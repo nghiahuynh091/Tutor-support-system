@@ -21,7 +21,7 @@ export function RoleSwitcher() {
     // Navigate to appropriate page based on role
     switch (role) {
       case 'mentee':
-        navigate('/');
+        navigate('/sessions');
         break;
       case 'tutor':
         navigate('/tutor/sessions');
