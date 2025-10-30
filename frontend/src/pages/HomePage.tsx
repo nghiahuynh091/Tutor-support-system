@@ -16,6 +16,7 @@ export function HomePage() {
       switch (currentRole) {
         case 'mentee':
           // Stay on home page
+          navigate('/sessions', { replace: true });
           break;
         case 'tutor':
           navigate('/tutor/sessions', { replace: true });
