@@ -124,11 +124,11 @@ export function LoginPage() {
               </a>
             </p>
             
-            <div className="text-xs text-center text-gray-500 mt-4 p-3 bg-blue-50 rounded border border-blue-200">
+            {/* <div className="text-xs text-center text-gray-500 mt-4 p-3 bg-blue-50 rounded border border-blue-200">
               <strong className="text-blue-800">Test credentials:</strong><br />
               Email: admin@gmail.com<br />
               Password: 12345678
-            </div>
+            </div> */}
           </form>
         </Card>
       </div>
