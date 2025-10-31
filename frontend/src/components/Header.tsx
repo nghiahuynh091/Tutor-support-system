@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { RoleSwitcher } from "@/components/RoleSwitcher";
 
+
 export function Header() {
   const navigate = useNavigate();
   const { isAuthenticated, user, logout } = useAuth();
@@ -37,6 +38,15 @@ export function Header() {
                 <span className="text-white text-sm">
                   Welcome, {user?.name || user?.email}
                 </span>
+
+                <Button
+                  size="lg"
+                  className="px-8 bg-white text-blue-800 hover:bg-blue-50"
+                  onClick={() => navigate('/profile')}
+                >
+                  My Profile
+                </Button>
+
                 <Button 
                   size="lg" 
                   variant="outline"

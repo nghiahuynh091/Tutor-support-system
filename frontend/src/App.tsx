@@ -4,6 +4,7 @@ import { LoginPage } from "./pages/LoginPage";
 import { MenteeSessions } from "./pages/MenteeSessions";
 import { TutorSessions } from "./pages/TutorSessions";
 import { CoordinatorDashboard } from "./pages/CoordinatorDashboard";
+import { MyProfile } from "./pages/MyProfile";
 
 function App() {
   return (
@@ -14,6 +15,7 @@ function App() {
         <Route path="/sessions" element={<MenteeSessions />} />
         <Route path="/tutor/sessions" element={<TutorSessions />} />
         <Route path="/coordinator/dashboard" element={<CoordinatorDashboard />} />
+        <Route path="/profile" element={<MyProfile />} />
       </Routes>
     </BrowserRouter>
   );
