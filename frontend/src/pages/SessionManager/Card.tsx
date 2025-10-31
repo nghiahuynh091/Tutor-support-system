@@ -4,8 +4,12 @@ import MeetingNotes from "./MeetingNotes";
 import MakeUpSession from "./MakeUpSession";
 import "./Card.css";
 import LearningResources from "./LearningResources";
+import { useParams } from "react-router-dom";
+import { Header } from "@/components/Header";
 
-function Card() {
+export function Card() {
+  const { classId } = useParams();
+
   const [activeSection, setActiveSection] = useState<string | null>(null);
 
   // 📝 Notes
@@ -67,8 +71,12 @@ function Card() {
 
   return (
     <div className="card">
-      <h2>COMP101 - Mentoring Session</h2>
-      <p>Lecturer: Dr. John Doe</p>
+    <Header />
+<h2>
+  Class ID: {classId || "N/A"} - Mentoring Session
+</h2>
+<p>Lecturer: Dr. John Doe</p>
+
 
       <div className="card-row clickable" onClick={() => setActiveSection("attendance")}>
         📋 Mark Attendance
@@ -145,5 +153,4 @@ function Card() {
     </div>
   );
 }
-
 export default Card;
