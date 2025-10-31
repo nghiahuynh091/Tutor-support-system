@@ -4,7 +4,6 @@ import { LoginPage } from "./pages/LoginPage";
 import { MenteeSessions } from "./pages/MenteeSessions";
 import { TutorSessions } from "./pages/TutorSessions";
 import { CoordinatorDashboard } from "./pages/CoordinatorDashboard";
-import { MyProfile } from "./pages/MyProfile";
 import { FeedbackPage } from "./pages/FeedbackPage";
 import { MenteeProgressPage } from "./pages/MenteeProgressPage";
 import { PrivateNotePage } from "./pages/PrivateNotePage";
@@ -28,7 +27,6 @@ function App() {
         <Route path="/sessions" element={<MenteeSessions />} />
         <Route path="/tutor/sessions" element={<TutorSessions />} />
         <Route path="/coordinator/dashboard" element={<CoordinatorDashboard />} />
-        <Route path="/profile" element={<MyProfile />} />
         <Route path="/my_sessions/feedback/:id" element={<FeedbackPage />} />
         <Route path="/mentee_progress/:id" element={<MenteeProgressPage />} />
         <Route path="/mentee_progress/:id/private_note" element={<PrivateNotePage />} />
