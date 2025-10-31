@@ -1,8 +1,26 @@
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { RoleSwitcher } from "@/components/RoleSwitcher";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+
 
 export function Header() {
   const navigate = useNavigate();
+  const { isAuthenticated, user, logout } = useAuth();
+
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
+  };
+
   return (
     <div className="w-full bg-blue-800 text-white">
       <div className="container mx-auto px-8 py-4">
@@ -11,23 +29,52 @@ export function Header() {
             className="flex items-center gap-4 cursor-pointer group"
             onClick={() => navigate('/')}
           >
-            {/* Placeholder for University Logo - Replace src with actual logo */}
-            <img
-              src="/university-logo.png"
-              alt="University Logo"
-              className="h-12 w-auto"
-            />
             <h1 className="text-2xl font-bold group-hover:text-blue-200 transition-colors">
               Tutor Support System
             </h1>
           </div>
-          <Button 
-            size="lg" 
-            className="px-8 bg-white text-blue-800 hover:bg-blue-50"
-            onClick={() => navigate('/login')}
-          >
-            Login
-          </Button>
+          <div className="flex items-center gap-4">
+            {isAuthenticated && <RoleSwitcher />}
+            {isAuthenticated ? (
+              <>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button className="flex items-center gap-2 focus:outline-none">
+                      <Avatar className="cursor-pointer hover:opacity-80">
+                        <AvatarImage src={user?.avatar} alt={user?.name || user?.email} />
+                        <AvatarFallback className="bg-blue-600 text-white">
+                          {(user?.name?.[0] || user?.email?.[0] || '?').toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-48" align="end">
+                    <DropdownMenuItem
+                      className="cursor-pointer"
+                      onClick={() => navigate('/profile')}
+                    >
+                      My Profile
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50"
+                      onClick={handleLogout}
+                    >
+                      Logout
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </>
+            ) : (
+              <Button 
+                size="lg" 
+                className="px-8 bg-white text-blue-800 hover:bg-blue-50"
+                onClick={() => navigate('/login')}
+              >
+                Login
+              </Button>
+            )}
+          </div>
         </div>
       </div>
     </div>

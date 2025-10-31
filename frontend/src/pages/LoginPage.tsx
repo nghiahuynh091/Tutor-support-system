@@ -1,4 +1,7 @@
 import { useForm } from "react-hook-form";
+import { useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Header } from "@/components/Header";
@@ -14,6 +17,10 @@ type LoginFormInputs = {
 };
 
 export function LoginPage() {
+  const navigate = useNavigate();
+  const { login } = useAuth();
+  const [error, setError] = useState<string>("");
+  
   const { register, handleSubmit, formState: { errors } } = useForm<LoginFormInputs>({
     defaultValues: {
       email: "",
@@ -23,8 +30,17 @@ export function LoginPage() {
   });
 
   const onSubmit = (data: LoginFormInputs) => {
-    console.log(data);
-    // Handle login logic here
+    setError(""); // Clear previous errors
+    
+    const success = login(data.email, data.password);
+    
+    if (success) {
+      // Redirect to home page on successful login
+      navigate("/");
+    } else {
+      // Show error message
+      setError("Invalid email or password. Try: admin@gmail.com / 12345678");
+    }
   };
 
   return (
@@ -36,6 +52,12 @@ export function LoginPage() {
           <h2 className="text-2xl font-bold text-center text-gray-900 mb-8">
             Login to Your Account
           </h2>
+          
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
+              {error}
+            </div>
+          )}
           
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             <div className="space-y-2">
@@ -101,6 +123,12 @@ export function LoginPage() {
                 Sign up
               </a>
             </p>
+            
+            <div className="text-xs text-center text-gray-500 mt-4 p-3 bg-blue-50 rounded border border-blue-200">
+              <strong className="text-blue-800">Test credentials:</strong><br />
+              Email: admin@gmail.com<br />
+              Password: 12345678
+            </div>
           </form>
         </Card>
       </div>

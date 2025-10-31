@@ -1,7 +1,70 @@
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
+import { Button } from "@/components/ui/button";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { useEffect } from "react";
 
 export function HomePage() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { isAuthenticated, currentRole } = useAuth();
+
+  // Redirect based on role when user is authenticated
+  useEffect(() => {
+    if (isAuthenticated && location.pathname === '/') {
+      switch (currentRole) {
+        case 'mentee':
+          // Stay on home page
+          navigate('/sessions', { replace: true });
+          break;
+        case 'tutor':
+          navigate('/tutor/sessions', { replace: true });
+          break;
+        case 'coordinator':
+          navigate('/coordinator/dashboard', { replace: true });
+          break;
+      }
+    }
+  }, [isAuthenticated, currentRole, navigate, location.pathname]);
+
+  const getActionButton = () => {
+    if (!isAuthenticated) return null;
+
+    switch (currentRole) {
+      case 'mentee':
+        return (
+          <Button 
+            size="lg"
+            className="bg-blue-600 hover:bg-blue-700 text-white"
+            onClick={() => navigate("/sessions")}
+          >
+            Browse Available Sessions
+          </Button>
+        );
+      case 'tutor':
+        return (
+          <Button 
+            size="lg"
+            className="bg-blue-600 hover:bg-blue-700 text-white"
+            onClick={() => navigate("/tutor/sessions")}
+          >
+            Manage My Sessions
+          </Button>
+        );
+      case 'coordinator':
+        return (
+          <Button 
+            size="lg"
+            className="bg-blue-600 hover:bg-blue-700 text-white"
+            onClick={() => navigate("/coordinator/dashboard")}
+          >
+            View Dashboard
+          </Button>
+        );
+    }
+  };
+
   return (
     <div className="min-h-screen bg-white">
       <Header />
@@ -14,9 +77,10 @@ export function HomePage() {
             <h2 className="text-4xl font-bold tracking-tight text-blue-900 mb-4">
               Welcome to the Tutor Support System
             </h2>
-            <p className="text-xl text-muted-foreground">
+            <p className="text-xl text-muted-foreground mb-6">
               Connecting students with tutors for better learning outcomes
             </p>
+            {getActionButton()}
           </div>
 
           {/* Feature Sections */}

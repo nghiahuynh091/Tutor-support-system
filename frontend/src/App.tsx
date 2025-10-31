@@ -9,6 +9,10 @@ import { HomeworkPage } from "./pages/HomeworkPage";
 import { QuizPage } from "./pages/QuizPage";
 import { MenteeAssignmentsPage } from "./pages/MenteeAssignmentsPage";
 import { MenteeQuizAttemptPage } from "./pages/MenteeQuizAttemptPage";
+import { MenteeSessions } from "./pages/MenteeSessions";
+import { TutorSessions } from "./pages/TutorSessions";
+import { CoordinatorDashboard } from "./pages/CoordinatorDashboard";
+import { MyProfile } from "./pages/MyProfile";
 
 function App() {
   return (
@@ -24,6 +28,10 @@ function App() {
         <Route path="/assignment/quiz/:id" element={<QuizPage />} />
         <Route path="/mentee/assignments" element={<MenteeAssignmentsPage />} />
         <Route path="/mentee/quiz/:id" element={<MenteeQuizAttemptPage />} />
+        <Route path="/sessions" element={<MenteeSessions />} />
+        <Route path="/tutor/sessions" element={<TutorSessions />} />
+        <Route path="/coordinator/dashboard" element={<CoordinatorDashboard />} />
+        <Route path="/profile" element={<MyProfile />} />
       </Routes>
     </BrowserRouter>
   );
