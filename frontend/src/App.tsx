@@ -4,6 +4,17 @@ import { LoginPage } from "./pages/LoginPage";
 import { MenteeSessions } from "./pages/MenteeSessions";
 import { TutorSessions } from "./pages/TutorSessions";
 import { CoordinatorDashboard } from "./pages/CoordinatorDashboard";
+import { MyProfile } from "./pages/MyProfile";
+import { FeedbackPage } from "./pages/FeedbackPage";
+import { MenteeProgressPage } from "./pages/MenteeProgressPage";
+import { PrivateNotePage } from "./pages/PrivateNotePage";
+import { ProvideAssignmentPage } from "./pages/ProvideAssignmentPage";
+import { HomeworkPage } from "./pages/HomeworkPage";
+import { QuizPage } from "./pages/QuizPage";
+import { MenteeAssignmentsPage } from "./pages/MenteeAssignmentsPage";
+import { MenteeQuizAttemptPage } from "./pages/MenteeQuizAttemptPage";
+import { MySessionsPage } from "@/pages/MySessionsPage";
+import { ProgressTrackingPage } from "./pages/ProgressTrackingPage";
 import { CoordinatorProfile } from "./pages/CoordinatorProfile";
 import { MenteeProfile } from "./pages/MenteeProfile";
 import { TutorProfile } from "./pages/TutorProfile";
@@ -17,6 +28,17 @@ function App() {
         <Route path="/sessions" element={<MenteeSessions />} />
         <Route path="/tutor/sessions" element={<TutorSessions />} />
         <Route path="/coordinator/dashboard" element={<CoordinatorDashboard />} />
+        <Route path="/profile" element={<MyProfile />} />
+        <Route path="/my_sessions/feedback/:id" element={<FeedbackPage />} />
+        <Route path="/mentee_progress/:id" element={<MenteeProgressPage />} />
+        <Route path="/mentee_progress/:id/private_note" element={<PrivateNotePage />} />
+        <Route path="/assignment" element={<ProvideAssignmentPage />} />
+        <Route path="/assignment/homework/:id" element={<HomeworkPage />} />
+        <Route path="/assignment/quiz/:id" element={<QuizPage />} />
+        <Route path="/my_sessions/assignments" element={<MenteeAssignmentsPage />} />
+        <Route path="/my_sessions/quiz/:id" element={<MenteeQuizAttemptPage />} />
+        <Route path="/my_sessions" element={<MySessionsPage />} />
+        <Route path="/tutor/mentees_list" element={<ProgressTrackingPage />} />
         <Route path="/coordinator/profile" element={<CoordinatorProfile />} />
         <Route path="/mentee/profile" element={<MenteeProfile />} />
         <Route path="/tutor/profile" element={<TutorProfile />} />
