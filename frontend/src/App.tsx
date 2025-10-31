@@ -5,6 +5,14 @@ import { MenteeSessions } from "./pages/MenteeSessions";
 import { TutorSessions } from "./pages/TutorSessions";
 import { CoordinatorDashboard } from "./pages/CoordinatorDashboard";
 import { MyProfile } from "./pages/MyProfile";
+import { FeedbackPage } from "./pages/FeedbackPage";
+import { MenteeProgressPage } from "./pages/MenteeProgressPage";
+import { PrivateNotePage } from "./pages/PrivateNotePage";
+import { ProvideAssignmentPage } from "./pages/ProvideAssignmentPage";
+import { HomeworkPage } from "./pages/HomeworkPage";
+import { QuizPage } from "./pages/QuizPage";
+import { MenteeAssignmentsPage } from "./pages/MenteeAssignmentsPage";
+import { MenteeQuizAttemptPage } from "./pages/MenteeQuizAttemptPage";
 
 function App() {
   return (
@@ -16,6 +24,14 @@ function App() {
         <Route path="/tutor/sessions" element={<TutorSessions />} />
         <Route path="/coordinator/dashboard" element={<CoordinatorDashboard />} />
         <Route path="/profile" element={<MyProfile />} />
+        <Route path="/sessions/feedback/:id" element={<FeedbackPage />} />
+        <Route path="/mentee_progress/:id" element={<MenteeProgressPage />} />
+        <Route path="/mentee_progress/:id/private_note" element={<PrivateNotePage />} />
+        <Route path="/assignment" element={<ProvideAssignmentPage />} />
+        <Route path="/assignment/homework/:id" element={<HomeworkPage />} />
+        <Route path="/assignment/quiz/:id" element={<QuizPage />} />
+        <Route path="/mentee/assignments" element={<MenteeAssignmentsPage />} />
+        <Route path="/mentee/quiz/:id" element={<MenteeQuizAttemptPage />} />
       </Routes>
     </BrowserRouter>
   );
