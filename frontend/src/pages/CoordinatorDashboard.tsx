@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Header } from "@/components/Header";
-import { Users, BookOpen, Calendar, TrendingUp, GraduationCap } from "lucide-react";
+import { Users, BookOpen, Calendar, TrendingUp, GraduationCap, AlertTriangle } from "lucide-react";
 
 type Stats = {
   totalMentees: number;
@@ -70,9 +70,39 @@ const MOCK_ACTIVITIES: RecentActivity[] = [
   },
 ];
 
+type ClassConflict = {
+  id: string;
+  subject: string;
+  tutor: string;
+  day: string;
+  periods: string;
+  conflictsWith: string;
+};
+
+const MOCK_CONFLICTS: ClassConflict[] = [
+  {
+    id: "1",
+    subject: "Mathematics",
+    tutor: "Dr. Smith",
+    day: "Monday",
+    periods: "2–4",
+    conflictsWith: "Class CC02 (Physics) - Monday 3–5"
+  },
+  {
+    id: "2",
+    subject: "Computer Science",
+    tutor: "Prof. Johnson",
+    day: "Wednesday",
+    periods: "8–10",
+    conflictsWith: "Class CC01 (Database) - Wednesday 9–11"
+  }
+];
+
 export function CoordinatorDashboard() {
   const [stats] = useState<Stats>(MOCK_STATS);
   const [activities] = useState<RecentActivity[]>(MOCK_ACTIVITIES);
+  const [conflicts] = useState<ClassConflict[]>(MOCK_CONFLICTS);
+  const [activeTab, setActiveTab] = useState<'overview' | 'conflicts'>('overview');
 
   const formatTimestamp = (timestamp: string) => {
     const date = new Date(timestamp);
@@ -110,8 +140,40 @@ export function CoordinatorDashboard() {
           <p className="text-gray-600">Overview of the tutoring system</p>
         </div>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+        {/* Tab Navigation */}
+        <div className="mb-6 flex space-x-4 border-b border-gray-200">
+          <button
+            onClick={() => setActiveTab('overview')}
+            className={`pb-3 px-4 text-sm font-medium transition-colors ${
+              activeTab === 'overview'
+                ? 'border-b-2 border-blue-600 text-blue-600'
+                : 'text-gray-600 hover:text-blue-600'
+            }`}
+          >
+            Overview
+          </button>
+          <button
+            onClick={() => setActiveTab('conflicts')}
+            className={`pb-3 px-4 text-sm font-medium transition-colors flex items-center space-x-2 ${
+              activeTab === 'conflicts'
+                ? 'border-b-2 border-red-600 text-red-600'
+                : 'text-gray-600 hover:text-red-600'
+            }`}
+          >
+            <AlertTriangle className="w-4 h-4" />
+            <span>Conflict Summary</span>
+            {conflicts.length > 0 && (
+              <span className="bg-red-100 text-red-800 px-2 py-0.5 rounded-full text-xs">
+                {conflicts.length}
+              </span>
+            )}
+          </button>
+        </div>
+
+        {activeTab === 'overview' ? (
+          <>
+            {/* Stats Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
           <Card className="border-blue-200">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Mentees</CardTitle>
@@ -242,6 +304,66 @@ export function CoordinatorDashboard() {
             </CardContent>
           </Card>
         </div>
+          </>
+        ) : (
+          /* Conflict Summary Tab */
+          <div className="space-y-6">
+            <Card className="border-red-200">
+              <CardHeader>
+                <div className="flex items-center space-x-2">
+                  <AlertTriangle className="w-6 h-6 text-red-600" />
+                  <div>
+                    <CardTitle className="text-xl text-red-900">Schedule Conflicts</CardTitle>
+                    <CardDescription>Overlapping classes and sessions that need attention</CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {conflicts.length === 0 ? (
+                  <div className="text-center py-8">
+                    <p className="text-green-600 font-medium">✓ No scheduling conflicts detected</p>
+                    <p className="text-gray-500 text-sm mt-2">All classes are properly scheduled</p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead className="bg-red-50">
+                        <tr>
+                          <th className="px-4 py-3 text-left text-sm font-semibold text-red-900">Subject</th>
+                          <th className="px-4 py-3 text-left text-sm font-semibold text-red-900">Tutor</th>
+                          <th className="px-4 py-3 text-left text-sm font-semibold text-red-900">Day</th>
+                          <th className="px-4 py-3 text-left text-sm font-semibold text-red-900">Periods</th>
+                          <th className="px-4 py-3 text-left text-sm font-semibold text-red-900">Conflicts With</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-200">
+                        {conflicts.map((conflict) => (
+                          <tr key={conflict.id} className="hover:bg-red-50">
+                            <td className="px-4 py-3 text-sm text-gray-900">{conflict.subject}</td>
+                            <td className="px-4 py-3 text-sm text-gray-700">{conflict.tutor}</td>
+                            <td className="px-4 py-3 text-sm text-gray-700">{conflict.day}</td>
+                            <td className="px-4 py-3 text-sm text-gray-700">{conflict.periods}</td>
+                            <td className="px-4 py-3 text-sm">
+                              <div className="flex items-center space-x-2">
+                                <span className="text-red-600 font-medium">{conflict.conflictsWith}</span>
+                                <span className="relative group">
+                                  <AlertTriangle className="w-4 h-4 text-red-500 cursor-help" />
+                                  <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                                    Time slots overlap
+                                  </span>
+                                </span>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        )}
       </main>
     </div>
   );

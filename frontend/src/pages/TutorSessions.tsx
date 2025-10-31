@@ -358,8 +358,8 @@ export function TutorSessions() {
         <CreateClassModal
           onClose={() => setIsCreateModalOpen(false)}
           onCreateClass={handleCreateClass}
-          existingClassCount={classes.length}
           tutorName="Dr. Sarah Johnson"
+          existingClasses={classes}
         />
       )}
     </div>

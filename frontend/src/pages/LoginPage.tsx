@@ -35,8 +35,8 @@ export function LoginPage() {
     const success = login(data.email, data.password);
     
     if (success) {
-      // Redirect to home page on successful login
-      navigate("/");
+      // Redirect to role selection page on successful login
+      navigate("/role-selection");
     } else {
       // Show error message
       setError("Invalid email or password. Try: admin@gmail.com / 12345678");
