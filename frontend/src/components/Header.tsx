@@ -1,7 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { RoleSwitcher } from "@/components/RoleSwitcher";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -34,7 +33,6 @@ export function Header() {
             </h1>
           </div>
           <div className="flex items-center gap-4">
-            {isAuthenticated && <RoleSwitcher />}
             {isAuthenticated ? (
               <>
                 <DropdownMenu>

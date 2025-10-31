@@ -65,6 +65,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setCurrentRole('mentee');
     localStorage.removeItem('user');
     localStorage.removeItem('currentRole');
+    localStorage.removeItem('selectedRole'); // Clear selected role on logout
   };
 
   const handleSetCurrentRole = (role: UserRole) => {
