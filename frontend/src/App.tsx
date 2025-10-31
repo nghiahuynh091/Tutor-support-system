@@ -15,6 +15,9 @@ import { MenteeAssignmentsPage } from "./pages/MenteeAssignmentsPage";
 import { MenteeQuizAttemptPage } from "./pages/MenteeQuizAttemptPage";
 import { MySessionsPage } from "@/pages/MySessionsPage";
 import { ProgressTrackingPage } from "./pages/ProgressTrackingPage";
+import { CoordinatorProfile } from "./pages/CoordinatorProfile";
+import { MenteeProfile } from "./pages/MenteeProfile";
+import { TutorProfile } from "./pages/TutorProfile";
 
 function App() {
   return (
@@ -36,6 +39,9 @@ function App() {
         <Route path="/my_sessions/quiz/:id" element={<MenteeQuizAttemptPage />} />
         <Route path="/my_sessions" element={<MySessionsPage />} />
         <Route path="/tutor/mentees_list" element={<ProgressTrackingPage />} />
+        <Route path="/coordinator/profile" element={<CoordinatorProfile />} />
+        <Route path="/mentee/profile" element={<MenteeProfile />} />
+        <Route path="/tutor/profile" element={<TutorProfile />} />
       </Routes>
     </BrowserRouter>
   );

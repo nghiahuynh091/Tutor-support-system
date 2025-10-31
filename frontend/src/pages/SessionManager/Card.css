@@ -1,0 +1,96 @@
+.card {
+  background-color: white;
+  border: 2px solid #b3d9ff; /* light blue border */
+  border-radius: 16px;
+  padding: 20px;
+  max-width: 700px;
+  margin: 40px auto;
+  box-shadow: 0 4px 10px rgba(0, 51, 102, 0.1);
+  transition: all 0.3s ease;
+}
+
+.card:hover {
+  box-shadow: 0 6px 16px rgba(102, 179, 255, 0.4); /* blue glow */
+  transform: translateY(-3px);
+}
+
+.card h2 {
+  color: #003366; /* dark blue */
+  margin-bottom: 5px;
+  font-size: 1.6rem;
+}
+
+.card p {
+  color: #66b3ff; /* light blue text */
+  margin-bottom: 15px;
+}
+
+.card-row {
+  background-color: #f8fbff;
+  border: 1px solid #b3d9ff;
+  color: #0059b3;
+  border-radius: 12px;
+  padding: 12px;
+  margin: 8px 0;
+  transition: all 0.2s ease;
+}
+
+.card-row.clickable:hover {
+  background-color: #e6f3ff;
+  cursor: pointer;
+  transform: translateX(4px);
+}
+
+.section-content {
+  margin-top: 15px;
+}
+
+/* ===== Attendance Table ===== */
+.attendance-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 15px;
+  background-color: #f8fbff;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.attendance-table th,
+.attendance-table td {
+  border: 1px solid #b3d9ff;
+  padding: 10px;
+  text-align: center;
+  color: #003366;
+}
+
+.attendance-table th {
+  background-color: #cce6ff; /* light blue header */
+  font-weight: bold;
+}
+
+.attendance-table tr:nth-child(even) {
+  background-color: #e6f3ff;
+}
+
+select {
+  padding: 5px;
+  border-radius: 6px;
+  border: 1px solid #66b3ff;
+  background-color: white;
+  color: #003366;
+}
+
+button {
+  background-color: #0066cc;
+  color: white;
+  padding: 8px 14px;
+  border: none;
+  border-radius: 8px;
+  margin-top: 10px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+button:hover {
+  background-color: #004c99;
+}
