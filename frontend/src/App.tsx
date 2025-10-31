@@ -20,6 +20,8 @@ import { ProgressTrackingPage } from "./pages/ProgressTrackingPage";
 import { CoordinatorProfile } from "./pages/CoordinatorProfile";
 import { MenteeProfile } from "./pages/MenteeProfile";
 import { TutorProfile } from "./pages/TutorProfile";
+import Card from "./pages/SessionManager/Card";
+
 
 function App() {
   return (
@@ -42,6 +44,7 @@ function App() {
         
         {/* Tutor Routes */}
         <Route path="/tutor/sessions" element={<TutorSessions />} />
+        <Route path="/tutor/mark_attendance/:classId" element={<Card />} />
         <Route path="/assignment" element={<ProvideAssignmentPage />} />
         <Route path="/assignment/homework/:id" element={<HomeworkPage />} />
         <Route path="/assignment/quiz/:id" element={<QuizPage />} />

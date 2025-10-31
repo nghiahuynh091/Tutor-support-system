@@ -329,6 +329,18 @@ export function TutorSessions() {
                                       </Button>
                                     </div>
                                   )}
+                                  {/* Mark Attendance Button */}
+<div className="pt-3">
+  <Button
+    variant="default"
+    size="sm"
+    className="w-full bg-green-600 hover:bg-green-700 text-white"
+    onClick={() => navigate(`/tutor/mark_attendance/${classItem.id}`)}
+  >
+    Meeting Action
+  </Button>
+</div>
+
 
                                   {/* Sessions Preview */}
                                   <div className="pt-3 border-t">
