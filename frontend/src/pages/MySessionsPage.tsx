@@ -229,7 +229,7 @@ setSubjects(Array.from(subjectMap.values()));
                                         : "bg-gray-300 text-gray-500 cursor-not-allowed"
                                     }`}
                                     onClick={() => {
-                                    if (isDone) navigate(`/my_sessions/feedback/${classItem.id}`);
+                                    if (isDone) navigate(`/mentee/sessions/feedback/${classItem.id}`);
                                     }}
                                 >
                                     Feedback

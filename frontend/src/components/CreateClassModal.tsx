@@ -19,8 +19,8 @@ type CreateClassForm = {
 interface CreateClassModalProps {
   onClose: () => void;
   onCreateClass: (newClass: Class) => void;
-  existingClassCount: number;
   tutorName: string;
+  existingClasses?: Class[]; // All tutor's existing classes for conflict detection
 }
 
 const DAYS_OF_WEEK = [
@@ -63,14 +63,18 @@ const getNextDayOfWeek = (dayOfWeek: number, weekOffset: number = 0): Date => {
   return result;
 };
 
-// Generate sequential class code
-const generateClassCode = (count: number): string => {
-  const code = (count + 1).toString().padStart(2, '0');
-  return `CC${code}`;
+// Generate sequential class code based on subject
+const generateClassCode = (subjectCode: string, existingClasses: Class[]): string => {
+  // Count existing classes for this subject
+  const sameSubjectClasses = existingClasses.filter(c => c.subject_code === subjectCode);
+  const count = sameSubjectClasses.length + 1;
+  return `CC${count.toString().padStart(2, '0')}`;
 };
 
-export function CreateClassModal({ onClose, onCreateClass, existingClassCount, tutorName }: CreateClassModalProps) {
+export function CreateClassModal({ onClose, onCreateClass, tutorName, existingClasses = [] }: CreateClassModalProps) {
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
+  const [showConflictWarning, setShowConflictWarning] = useState(false);
+  const [conflictDetails, setConflictDetails] = useState<string[]>([]);
   
   const { register, handleSubmit, formState: { errors }, watch } = useForm<CreateClassForm>({
     defaultValues: {
@@ -84,6 +88,7 @@ export function CreateClassModal({ onClose, onCreateClass, existingClassCount, t
   });
 
   const weeksValue = watch("number_of_weeks");
+  const subjectCodeValue = watch("subject_code");
 
   const addTimeSlot = () => {
     const newSlot: TimeSlot = {
@@ -106,7 +111,7 @@ export function CreateClassModal({ onClose, onCreateClass, existingClassCount, t
   };
 
   const validateTimeSlots = (): boolean => {
-    // Check for overlapping time slots on the same day
+    // Check for overlapping time slots within this class
     for (let i = 0; i < timeSlots.length; i++) {
       for (let j = i + 1; j < timeSlots.length; j++) {
         const slot1 = timeSlots[i];
@@ -114,11 +119,11 @@ export function CreateClassModal({ onClose, onCreateClass, existingClassCount, t
         
         if (slot1.dayOfWeek === slot2.dayOfWeek) {
           // Check if periods overlap
+          const dayName = DAYS_OF_WEEK.find(d => d.value === slot1.dayOfWeek)?.label;
           if (
-            (slot1.startPeriod <= slot2.endPeriod && slot1.endPeriod >= slot2.startPeriod) ||
-            (slot2.startPeriod <= slot1.endPeriod && slot2.endPeriod >= slot1.startPeriod)
+            (slot1.startPeriod <= slot2.endPeriod && slot1.endPeriod >= slot2.startPeriod)
           ) {
-            alert(`Conflict detected: Time slots on ${DAYS_OF_WEEK.find(d => d.value === slot1.dayOfWeek)?.label} overlap!`);
+            alert(`⚠️ Duplicate Time Slot: ${dayName} ${slot1.startPeriod}–${slot1.endPeriod} overlaps ${dayName} ${slot2.startPeriod}–${slot2.endPeriod}.`);
             return false;
           }
         }
@@ -133,6 +138,32 @@ export function CreateClassModal({ onClose, onCreateClass, existingClassCount, t
     return true;
   };
 
+  const checkCrossClassConflicts = (): string[] => {
+    const conflicts: string[] = [];
+    
+    // Check against all existing classes
+    for (const existingClass of existingClasses) {
+      for (const newSlot of timeSlots) {
+        for (const existingSlot of existingClass.time_slots) {
+          if (newSlot.dayOfWeek === existingSlot.dayOfWeek) {
+            // Check if periods overlap
+            if (
+              newSlot.startPeriod <= existingSlot.endPeriod && 
+              newSlot.endPeriod >= existingSlot.startPeriod
+            ) {
+              const dayName = DAYS_OF_WEEK.find(d => d.value === newSlot.dayOfWeek)?.label;
+              conflicts.push(
+                `${dayName} ${newSlot.startPeriod}–${newSlot.endPeriod} conflicts with Class ${existingClass.class_code} (${existingClass.subject_name}) - ${dayName} ${existingSlot.startPeriod}–${existingSlot.endPeriod}`
+              );
+            }
+          }
+        }
+      }
+    }
+    
+    return conflicts;
+  };
+
   const onSubmit = (data: CreateClassForm) => {
     if (timeSlots.length === 0) {
       alert("Please add at least one time slot");
@@ -143,8 +174,16 @@ export function CreateClassModal({ onClose, onCreateClass, existingClassCount, t
       return;
     }
 
-    // Generate class code
-    const classCode = generateClassCode(existingClassCount);
+    // Check for cross-class conflicts
+    const conflicts = checkCrossClassConflicts();
+    if (conflicts.length > 0) {
+      setConflictDetails(conflicts);
+      setShowConflictWarning(true);
+      return;
+    }
+
+    // Generate class code based on subject
+    const classCode = generateClassCode(data.subject_code, existingClasses);
     const classId = `class-${Date.now()}`;
     const subjectId = Math.floor(Math.random() * 1000);
 
@@ -209,7 +248,7 @@ export function CreateClassModal({ onClose, onCreateClass, existingClassCount, t
               <CardTitle className="text-2xl text-blue-900">Create New Class</CardTitle>
               <p className="text-sm text-gray-600 mt-1">Set up a multi-week class with recurring sessions</p>
               <p className="text-xs text-blue-600 mt-1 font-semibold">
-                Class Code: {generateClassCode(existingClassCount)}
+                Class Code: {subjectCodeValue ? generateClassCode(subjectCodeValue, existingClasses) : 'Enter subject code first'}
               </p>
             </div>
             <Button variant="outline" size="sm" onClick={onClose}>
@@ -423,7 +462,7 @@ export function CreateClassModal({ onClose, onCreateClass, existingClassCount, t
                 <div className="mt-4 p-4 bg-blue-50 rounded-lg border-2 border-blue-200">
                   <p className="text-sm font-semibold text-blue-900 mb-2">📊 Summary:</p>
                   <ul className="text-sm text-blue-800 space-y-1">
-                    <li>• Class Code: <strong>{generateClassCode(existingClassCount)}</strong></li>
+                    <li>• Class Code: <strong>{subjectCodeValue ? generateClassCode(subjectCodeValue, existingClasses) : 'TBD'}</strong></li>
                     <li>• <strong>{timeSlots.length}</strong> session(s) per week</li>
                     <li>• Running for <strong>{weeksValue || 1}</strong> week(s)</li>
                     <li>• <strong>{timeSlots.length * parseInt(weeksValue?.toString() || "1")}</strong> total sessions will be created</li>
@@ -444,6 +483,44 @@ export function CreateClassModal({ onClose, onCreateClass, existingClassCount, t
           </form>
         </CardContent>
       </Card>
+
+      {/* Conflict Warning Modal */}
+      {showConflictWarning && (
+        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-[60]">
+          <Card className="max-w-lg w-full mx-4 p-6 bg-white">
+            <div className="flex items-start space-x-3 mb-4">
+              <div className="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center flex-shrink-0">
+                <span className="text-2xl">⚠️</span>
+              </div>
+              <div className="flex-1">
+                <h3 className="text-xl font-bold text-yellow-800 mb-2">Class Conflict Detected</h3>
+                <p className="text-gray-700 mb-4">
+                  The following time slots conflict with your existing classes:
+                </p>
+                <div className="bg-yellow-50 border border-yellow-200 rounded p-3 max-h-48 overflow-y-auto">
+                  <ul className="text-sm text-yellow-900 space-y-2">
+                    {conflictDetails.map((conflict, idx) => (
+                      <li key={idx} className="flex items-start">
+                        <span className="mr-2">•</span>
+                        <span>{conflict}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <p className="text-sm text-gray-600 mt-4">
+                  Please adjust your time slots to avoid scheduling conflicts.
+                </p>
+              </div>
+            </div>
+            <Button 
+              onClick={() => setShowConflictWarning(false)}
+              className="w-full bg-yellow-600 hover:bg-yellow-700"
+            >
+              OK, I'll Adjust
+            </Button>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }
