@@ -2,7 +2,7 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import UserProfile from "@/components/UserProfile"; // Assuming you have this component
 
-export function MyProfile() {
+export function TutorProfile() {
   return (
     <div className="min-h-screen bg-white">
       <Header />
@@ -11,12 +11,13 @@ export function MyProfile() {
           My Profile
         </h2>
         <UserProfile
-          name="Jane Doe"
-          email="jane.doe@example.com"
-          ID="2559091"
+          name="Cjarles Smith"
+          email="asdf.fff@example.com"
+          ID="2551100"
           avatarUrl="https://i.pravatar.cc/150?img=47"
-          bio="Frontend developer passionate about UI/UX and accessibility."
           location="Ho Chi Minh City, Vietnam"
+          role="tutor"
+          Faculty="Chemistry"
         />
       </div>
       <Footer />
