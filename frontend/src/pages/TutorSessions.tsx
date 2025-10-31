@@ -5,6 +5,7 @@ import { Calendar, Clock, Plus, Trash2, Users, ChevronDown, ChevronRight, Edit }
 import { Header } from "@/components/Header";
 import { CreateClassModal } from "@/components/CreateClassModal";
 import type { Class, Subject } from "@/types";
+import { useNavigate } from "react-router-dom";
 
 // Hard-coded mock data for tutor's classes
 const MOCK_TUTOR_CLASSES: Class[] = [
@@ -63,6 +64,7 @@ export function TutorSessions() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [expandedSubjectId, setExpandedSubjectId] = useState<number | null>(null);
   const [expandedClassId, setExpandedClassId] = useState<string | null>(null);
+  const navigate = useNavigate()
 
   // Group classes by subject
   useEffect(() => {
@@ -129,14 +131,34 @@ export function TutorSessions() {
             <p className="text-gray-600">Create and manage your tutoring classes</p>
           </div>
           
-          <Button 
-            size="lg"
-            className="bg-blue-600 hover:bg-blue-700 text-white"
-            onClick={() => setIsCreateModalOpen(true)}
-          >
-            <Plus className="mr-2 h-5 w-5" />
-            Create Class
-          </Button>
+          <div className="flex flex-col items-end space-y-3">
+            <Button 
+              size="lg"
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+              onClick={() => setIsCreateModalOpen(true)}
+            >
+              <Plus className="mr-2 h-5 w-5" />
+              Create Class
+            </Button>
+
+            <Button 
+              size="lg"
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+              onClick={() => navigate("/assignment")}
+            >
+              <Plus className="mr-2 h-5 w-5" />
+              Create Assignment
+            </Button>
+
+            <Button
+              size="lg"
+              className="bg-green-600 hover:bg-green-700 text-white"
+              onClick={() => navigate("/tutor/mentees_list")}
+            >
+              Progress Track
+            </Button>
+          </div>
+
         </div>
 
         {subjects.length === 0 ? (

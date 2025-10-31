@@ -239,25 +239,49 @@ export const QuizPage: React.FC = () => {
                 </div>
 
                 {q.options.map((opt, oIndex) => (
-                  <div key={oIndex}>
-                    <label className="block font-medium text-gray-600">
-                      Option {String.fromCharCode(65 + oIndex)} *
-                    </label>
-                    <input
-                      type="text"
-                      value={opt}
-                      onChange={(e) => handleChange(qIndex, "option", e.target.value, oIndex)}
-                      className={`w-full p-2 border rounded-lg mt-1 focus:ring-2 ${
-                        errors.questions[qIndex].options[oIndex]
-                          ? "border-red-500 focus:ring-red-400"
-                          : "focus:ring-blue-400"
-                      }`}
-                    />
-                    {errors.questions[qIndex].options[oIndex] && (
-                      <p className="text-red-500 text-sm mt-1">Option is required.</p>
-                    )}
-                  </div>
-                ))}
+                <div key={oIndex} className="relative">
+                  <label className="block font-medium text-gray-600">
+                    Option {String.fromCharCode(65 + oIndex)} *
+                  </label>
+
+                  <input
+                    type="text"
+                    value={opt}
+                    onChange={(e) => handleChange(qIndex, "option", e.target.value, oIndex)}
+                    className={`w-full p-2 border rounded-lg mt-1 focus:ring-2 ${
+                      errors.questions[qIndex].options[oIndex]
+                        ? "border-red-500 focus:ring-red-400"
+                        : "focus:ring-blue-400"
+                    }`}
+                  />
+
+                  {errors.questions[qIndex].options[oIndex] && (
+                    <p className="text-red-500 text-sm mt-1">Option is required.</p>
+                  )}
+
+                  {/* 🗑️ Trash bin for deleting this option */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (q.options.length === 1) {
+                        alert("Each question must have at least one option!");
+                        return;
+                      }
+                      const newQuestions = [...questions];
+                      newQuestions[qIndex].options.splice(oIndex, 1);
+                      setQuestions(newQuestions);
+
+                      const newErrors = { ...errors };
+                      newErrors.questions[qIndex].options.splice(oIndex, 1);
+                      setErrors(newErrors);
+                    }}
+                    className="absolute top-0 right-0 text-red-500 hover:text-red-700"
+                    title="Delete this option"
+                  >
+                    <Trash2 size={18} />
+                  </button>
+                </div>
+              ))}
 
                 <button
                   type="button"

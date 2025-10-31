@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Clock, Search, Users, ExternalLink, ChevronDown, ChevronRight } from "lucide-react";
 import { Header } from "@/components/Header";
 import type { Class, Subject } from "@/types";
+import { useNavigate } from "react-router-dom";
 
 // Hard-coded mock data
 const MOCK_CLASSES: Class[] = [
@@ -96,6 +97,7 @@ const periodToTime = (period: number): string => {
 };
 
 export function MenteeSessions() {
+  const navigate = useNavigate()
   const [classes, setClasses] = useState<Class[]>(MOCK_CLASSES);
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [filteredSubjects, setFilteredSubjects] = useState<Subject[]>([]);
@@ -190,11 +192,21 @@ export function MenteeSessions() {
       <Header />
       
       <main className="container mx-auto px-4 md:px-8 py-8">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-2 text-blue-900">Available Classes</h1>
-          <p className="text-gray-600">Browse subjects and register for tutoring classes</p>
+        <div className="mb-8 flex justify-between items-center">
+          <div>
+            <h1 className="text-4xl font-bold mb-2 text-blue-900">Available Classes</h1>
+            <p className="text-gray-600">
+              Browse subjects and register for tutoring classes
+            </p>
+          </div>
+          <button
+            onClick={() => navigate("/my_sessions")}
+            className="bg-blue-600 text-white px-5 py-2 rounded-lg font-semibold hover:bg-blue-700 transition"
+          >
+            My Sessions
+          </button>
         </div>
-
+        
         {/* Search Bar */}
         <div className="mb-8">
           <div className="relative max-w-2xl">

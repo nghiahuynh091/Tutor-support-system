@@ -28,7 +28,7 @@ export const MenteeAssignmentsPage: React.FC = () => {
   ]);
 
   const handleAttemptQuiz = (assignmentId: number) => {
-    navigate(`/mentee/quiz/${assignmentId}`);
+    navigate(`/my_sessions/quiz/${assignmentId}`);
   };
 
   return (
@@ -36,7 +36,17 @@ export const MenteeAssignmentsPage: React.FC = () => {
       <Header />
 
       <main className="flex-grow p-8">
-        <h1 className="text-3xl font-bold text-blue-700 mb-6">Assignments</h1>
+        <div className="mb-8 flex justify-between items-center">
+          <div>
+            <h1 className="text-4xl font-bold mb-2 text-blue-900">Assignments</h1>
+          </div>
+          <button
+            onClick={() => navigate("/my_sessions")}
+            className="bg-blue-600 text-white px-5 py-2 rounded-lg font-semibold hover:bg-blue-700 transition"
+          >
+            My Sessions
+          </button>
+        </div>
 
         <div className="space-y-8">
           {assignments.map((a) => (
