@@ -1,6 +1,14 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { HomePage } from "./pages/HomePage";
 import { LoginPage } from "./pages/LoginPage";
+import { FeedbackPage } from "./pages/FeedbackPage";
+import { MenteeProgressPage } from "./pages/MenteeProgressPage";
+import { PrivateNotePage } from "./pages/PrivateNotePage";
+import { ProvideAssignmentPage } from "./pages/ProvideAssignmentPage";
+import { HomeworkPage } from "./pages/HomeworkPage";
+import { QuizPage } from "./pages/QuizPage";
+import { MenteeAssignmentsPage } from "./pages/MenteeAssignmentsPage";
+import { MenteeQuizAttemptPage } from "./pages/MenteeQuizAttemptPage";
 
 function App() {
   return (
@@ -8,6 +16,14 @@ function App() {
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/sessions/feedback/:id" element={<FeedbackPage />} />
+        <Route path="/mentee_progress/:id" element={<MenteeProgressPage />} />
+        <Route path="/mentee_progress/:id/private_note" element={<PrivateNotePage />} />
+        <Route path="/assignment" element={<ProvideAssignmentPage />} />
+        <Route path="/assignment/homework/:id" element={<HomeworkPage />} />
+        <Route path="/assignment/quiz/:id" element={<QuizPage />} />
+        <Route path="/mentee/assignments" element={<MenteeAssignmentsPage />} />
+        <Route path="/mentee/quiz/:id" element={<MenteeQuizAttemptPage />} />
       </Routes>
     </BrowserRouter>
   );
