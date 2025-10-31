@@ -51,7 +51,21 @@ export function Header() {
                   <DropdownMenuContent className="w-48" align="end">
                     <DropdownMenuItem
                       className="cursor-pointer"
-                      onClick={() => navigate('/profile')}
+                      onClick={() => {
+                        switch (user?.role) {
+                          case "coordinator":
+                            navigate('/coordinator/profile');
+                            break;
+                          case "mentee":
+                            navigate('/mentee/profile');
+                            break;
+                          case "tutor":
+                            navigate('/tutor/profile');
+                            break;
+                          default:
+                            navigate('/profile');
+                        }
+                      }}
                     >
                       My Profile
                     </DropdownMenuItem>
