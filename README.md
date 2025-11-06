@@ -1,64 +1,126 @@
 # Tutor Support System
 
-### Prerequisites
+A full-stack tutoring management system built with **FastAPI** (Python) backend and **React + TypeScript** frontend.
 
-- Node.js (v18 or higher)
-- npm or yarn
-- Supabase account
+## Prerequisites
 
-### Installation
+- **Python 3.12** 
+- **Node.js** (v18 or higher)
+- **npm** or **yarn**
+- **Supabase account** (for PostgreSQL database)
 
-1. Clone the repository and navigate to the project directory
+## Installation & Setup
 
-2. Install dependencies for backend:
+### 1. Backend Setup (Python FastAPI)
+
+1. **Navigate to backend directory:**
 
    ```bash
    cd backend
-   npm install
    ```
 
-3. Set up environment variables:
+2. **Create virtual environment:**
 
    ```bash
-   # Copy and configure backend environment
-   cp backend/.env.example backend/.env
-   # Edit backend/.env with your Supabase credentials (supabase URL)
+   python3.12 -m venv .venv
+   source .venv/bin/activate  # On Windows: .venv\Scripts\activate
    ```
 
-4. Start the development servers:
+3. **Install Python dependencies:**
+
    ```bash
-   npm run dev
+   pip install --upgrade pip
+   pip install -r requirements.txt
    ```
-5. Install dependencies for frontend
+
+4. **Configure environment variables:**
+
+   ```bash
+   cp .env.example .env
+   # Edit .env with your configuration:
+   # - DATABASE_URL: Your Supabase PostgreSQL connection string
+   # - Other settings as needed
+   ```
+
+5. **Start the backend server:**
+
+   ```bash
+   python main.py
+   ```
+
+   The backend will start on **http://localhost:8002**
+
+### 3. Frontend Setup (React + TypeScript)
+
+1. **Navigate to frontend directory:**
+
    ```bash
    cd frontend
+   ```
+
+2. **Install Node.js dependencies:**
+
+   ```bash
    npm install
    ```
-6. Start the web page run:
+
+3. **Start the frontend development server:**
+
    ```bash
    npm run dev
-This will start:
+   ```
 
-- Backend server on http://localhost:3001
-- Frontend server on http://localhost:5173
+   The frontend will start on **http://localhost:5173**
+
+## 🚀 Quick Start
+
+After setup, access:
+
+- **Backend API**: http://localhost:8002
+- **API Documentation**: http://localhost:8002/docs (Swagger UI)
+- **ReDoc Documentation**: http://localhost:8002/redoc
+- **Frontend Application**: http://localhost:5173
 
 
+## Development
 
-## Backend API
+### Backend Development
 
-The backend provides a RESTful API with the following endpoints:
+```bash
+cd backend
+source .venv/bin/activate  # Activate virtual environment
+python main.py             # Start with hot reload
+```
 
-- `GET /` - API welcome message
-- `GET /health` - Health check endpoint
-- `GET /api/test-db` - Test database connection
+### Frontend Development
 
-## Contributing
+```bash
+cd frontend
+npm run dev                 # Start with hot reload
+```
 
-1. Create a new branch for your feature
-2. Make your changes
-3. Test thoroughly
-4. Create a pull request
+## Project Structure
 
-## License
+```
+Tutor-support-system/
+├── backend/                 # Python FastAPI backend
+│   ├── .venv/              # Virtual environment
+│   ├── controllers/        # Business logic controllers
+│   ├── db/                 # Database configuration
+│   ├── middleware/         # Custom middleware
+│   ├── models/             # Data models
+│   ├── routes/             # API route definitions
+│   ├── utils/              # Utility functions
+│   ├── main.py             # FastAPI application entry point
+│   ├── requirements.txt    # Python dependencies
+│   └── .env                # Environment configuration
+├── frontend/               # React TypeScript frontend
+│   ├── src/                # Source code
+│   ├── public/             # Static assets
+│   └── package.json        # Node.js dependencies
+└── README.md               # This file
+```
 
-MIT License
+
+```
+
