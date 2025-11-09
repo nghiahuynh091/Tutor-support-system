@@ -7,6 +7,7 @@ from middleware.database import DatabaseMiddleware
 # Import route modules
 
 from routes import user_route, system_route
+from routes.FeedbackAndProgressTracking import assignmentRoute, feedbackRoute, progressRoute, submissionRoute
 
 app = FastAPI(
     title=settings.API_TITLE,
@@ -31,6 +32,10 @@ app.add_middleware(
 # Include route modules
 app.include_router(system_route.router)  # Root and system endpoints
 app.include_router(user_route.router)    # /users endpoints
+app.include_router(progressRoute.router)
+app.include_router(assignmentRoute.router)
+app.include_router(submissionRoute.router)
+app.include_router(feedbackRoute.router)
 
 
 if __name__ == "__main__":
