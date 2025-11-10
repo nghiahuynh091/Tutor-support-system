@@ -22,6 +22,8 @@ class ClassModel:
                 c.updated_at,
                 c.start_time,
                 c.end_time,
+                c.week_day,
+                c.semester,
                 c.registration_deadline,
                 s.subject_name,
                 s.subject_code,
@@ -41,28 +43,66 @@ class ClassModel:
         return await db.execute_query(query, *params)
 
     @staticmethod
-    
-    @staticmethod
-    async def get_class_sessions(class_id: str) -> List[Dict[str, Any]]:
-        """Get all sessions for a class"""
+    async def get_class_by_id(class_id: int) -> Optional[Dict[str, Any]]:
+        """Get a class by its ID"""
         query = """
             SELECT 
-                id,
-                class_id,
-                session_date,
-                week_number,
-                day_of_week,
-                start_period,
-                end_period,
-                duration_minutes,
-                meeting_link,
-                status,
-                is_makeup_session,
-                original_session_id,
-                created_at,
-                updated_at
-            FROM sessions
-            WHERE class_id = $1
-            ORDER BY session_date, start_period
+                c.id,
+                c.subject_id,
+                c.tutor_id,
+                c.location,
+                c.capacity,
+                c.current_enrolled,
+                c.num_of_weeks,
+                c.class_status,
+                c.created_at,
+                c.updated_at,
+                c.start_time,
+                c.end_time,
+                c.week_day,
+                c.semester,
+                c.registration_deadline,
+                s.subject_name,
+                s.subject_code,
+                u.full_name as tutor_name,
+                u.email as tutor_email,
+                u.faculty as tutor_faculty
+            FROM classes c
+            JOIN subjects s ON c.subject_id = s.id
+            LEFT JOIN "user" u ON c.tutor_id = u.id
+            WHERE c.id = $1
         """
-        return await db.execute_query(query, class_id)
+        result = await db.execute_query(query, class_id)
+        return result[0] if result else None
+    
+    async def get_class_by_subject(subject_id: int) -> List[Dict[str, Any]]:
+        """Get classes by subject ID"""
+        query = """
+            SELECT 
+                c.id,
+                c.subject_id,
+                c.tutor_id,
+                c.location,
+                c.capacity,
+                c.current_enrolled,
+                c.num_of_weeks,
+                c.class_status,
+                c.created_at,
+                c.updated_at,
+                c.start_time,
+                c.end_time,
+                c.week_day,
+                c.semester,
+                c.registration_deadline,
+                s.subject_name,
+                s.subject_code,
+                u.full_name as tutor_name,
+                u.email as tutor_email,
+                u.faculty as tutor_faculty
+            FROM classes c
+            JOIN subjects s ON c.subject_id = s.id
+            LEFT JOIN "user" u ON c.tutor_id = u.id
+            WHERE c.subject_id = $1
+            ORDER BY c.created_at DESC
+        """
+        return await db.execute_query(query, subject_id)
