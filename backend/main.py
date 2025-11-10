@@ -9,7 +9,10 @@ from middleware.database import DatabaseMiddleware
 
 # Import route modules
 
-from routes import user_route, system_route
+from routes import user_route, system_route, class_route
+
+#tạo mới tránh conflict
+from routes import registration_route
 
 app = FastAPI(
     title=settings.API_TITLE,
@@ -34,6 +37,12 @@ app.add_middleware(
 # Include route modules
 app.include_router(system_route.router)  # Root and system endpoints
 app.include_router(user_route.router)    # /users endpoints
+
+# class modules
+app.include_router(class_route.router)
+
+# registration modules
+app.include_router(registration_route.router)
 
 
 if __name__ == "__main__":
