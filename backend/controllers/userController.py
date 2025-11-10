@@ -27,23 +27,9 @@ class UserController:
     async def create_user(user_data: Dict[str, Any]) -> Dict[str, Any]:
         """Controller for creating a new user"""
         try:
-            # Validate required fields
-            required_fields = ["email", "password", "full_name", "role"]
-            for field in required_fields:
-                if field not in user_data:
-                    return {
-                        "success": False,
-                        "error": f"Missing required field: {field}",
-                        "data": None
-                    }
-
-            # Create new user
-            user = await UserModel.create_user(
-                email=user_data["email"],
-                password=user_data["password"],
-                full_name=user_data["full_name"],
-                role=user_data["role"]
-            )
+            user_data_dict = user_data.model_dump() 
+            
+            user = await UserModel.create_user(user_data_dict)
 
             return {
                 "success": True,
@@ -51,6 +37,13 @@ class UserController:
                 "message": "User created successfully"
             }
         except Exception as e:
+            if "unique constraint" in str(e).lower():
+                 return {
+                    "success": False,
+                    "error": "Email already exists",
+                    "data": None
+                }
+            
             return {
                 "success": False,
                 "error": f"Failed to create user: {str(e)}",
@@ -61,8 +54,9 @@ class UserController:
     async def login_user(credentials: Dict[str, Any]) -> Dict[str, Any]:
         """Controller for user login"""
         try:
-            email = credentials.get("email")
-            password = credentials.get("password")
+            credentials_dict = credentials.model_dump()
+            email = credentials_dict.get("email")
+            password = credentials_dict.get("password")
 
             if not email or not password:
                  return {
