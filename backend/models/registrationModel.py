@@ -110,7 +110,180 @@ class RegistrationModel:
         
         return {"success": True, "data": result[0]}
     
+    @staticmethod
+    async def reschedule_class(
+        old_class_id: int, 
+        new_class_id: int, 
+        mentee_id: str
+    ) -> Dict[str, Any]:
+        """
+        Reschedule from old class to new class
+        Steps:
+        1. Validate old registration exists
+        2. Check old class deadline hasn't passed
+        3. Validate new class exists and has space
+        4. Check new class deadline hasn't passed
+        5. Check no time conflict with other classes (excluding old class)
+        6. Update registration (atomic operation)
+        """
 
+        # check 2 class have same subject id
+        subject_check_query = """
+            SELECT 
+                c1.subject_id as old_subject_id,
+                c2.subject_id as new_subject_id 
+            FROM classes c1
+            CROSS JOIN classes c2
+            WHERE c1.id = $1 AND c2.id = $2
+            """
+        subject_check = await db.execute_query(subject_check_query, old_class_id, new_class_id)
+        
+        if not subject_check:
+            return {"success": False, "error": "One or both classes not found"}
+
+        subject_data = subject_check[0]
+        if subject_data['old_subject_id'] != subject_data['new_subject_id']:
+            return {"success": False, "error": "Both classes must be in the same subject"}
+        
+        # Step 1 & 2: Check old registration and deadline
+        old_class_query = """
+            SELECT 
+                cr.class_id,
+                cr.mentee_id,
+                cr.registration_log,
+                c.registration_deadline,
+                (c.registration_deadline < NOW()) as deadline_passed
+            FROM class_registrations cr
+            JOIN classes c ON cr.class_id = c.id
+            WHERE cr.class_id = $1 AND cr.mentee_id = $2
+        """
+        old_registration = await db.execute_query(old_class_query, old_class_id, mentee_id)
+        
+        if not old_registration:
+            return {"success": False, "error": "Original registration not found"}
+        
+        old_reg_data = old_registration[0]
+        
+        # Check if old class deadline has passed
+        if old_reg_data['registration_deadline'] and old_reg_data['deadline_passed']:
+            return {
+                "success": False, 
+                "error": "Cannot reschedule - registration deadline for current class has passed"
+            }
+        
+        # Step 3: Check new class exists and has space
+        new_class_query = """
+            SELECT 
+                id, 
+                capacity, 
+                current_enrolled,
+                registration_deadline,
+                (registration_deadline < NOW()) as deadline_passed,
+                week_day,
+                semester,
+                start_time,
+                end_time
+            FROM classes
+            WHERE id = $1
+        """
+        new_class_info = await db.execute_query(new_class_query, new_class_id)
+        
+        if not new_class_info:
+            return {"success": False, "error": "New class not found"}
+        
+        new_class_data = new_class_info[0]
+        
+        # Step 4: Check new class deadline
+        if new_class_data['registration_deadline'] and new_class_data['deadline_passed']:
+            return {"success": False, "error": "Registration deadline for new class has passed"}
+        
+        # Check if new class is full
+        if new_class_data['current_enrolled'] >= new_class_data['capacity']:
+            return {"success": False, "error": "New class is full"}
+        
+        # Check if already registered in new class
+        check_new_query = """
+            SELECT class_id FROM class_registrations
+            WHERE class_id = $1 AND mentee_id = $2
+        """
+        existing_new = await db.execute_query(check_new_query, new_class_id, mentee_id)
+        
+        if existing_new:
+            return {"success": False, "error": "Already registered for the new class"}
+        
+        # Step 5: Check time conflict (excluding old class)
+        conflict_query = """
+            SELECT DISTINCT
+                c1.id as conflicting_class_id,
+                s1.subject_name as conflicting_subject,
+                s1.subject_code as conflicting_subject_code,
+                c1.week_day,
+                c1.start_time as conflicting_start_time,
+                c1.end_time as conflicting_end_time
+            FROM class_registrations cr
+            JOIN classes c1 ON cr.class_id = c1.id
+            JOIN subjects s1 ON c1.subject_id = s1.id
+            WHERE cr.mentee_id = $1
+            AND c1.id != $2  -- Exclude old class
+            AND c1.week_day = $3
+            AND (
+                c1.start_time < $5 AND c1.end_time > $4
+            )
+        """
+        conflicts = await db.execute_query(
+            conflict_query,
+            mentee_id,
+            old_class_id,
+            new_class_data['week_day'],
+            new_class_data['start_time'],
+            new_class_data['end_time']
+        )
+
+        if conflicts:
+            return {
+                "success": False,
+                "error": "Time conflict with other registered classes",
+                "conflicts": conflicts
+            }
+        
+        # Step 6: Atomic update - reschedule
+        # Update registration to new class
+        update_query = """
+            UPDATE class_registrations
+            SET class_id = $1, registration_log = NOW()
+            WHERE class_id = $2 AND mentee_id = $3
+            RETURNING class_id, mentee_id, registration_log
+        """
+        result = await db.execute_query(update_query, new_class_id, old_class_id, mentee_id)
+        
+        # Update enrollment counts
+        # Decrease old class
+        decrease_query = """
+            UPDATE classes
+            SET current_enrolled = current_enrolled - 1
+            WHERE id = $1 AND current_enrolled > 0
+        """
+        await db.execute_query(decrease_query, old_class_id)
+        
+        # Increase new class
+        increase_query = """
+            UPDATE classes
+            SET current_enrolled = current_enrolled + 1
+            WHERE id = $1
+        """
+
+        await db.execute_query(increase_query, new_class_id)
+        
+        return {
+            "success": True,
+            "message": "Successfully rescheduled",
+            "data": {
+                "old_class_id": old_class_id,
+                "new_class_id": new_class_id,
+                "mentee_id": mentee_id,
+                "rescheduled_at": result[0]['registration_log']
+            }
+        }
 
     @staticmethod
     async def check_time_conflict(mentee_id: str, class_id: int) -> Dict[str, Any]:

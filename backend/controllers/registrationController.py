@@ -45,6 +45,33 @@ class RegistrationController:
                 "success": False,
                 "error": str(e)
             }
+        
+    @staticmethod
+    async def reschedule_class(
+        old_class_id: int, 
+        new_class_id: int, 
+        mentee_id: str
+    ) -> Dict[str, Any]:
+        """
+        Reschedule from old class to new class
+        Validates:
+        - Old registration exists
+        - Both deadlines haven't passed
+        - New class has space
+        - No time conflicts
+        """
+        try:
+            result = await RegistrationModel.reschedule_class(
+                old_class_id, 
+                new_class_id, 
+                mentee_id
+            )
+            return result
+        except Exception as e:
+            return {
+                "success": False,
+                "error": str(e)
+            }
 
     @staticmethod
     async def check_time_conflict(mentee_id: str, class_id: int) -> Dict[str, Any]:

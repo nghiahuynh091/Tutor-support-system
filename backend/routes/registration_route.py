@@ -50,6 +50,49 @@ async def cancel_registration(
         return result
     else:
         raise HTTPException(status_code=500, detail=result["error"])
+    
+@router.post("/reschedule")
+async def reschedule_class(
+    request: Optional[dict] = Body(...,
+    example={
+        "old_class_id": 1,
+        "new_class_id": 2,
+        "mentee_id": "uuid-of-mentee"
+    })):
+    """
+    Reschedule from old class to new class
+    """
+    old_class_id = request.get("old_class_id")
+    new_class_id = request.get("new_class_id")
+    mentee_id = request.get("mentee_id")
+    
+    if not all([old_class_id, new_class_id, mentee_id]):
+        raise HTTPException(
+            status_code=400,
+            detail="old_class_id, new_class_id, and mentee_id are all required"
+        )
+    
+    if old_class_id == new_class_id:
+        raise HTTPException(
+            status_code=400,
+            detail="Old class and new class cannot be the same"
+        )
+    
+    result = await RegistrationController.reschedule_class(
+        old_class_id,
+        new_class_id,
+        mentee_id
+    )
+    
+    if result["success"]:
+        return result
+    else:
+        raise HTTPException(
+            status_code=400,
+            detail=result.get("error", "Reschedule failed")
+        )
+    
+
 
 @router.get("/check-conflict")
 async def check_time_conflict(mentee_id: str, class_id: int):
