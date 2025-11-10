@@ -11,7 +11,8 @@ class RegistrationModel:
         # Check if class exists and has space
         class_query = """
             SELECT 
-                id, 
+                id,
+                subject_id,
                 capacity,
                 semester,
                 current_enrolled, 
@@ -27,17 +28,31 @@ class RegistrationModel:
         
         class_data = class_info[0]
 
-        # check if already register for the subject in same semester
+        # Check if already registered for the SAME SUBJECT in SAME SEMESTER
         conflict_query = """
-            SELECT c1.id FROM classes c1
+            SELECT 
+                c1.id as conflicting_class_id,
+                s1.subject_name,
+                s1.subject_code
+            FROM classes c1
             JOIN class_registrations cr ON c1.id = cr.class_id
-            WHERE cr.mentee_id = $1 AND c1.semester = $2
+            JOIN subjects s1 ON c1.subject_id = s1.id
+            WHERE cr.mentee_id = $1 
+            AND c1.semester = $2
+            AND c1.subject_id = $3
         """
-        conflicts = await db.execute_query(conflict_query, mentee_id, class_data['semester'])
+        conflicts = await db.execute_query(
+            conflict_query, 
+            mentee_id, 
+            class_data['semester'],
+            class_data['subject_id']  # Thêm subject_id
+        )
+        
         if conflicts:
+            conflict_info = conflicts[0]
             return {
                 "success": False,
-                "error": "Already registered for another class in the same semester"
+                "error": f"Already registered for {conflict_info['subject_code']} - {conflict_info['subject_name']} (Class ID: {conflict_info['conflicting_class_id']}) in semester {class_data['semester']}"
             }
 
         # Check if registration deadline has passed
@@ -227,7 +242,7 @@ class RegistrationModel:
             AND c1.id != $2  -- Exclude old class
             AND c1.week_day = $3
             AND (
-                c1.start_time < $5 AND c1.end_time > $4
+                c1.start_time <= $5 AND c1.end_time >= $4
             )
         """
         conflicts = await db.execute_query(
@@ -313,8 +328,8 @@ class RegistrationModel:
             AND c1.semester = c2.semester
             AND (
                 -- Check if time periods overlap
-                -- Overlap exists if: start1 < end2 AND end1 > start2
-                c1.start_time < c2.end_time AND c1.end_time > c2.start_time
+                -- Overlap exists if: start1 <= end2 AND end1 >= start2
+                c1.start_time <= c2.end_time AND c1.end_time >= c2.start_time
             )
         """
         conflicts = await db.execute_query(query, mentee_id, class_id)
