@@ -10,8 +10,9 @@ router = APIRouter(
 )
 
 @router.post("/register")
-async def register_for_class(request: Optional[dict] = Body(...,
-                                                            example={
+async def register_for_class(
+    request: Optional[dict] = Body(...,
+    example={
         "class_id": 1,
         "mentee_id": "uuid-of-mentee"
     })):
@@ -30,7 +31,25 @@ async def register_for_class(request: Optional[dict] = Body(...,
             status_code=400 if "conflict" in result.get("error", "").lower() else 500,
             detail=result.get("error", "Registration failed")
         )
+@router.post("/cancel")
+async def cancel_registration(
+    request: Optional[dict] = Body(...,
+    example={
+        "class_id": 1,
+        "mentee_id": "uuid-of-mentee"
+    })):
+    """
+    Cancel a class registration
+    """
+    result = await RegistrationController.cancel_registration(
+        request.get("class_id"), 
+        request.get("mentee_id")
+    )   
     
+    if result["success"]:
+        return result
+    else:
+        raise HTTPException(status_code=500, detail=result["error"])
 
 @router.get("/check-conflict")
 async def check_time_conflict(mentee_id: str, class_id: int):
