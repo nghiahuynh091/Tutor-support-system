@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, Body, Depends
 from controllers.userController import UserController
-from middleware.auth import verify_token
+from middleware.auth import verify_token, authorize
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from typing import Dict, Any
 
@@ -15,7 +15,7 @@ router = APIRouter(
 
 
 @router.get("/")
-async def get_all_users():
+async def get_all_users(current_user: dict = Depends(authorize(allowed_roles=["admin"]))):
     """Get all users from database"""
     result = await UserController.get_all_users()
     if result["success"]:
@@ -25,7 +25,12 @@ async def get_all_users():
 
 
 @router.post("/register")
-async def register_user(user_data: Dict[str, Any] = Body(...)):
+async def register_user(user_data: Dict[str, Any] = Body(..., example={
+        "email": "newuser@example.com",
+        "password": "strongpassword123",
+        "full_name": "New User",
+        "role": "student"
+    })):
     """Register a new user"""
     result = await UserController.create_user(user_data)
     if result["success"]:
@@ -35,7 +40,10 @@ async def register_user(user_data: Dict[str, Any] = Body(...)):
 
 
 @router.post("/login")
-async def login_user(credentials: Dict[str, Any] = Body(...)):
+async def login_user(credentials: Dict[str, Any] = Body(..., example={
+        "email": "admin2@example.com",
+        "password": "password6"
+    })):
     """Login user and return JWT token"""
     result = await UserController.login_user(credentials)
     if result["success"]:
