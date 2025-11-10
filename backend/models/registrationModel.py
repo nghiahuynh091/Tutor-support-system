@@ -12,7 +12,8 @@ class RegistrationModel:
         class_query = """
             SELECT 
                 id, 
-                capacity, 
+                capacity,
+                semester,
                 current_enrolled, 
                 registration_deadline,
                 (registration_deadline < NOW()) as deadline_passed
@@ -25,7 +26,20 @@ class RegistrationModel:
             return {"success": False, "error": "Class not found"}
         
         class_data = class_info[0]
-        
+
+        # check if already register for the subject in same semester
+        conflict_query = """
+            SELECT c1.id FROM classes c1
+            JOIN class_registrations cr ON c1.id = cr.class_id
+            WHERE cr.mentee_id = $1 AND c1.semester = $2
+        """
+        conflicts = await db.execute_query(conflict_query, mentee_id, class_data['semester'])
+        if conflicts:
+            return {
+                "success": False,
+                "error": "Already registered for another class in the same semester"
+            }
+
         # Check if registration deadline has passed
         # Để PostgreSQL tự xử lý timezone comparison
         if class_data['registration_deadline'] and class_data['deadline_passed']:
@@ -63,6 +77,40 @@ class RegistrationModel:
         
         return {"success": True, "data": result[0]}
     
+    @staticmethod
+    async def cancel_registration(class_id: int, mentee_id: str) -> Dict[str, Any]:
+        """
+        Cancel a class registration
+        """
+        # Check if registration exists
+        check_query = """
+            SELECT class_id, mentee_id FROM class_registrations
+            WHERE class_id = $1 AND mentee_id = $2
+        """
+        existing = await db.execute_query(check_query, class_id, mentee_id)
+        
+        if not existing:
+            return {"success": False, "error": "Registration not found"}
+        
+        # Delete registration
+        delete_query = """
+            DELETE FROM class_registrations
+            WHERE class_id = $1 AND mentee_id = $2
+            RETURNING class_id, mentee_id
+        """
+        result = await db.execute_query(delete_query, class_id, mentee_id)
+        
+        # Decrease class enrollment count
+        decrease_query = """
+            UPDATE classes
+            SET current_enrolled = current_enrolled - 1
+            WHERE id = $1 AND current_enrolled > 0
+        """
+        await db.execute_query(decrease_query, class_id)
+        
+        return {"success": True, "data": result[0]}
+    
+
 
     @staticmethod
     async def check_time_conflict(mentee_id: str, class_id: int) -> Dict[str, Any]:
@@ -75,6 +123,7 @@ class RegistrationModel:
                 s1.subject_name as conflicting_subject,
                 s1.subject_code as conflicting_subject_code,
                 c1.week_day,
+                c1.semester,
                 c1.start_time as conflicting_start_time,
                 c1.end_time as conflicting_end_time,
                 c2.start_time as new_start_time,
@@ -88,6 +137,7 @@ class RegistrationModel:
             AND c2.id = $2
             AND c1.id != c2.id
             AND c1.week_day = c2.week_day
+            AND c1.semester = c2.semester
             AND (
                 -- Check if time periods overlap
                 -- Overlap exists if: start1 < end2 AND end1 > start2

@@ -31,6 +31,20 @@ class RegistrationController:
                 "success": False,
                 "error": str(e)
             }
+        
+    @staticmethod
+    async def cancel_registration(class_id: int, mentee_id: str) -> Dict[str, Any]:
+        """
+        Cancel a class registration
+        """
+        try:
+            result = await RegistrationModel.cancel_registration(class_id, mentee_id)
+            return result
+        except Exception as e:
+            return {
+                "success": False,
+                "error": str(e)
+            }
 
     @staticmethod
     async def check_time_conflict(mentee_id: str, class_id: int) -> Dict[str, Any]:
