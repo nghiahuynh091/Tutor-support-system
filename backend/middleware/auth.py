@@ -3,6 +3,7 @@ import os
 from jose import JWTError, jwt
 from fastapi import HTTPException, status, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from typing import List
 
 # Cấu hình JWT từ biến môi trường
 SECRET_KEY = os.getenv("JWT_SECRET_KEY")
@@ -43,3 +44,32 @@ def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security_sc
         return payload  
     except JWTError:
         raise credentials_exception
+    
+def authorize(allowed_roles: List[str]):
+    """
+    Hàm "Factory" tạo ra một dependency
+    để kiểm tra vai trò (role) của user.
+    Giống hệt hàm authorize(allowedRoles) của bạn.
+    """
+    
+    # Đây là dependency (middleware) thực sự sẽ được chạy
+    async def role_checker(current_user: dict = Depends(verify_token)):
+        """
+        Hàm gác cổng này chạy SAU KHI verify_token chạy thành công.
+        Nó nhận 'current_user' (payload) từ verify_token.
+        """
+        user_role = current_user.get("role")
+        
+        # Kiểm tra role
+        if user_role not in allowed_roles:
+            # Nếu không có quyền, ném lỗi 403
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Access forbidden. Requires one of: {', '.join(allowed_roles)}"
+            )
+        
+        # Nếu có quyền, trả về user
+        return current_user
+    
+    # Hàm authorize() trả về hàm role_checker
+    return role_checker
