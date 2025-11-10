@@ -22,7 +22,7 @@ export function MenteeHomePage() {
               Mentee Dashboard
             </h1>
             <p className="text-xl text-gray-600">
-              Welcome back, {user?.name || 'Student'}! Ready to continue your learning journey?
+              Welcome back, {user?.full_name || 'Student'}! Ready to continue your learning journey?
             </p>
           </div>
 
