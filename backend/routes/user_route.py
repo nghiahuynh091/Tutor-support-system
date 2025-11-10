@@ -1,5 +1,10 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Body, Depends
 from controllers.userController import UserController
+from middleware.auth import verify_token
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from typing import Dict, Any
+
+security = HTTPBearer()
 
 # Create router for user-related endpoints
 router = APIRouter(
@@ -17,3 +22,23 @@ async def get_all_users():
         return result
     else:
         raise HTTPException(status_code=500, detail=result["error"])
+
+
+@router.post("/register")
+async def register_user(user_data: Dict[str, Any] = Body(...)):
+    """Register a new user"""
+    result = await UserController.create_user(user_data)
+    if result["success"]:
+        return result
+    else:
+        raise HTTPException(status_code=400, detail=result["error"])
+
+
+@router.post("/login")
+async def login_user(credentials: Dict[str, Any] = Body(...)):
+    """Login user and return JWT token"""
+    result = await UserController.login_user(credentials)
+    if result["success"]:
+        return result
+    else:
+        raise HTTPException(status_code=401, detail=result["error"])
