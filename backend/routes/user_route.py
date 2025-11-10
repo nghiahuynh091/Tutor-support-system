@@ -3,6 +3,7 @@ from controllers.userController import UserController
 from middleware.auth import verify_token, authorize
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from typing import Dict, Any
+from schemas.user_schema import UserRegisterSchema, UserLoginSchema
 
 security = HTTPBearer()
 
@@ -25,25 +26,19 @@ async def get_all_users(current_user: dict = Depends(authorize(allowed_roles=["a
 
 
 @router.post("/register")
-async def register_user(user_data: Dict[str, Any] = Body(..., example={
-        "email": "newuser@example.com",
-        "password": "strongpassword123",
-        "full_name": "New User",
-        "role": "student"
-    })):
+async def register_user(user_data: UserRegisterSchema):
     """Register a new user"""
     result = await UserController.create_user(user_data)
     if result["success"]:
+        if "user" in result and "password" in result["user"]:
+            del result["user"]["password"]
         return result
     else:
         raise HTTPException(status_code=400, detail=result["error"])
 
 
 @router.post("/login")
-async def login_user(credentials: Dict[str, Any] = Body(..., example={
-        "email": "admin2@example.com",
-        "password": "password6"
-    })):
+async def login_user(credentials: UserLoginSchema):
     """Login user and return JWT token"""
     result = await UserController.login_user(credentials)
     if result["success"]:
