@@ -3,11 +3,7 @@ from db.database import db
 
 class ClassModel:
     @staticmethod
-    async def get_all_classes(
-        status: Optional[str] = None,
-        tutor_id: Optional[str] = None,
-        subject_id: Optional[int] = None
-    ) -> List[Dict[str, Any]]:
+    async def get_all_classes() -> List[Dict[str, Any]]:
         """
         Get all classes with optional filters
         Returns classes with their subject info and time slots
@@ -26,6 +22,7 @@ class ClassModel:
                 c.updated_at,
                 c.start_time,
                 c.end_time,
+                c.registration_deadline,
                 s.subject_name,
                 s.subject_code,
                 u.full_name as tutor_name,
@@ -38,22 +35,6 @@ class ClassModel:
         """
         
         params = []
-        param_count = 1
-        
-        if status:
-            query += f" AND c.status = ${param_count}"
-            params.append(status)
-            param_count += 1
-            
-        if tutor_id:
-            query += f" AND c.tutor_id = ${param_count}"
-            params.append(tutor_id)
-            param_count += 1
-            
-        if subject_id:
-            query += f" AND c.subject_id = ${param_count}"
-            params.append(subject_id)
-            param_count += 1
         
         query += " ORDER BY c.created_at DESC"
         

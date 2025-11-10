@@ -4,15 +4,11 @@ from models.classModel import ClassModel
 
 class ClassController:
     @staticmethod
-    async def get_all_classes(
-        status: Optional[str] = None,
-        tutor_id: Optional[str] = None,
-        subject_id: Optional[int] = None
-    ) -> Dict[str, Any]:
+    async def get_all_classes() -> Dict[str, Any]:
         """Get all classes with optional filters"""
         try:
-            classes = await ClassModel.get_all_classes(status, tutor_id, subject_id)
-            
+            classes = await ClassModel.get_all_classes()
+
             return {
                 "success": True,
                 "classes": classes,
