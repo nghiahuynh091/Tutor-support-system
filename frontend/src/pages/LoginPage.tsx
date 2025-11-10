@@ -29,17 +29,32 @@ export function LoginPage() {
     }
   });
 
-  const onSubmit = (data: LoginFormInputs) => {
+  const onSubmit = async (data: LoginFormInputs) => {
     setError(""); // Clear previous errors
     
-    const success = login(data.email, data.password);
-    
-    if (success) {
-      // Redirect to role selection page on successful login
-      navigate("/role-selection");
-    } else {
-      // Show error message
-      setError("Invalid email or password. Try: admin@gmail.com / 12345678");
+    try {
+      const userRole = await login(data.email, data.password);
+      
+      switch (userRole) {
+        case 'mentee':
+          navigate("/mentee/home");
+          break;
+        case 'tutor':
+          navigate("/tutor/sessions");
+          break;
+        case 'coordinator':
+          navigate("/coordinator/dashboard");
+          break;
+        // Thêm 'admin' (từ BE) nếu 'coordinator' và 'admin' là một
+        case 'admin':
+          navigate("/coordinator/dashboard"); 
+          break;
+        default:
+          navigate("/"); // Trang chủ dự phòng
+      }
+      
+    } catch (err) {
+      setError((err as Error).message);
     }
   };
 
