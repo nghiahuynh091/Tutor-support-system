@@ -4,91 +4,15 @@ import { Footer } from "@/components/Footer";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ChevronDown, ChevronRight, Users, AlertCircle, CheckCircle, Clock, Search, ExternalLink, Calendar } from "lucide-react";
-import type { Subject, Class } from "@/types";
+import { ChevronDown, ChevronRight, Users, AlertCircle, CheckCircle, Clock, Search, ExternalLink, Calendar, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { registrationService, type Subject, type Class, type ConflictDetail } from "@/services/registrationService";
+import { useAuth } from "@/contexts/AuthContext";
 
-// Mock data - replace with actual API calls
-const mockSubjects: Subject[] = [
-  {
-    id: 1,
-    subject_name: "Calculus 1",
-    subject_code: "MT1003",
-    classes: [
-      {
-        id: "c1",
-        subject_id: 1,
-        subject_name: "Calculus 1",
-        subject_code: "MT1003",
-        class_code: "CC01",
-        description: "basics calculus and algebra",
-        tutor_id: "t1",
-        tutor_name: "Prof. Phung Trong Thuc",
-        max_students: 20,
-        current_enrolled: 15,
-        number_of_weeks: 12,
-        meeting_link: null,
-        registration_deadline: "2025-11-15T23:59:59",
-        time_slots: [
-          { id: "ts1", dayOfWeek: 1, startPeriod: 2, endPeriod: 4 },
-          { id: "ts2", dayOfWeek: 4, startPeriod: 8, endPeriod: 10 }
-        ],
-        sessions: [],
-        created_at: "2025-01-01"
-      },
-      {
-        id: "c2",
-        subject_id: 1,
-        subject_name: "Giai Tich 1",
-        subject_code: "MT1003",
-        class_code: "CC02",
-        description: "Basic mathematics foundation",
-        tutor_id: "t2",
-        tutor_name: "Prof. Phung Trong Thuc",
-        max_students: 25,
-        current_enrolled: 20,
-        number_of_weeks: 12,
-        meeting_link: null,
-        registration_deadline: "2025-11-10T23:59:59",
-        time_slots: [
-          { id: "ts3", dayOfWeek: 2, startPeriod: 3, endPeriod: 5 },
-        ],
-        sessions: [],
-        created_at: "2025-01-01"
-      }
-    ]
-  },
-  {
-    id: 2,
-    subject_name: "Physics 1",
-    subject_code: "PH1003",
-    classes: [
-      {
-        id: "c3",
-        subject_id: 2,
-        subject_name: "Physics 1",
-        subject_code: "PH1003",
-        class_code: "CC03",
-        description: "Introduction to physics",
-        tutor_id: "t3",
-        tutor_name: "Prof. Dau The Phiet",
-        max_students: 18,
-        current_enrolled: 12,
-        number_of_weeks: 12,
-        meeting_link: null,
-        registration_deadline: "2025-11-20T23:59:59",
-        time_slots: [
-          { id: "ts4", dayOfWeek: 1, startPeriod: 3, endPeriod: 5 },
-          { id: "ts5", dayOfWeek: 3, startPeriod: 10, endPeriod: 12 }
-        ],
-        sessions: [],
-        created_at: "2025-01-01"
-      }
-    ]
+const getDayName = (day: number | string): string => {
+  if (typeof day === 'string') {
+    return day.charAt(0).toUpperCase() + day.slice(1).toLowerCase();
   }
-];
-
-const getDayName = (day: number): string => {
   const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
   return days[day] || 'Unknown';
 };
@@ -115,38 +39,86 @@ const isDeadlinePassed = (deadline: string): boolean => {
 
 interface ConflictInfo {
   hasConflict: boolean;
-  conflictingClass?: {
-    subject: string;
-    classCode: string;
-    day: string;
-    periods: string;
-  };
+  conflicts?: ConflictDetail[];
 }
 
 export function MenteeRegistrationPage() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [filteredSubjects, setFilteredSubjects] = useState<Subject[]>([]);
   const [expandedSubjects, setExpandedSubjects] = useState<Set<number>>(new Set());
-  const [registeredClasses, setRegisteredClasses] = useState<Set<string>>(new Set());
+  const [registeredClasses, setRegisteredClasses] = useState<Set<number>>(new Set());
   const [showConflictModal, setShowConflictModal] = useState(false);
   const [conflictInfo, setConflictInfo] = useState<ConflictInfo | null>(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [registering, setRegistering] = useState<number | null>(null);
+
+  // Get current mentee ID
+  const menteeId = user?.id || "";
 
   useEffect(() => {
-    // Load subjects and registered classes
-    setSubjects(mockSubjects);
-    setFilteredSubjects(mockSubjects);
-    // Mock registered classes - replace with actual API call
-    setRegisteredClasses(new Set(['c1']));
-  }, []);
+    if (menteeId) {
+      loadData();
+    } else {
+      setLoading(false);
+    }
+  }, [menteeId]);
+
+  const loadData = async () => {
+    if (!menteeId) {
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      
+      // Load all classes and registered classes in parallel
+      const [allClasses, myRegistrations] = await Promise.all([
+        registrationService.getAllClasses(),
+        registrationService.getMyRegistrations(menteeId)
+      ]);
+
+      // Group classes by subject
+      const subjectsMap = new Map<number, Subject>();
+
+      allClasses.forEach((cls: Class) => {
+        if (!subjectsMap.has(cls.subject_id)) {
+          subjectsMap.set(cls.subject_id, {
+            id: cls.subject_id,
+            subject_name: cls.subject_name,
+            subject_code: cls.subject_code,
+            classes: []
+          });
+        }
+        subjectsMap.get(cls.subject_id)!.classes.push(cls);
+      });
+
+      const groupedSubjects = Array.from(subjectsMap.values());
+      setSubjects(groupedSubjects);
+      setFilteredSubjects(groupedSubjects);
+      
+      // Extract registered class IDs
+      const registeredIds = new Set(myRegistrations.map(cls => cls.id));
+      setRegisteredClasses(registeredIds);
+    } catch (error) {
+      console.error('Failed to load data:', error);
+      alert('Failed to load classes. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Filter subjects based on search
   useEffect(() => {
     if (!searchQuery.trim()) {
       setFilteredSubjects(subjects);
-      setExpandedSubjects(new Set()); // Collapse when clearing search
+      setExpandedSubjects(new Set());
       return;
     }
 
@@ -156,12 +128,11 @@ export function MenteeRegistrationPage() {
         subject.subject_name.toLowerCase().includes(query) ||
         subject.subject_code.toLowerCase().includes(query) ||
         subject.classes.some(classItem => 
-          classItem.tutor_name.toLowerCase().includes(query) ||
-          classItem.class_code.toLowerCase().includes(query)
+          classItem.tutor_name?.toLowerCase().includes(query)
         )
     );
     setFilteredSubjects(filtered);
-    setExpandedSubjects(new Set()); // Collapse when searching
+    setExpandedSubjects(new Set());
   }, [searchQuery, subjects]);
 
   const toggleSubject = (subjectId: number) => {
@@ -174,95 +145,123 @@ export function MenteeRegistrationPage() {
     setExpandedSubjects(newExpanded);
   };
 
-  const checkTimeConflict = (classToCheck: Class): ConflictInfo => {
-    // Check if any time slots conflict with already registered classes
-    for (const registeredClassId of registeredClasses) {
-      // Find the registered class
-      let registeredClass: Class | null = null;
-      for (const subject of subjects) {
-        const found = subject.classes.find(c => c.id === registeredClassId);
-        if (found) {
-          registeredClass = found;
-          break;
-        }
-      }
-
-      if (!registeredClass) continue;
-
-      // Check for time conflicts
-      for (const newSlot of classToCheck.time_slots) {
-        for (const existingSlot of registeredClass.time_slots) {
-          // Same day?
-          if (newSlot.dayOfWeek === existingSlot.dayOfWeek) {
-            // Check if periods overlap
-            const newStart = newSlot.startPeriod;
-            const newEnd = newSlot.endPeriod;
-            const existStart = existingSlot.startPeriod;
-            const existEnd = existingSlot.endPeriod;
-
-            if ((newStart < existEnd && newEnd > existStart)) {
-              return {
-                hasConflict: true,
-                conflictingClass: {
-                  subject: registeredClass.subject_name,
-                  classCode: registeredClass.class_code,
-                  day: getDayName(existingSlot.dayOfWeek),
-                  periods: `${existStart}–${existEnd}`
-                }
-              };
-            }
-          }
-        }
-      }
+  const handleRegister = async (classId: number, classItem: Class) => {
+    if (!menteeId) {
+      alert('Please login to register for classes.');
+      navigate('/login');
+      return;
     }
 
-    return { hasConflict: false };
-  };
-
-  const handleRegister = (classId: string, classItem: Class) => {
     // Check if registration deadline has passed
     if (classItem.registration_deadline && isDeadlinePassed(classItem.registration_deadline)) {
       alert(`Registration deadline has passed for this class.`);
       return;
     }
 
-    // Check if already registered for this subject
+    // Check if already registered for this subject in same semester
     const alreadyRegistered = subjects.some(subject => 
       subject.id === classItem.subject_id && 
-      subject.classes.some(c => registeredClasses.has(c.id))
+      subject.classes.some(c => 
+        registeredClasses.has(c.id) && 
+        c.semester === classItem.semester
+      )
     );
 
     if (alreadyRegistered) {
-      alert(`You are already registered for a ${classItem.subject_name} class.`);
+      alert(`You are already registered for a ${classItem.subject_name} class in semester ${classItem.semester}.`);
       return;
     }
 
-    // Check for time conflicts
-    const conflict = checkTimeConflict(classItem);
-    if (conflict.hasConflict) {
-      setConflictInfo(conflict);
-      setShowConflictModal(true);
+    try {
+      setRegistering(classId);
+
+      // Call registration API
+      const result = await registrationService.register(classId, menteeId);
+
+      if (result.success) {
+        // Reload data to get updated state
+        await loadData();
+        
+        setSuccessMessage(`Successfully registered for Class ${classId}!`);
+        setShowSuccessModal(true);
+        setTimeout(() => setShowSuccessModal(false), 3000);
+      } else {
+        // Handle errors
+        if (result.conflicts && result.conflicts.length > 0) {
+          setConflictInfo({
+            hasConflict: true,
+            conflicts: result.conflicts
+          });
+          setShowConflictModal(true);
+        } else {
+          alert(result.error || 'Registration failed. Please try again.');
+        }
+      }
+    } catch (error: any) {
+      console.error('Registration error:', error);
+      alert(error.message || 'Failed to register. Please try again.');
+    } finally {
+      setRegistering(null);
+    }
+  };
+
+  const handleCancelRegistration = async (classId: number, classItem: Class) => {
+    if (!menteeId) return;
+
+    if (!window.confirm(`Are you sure you want to cancel registration for Class ${classId}?`)) {
       return;
     }
 
-    // Show confirmation and register
-    if (window.confirm(`Register for Class ${classItem.class_code} - ${classItem.subject_name}?`)) {
-      // Call backend API here
-      const newRegistered = new Set(registeredClasses);
-      newRegistered.add(classId);
-      setRegisteredClasses(newRegistered);
-      setShowSuccessModal(true);
-      setTimeout(() => setShowSuccessModal(false), 3000);
-      alert(`Successfully registered for ${classItem.class_code}! You are now enrolled in all sessions.`);
+    try {
+      const result = await registrationService.cancel(classId, menteeId);
+
+      if (result.success) {
+        // Reload data to get updated state
+        await loadData();
+        
+        setSuccessMessage(`Registration cancelled for Class ${classId}!`);
+        setShowSuccessModal(true);
+        setTimeout(() => setShowSuccessModal(false), 3000);
+      } else {
+        alert(result.error || 'Failed to cancel registration.');
+      }
+    } catch (error) {
+      console.error('Cancel error:', error);
+      alert('Failed to cancel registration. Please try again.');
     }
   };
 
-  const handleCancelRegistration = (classId: string, classItem: Class) => {
-    const newRegisteredIds = new Set(registeredClasses);
-    newRegisteredIds.delete(classId);
-    setRegisteredClasses(newRegisteredIds);
-    alert(`Registration cancelled for ${classItem.class_code}!`);
-  };
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-sky-50 to-white">
+        <Header />
+        <div className="container mx-auto px-4 py-16 flex items-center justify-center min-h-[60vh]">
+          <div className="text-center">
+            <Loader2 className="h-12 w-12 animate-spin text-blue-600 mx-auto mb-4" />
+            <p className="text-gray-600">Loading classes...</p>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (!menteeId) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-sky-50 to-white">
+        <Header />
+        <div className="container mx-auto px-4 py-16 flex items-center justify-center min-h-[60vh]">
+          <div className="text-center">
+            <p className="text-gray-600 mb-4">Please login to view and register for classes.</p>
+            <Button onClick={() => navigate('/login')} className="bg-blue-600 hover:bg-blue-700">
+              Go to Login
+            </Button>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-sky-50 to-white">
@@ -289,7 +288,7 @@ export function MenteeRegistrationPage() {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
               <Input
                 type="text"
-                placeholder="Search by subject name, code, class, or tutor..."
+                placeholder="Search by subject name, code, or tutor..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10 h-12 text-lg border-blue-200 focus:border-blue-400 focus:ring-blue-400"
@@ -301,35 +300,56 @@ export function MenteeRegistrationPage() {
           {showSuccessModal && (
             <div className="fixed top-4 right-4 bg-green-500 text-white px-6 py-4 rounded-lg shadow-lg flex items-center space-x-2 z-50 animate-in slide-in-from-right">
               <CheckCircle className="w-5 h-5" />
-              <span className="font-medium">Registered successfully!</span>
+              <span className="font-medium">{successMessage}</span>
             </div>
           )}
 
           {/* Conflict Modal */}
-          {showConflictModal && conflictInfo && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-              <Card className="max-w-md w-full mx-4 p-6 bg-white">
+          {showConflictModal && conflictInfo && conflictInfo.conflicts && conflictInfo.conflicts.length > 0 && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+              <Card className="max-w-2xl w-full mx-4 p-6 bg-white max-h-[80vh] overflow-y-auto">
                 <div className="flex items-start space-x-3 mb-4">
                   <AlertCircle className="w-6 h-6 text-red-500 flex-shrink-0 mt-1" />
-                  <div>
-                    <h3 className="text-xl font-bold text-red-600 mb-2">Schedule Conflict</h3>
+                  <div className="flex-1">
+                    <h3 className="text-xl font-bold text-red-600 mb-2">Schedule Conflict Detected</h3>
                     <p className="text-gray-700 mb-4">
-                      This class overlaps with another class in your schedule.
+                      This class overlaps with {conflictInfo.conflicts.length} class{conflictInfo.conflicts.length > 1 ? 'es' : ''} in your schedule.
                     </p>
-                    <div className="bg-red-50 border border-red-200 rounded p-3 text-sm">
-                      <p className="font-semibold text-red-800">Conflicting class:</p>
-                      <p className="text-red-700">
-                        {conflictInfo.conflictingClass?.classCode} ({conflictInfo.conflictingClass?.subject})
-                      </p>
-                      <p className="text-red-700">
-                        {conflictInfo.conflictingClass?.day} {conflictInfo.conflictingClass?.periods}
-                      </p>
+                    
+                    <div className="space-y-3">
+                      {conflictInfo.conflicts.map((conflict, idx) => (
+                        <div key={idx} className="bg-red-50 border border-red-200 rounded p-4">
+                          <div className="grid md:grid-cols-2 gap-4">
+                            <div>
+                              <p className="font-semibold text-red-800 mb-2">Current Class:</p>
+                              <div className="text-sm text-red-700 space-y-1">
+                                <p><strong>Subject:</strong> {conflict.conflicting_subject_code} - {conflict.conflicting_subject}</p>
+                                <p><strong>Day:</strong> {getDayName(conflict.conflicting_week_day)}</p>
+                                <p><strong>Time:</strong> {periodToTime(conflict.conflicting_start_time)} - {periodToTime(conflict.conflicting_end_time)}</p>
+                                <p><strong>Location:</strong> {conflict.conflicting_location || 'TBA'}</p>
+                                <p><strong>Tutor:</strong> {conflict.conflicting_tutor_name}</p>
+                              </div>
+                            </div>
+                            
+                            <div>
+                              <p className="font-semibold text-orange-800 mb-2">New Class:</p>
+                              <div className="text-sm text-orange-700 space-y-1">
+                                <p><strong>Subject:</strong> {conflict.new_subject_code} - {conflict.new_subject}</p>
+                                <p><strong>Day:</strong> {getDayName(conflict.new_week_day)}</p>
+                                <p><strong>Time:</strong> {periodToTime(conflict.new_start_time)} - {periodToTime(conflict.new_end_time)}</p>
+                                <p><strong>Location:</strong> {conflict.new_location || 'TBA'}</p>
+                                <p><strong>Tutor:</strong> {conflict.new_tutor_name}</p>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 </div>
                 <Button 
                   onClick={() => setShowConflictModal(false)}
-                  className="w-full bg-gray-600 hover:bg-gray-700"
+                  className="w-full bg-gray-600 hover:bg-gray-700 mt-4"
                 >
                   Close
                 </Button>
@@ -353,177 +373,182 @@ export function MenteeRegistrationPage() {
                 const classCount = subject.classes.length;
                 
                 return (
-              <Card key={subject.id} className="border-blue-200 hover:border-blue-400 hover:shadow-lg transition-all duration-200 bg-white">
-                <div
-                  className="p-4 bg-blue-50 hover:bg-blue-100 cursor-pointer transition-colors flex items-center justify-between"
-                  onClick={() => toggleSubject(subject.id)}
-                >
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3">
-                      {isExpanded ? (
-                        <ChevronDown className="h-5 w-5 text-blue-600" />
-                      ) : (
-                        <ChevronRight className="h-5 w-5 text-blue-600" />
-                      )}
-                      <div>
-                        <h2 className="text-xl font-bold text-gray-900">{subject.subject_name}</h2>
-                        <p className="text-sm text-blue-600 font-semibold mt-1">{subject.subject_code}</p>
+                  <Card key={subject.id} className="border-blue-200 hover:border-blue-400 hover:shadow-lg transition-all duration-200 bg-white">
+                    <div
+                      className="p-4 bg-blue-50 hover:bg-blue-100 cursor-pointer transition-colors flex items-center justify-between"
+                      onClick={() => toggleSubject(subject.id)}
+                    >
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3">
+                          {isExpanded ? (
+                            <ChevronDown className="h-5 w-5 text-blue-600" />
+                          ) : (
+                            <ChevronRight className="h-5 w-5 text-blue-600" />
+                          )}
+                          <div>
+                            <h2 className="text-xl font-bold text-gray-900">{subject.subject_name}</h2>
+                            <p className="text-sm text-blue-600 font-semibold mt-1">{subject.subject_code}</p>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                          {classCount} {classCount === 1 ? 'class' : 'classes'}
+                        </span>
                       </div>
                     </div>
-                  </div>
-                  <div className="text-right">
-                    <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
-                      {classCount} {classCount === 1 ? 'class' : 'classes'}
-                    </span>
-                  </div>
-                </div>
 
-                {expandedSubjects.has(subject.id) && (
-                  <div className="pt-0 pb-4 px-4 space-y-3">
-                    {subject.classes.length === 0 ? (
-                      <p className="text-gray-500 text-sm text-center py-4">
-                        No available classes at the moment.
-                      </p>
-                    ) : (
-                      subject.classes.map((cls) => {
-                        const isRegistered = registeredClasses.has(cls.id);
-                        const isFull = cls.current_enrolled >= cls.max_students;
-                        const deadlinePassed = cls.registration_deadline ? isDeadlinePassed(cls.registration_deadline) : false;
-                        const canRegister = !isRegistered && !isFull && !deadlinePassed;
+                    {isExpanded && (
+                      <div className="pt-0 pb-4 px-4 space-y-3">
+                        {subject.classes.length === 0 ? (
+                          <p className="text-gray-500 text-sm text-center py-4">
+                            No available classes at the moment.
+                          </p>
+                        ) : (
+                          subject.classes.map((cls) => {
+                            const isRegistered = registeredClasses.has(cls.id);
+                            const isFull = cls.current_enrolled >= cls.capacity;
+                            const deadlinePassed = cls.registration_deadline ? isDeadlinePassed(cls.registration_deadline) : false;
+                            const canRegister = !isRegistered && !isFull && !deadlinePassed;
+                            const isCurrentlyRegistering = registering === cls.id;
 
-                        return (
-                          <div
-                            key={cls.id}
-                            className="bg-blue-50/50 border-l-4 border-blue-400 rounded-lg p-4 hover:bg-blue-50 transition-colors"
-                          >
-                            {/* Class Info */}
-                            <div className="space-y-3">
-                              {/* Class Header */}
-                              <div className="flex items-start justify-between">
-                                <div className="flex-1">
-                                  <div className="flex items-center gap-2 mb-1">
-                                    <span className="text-lg font-bold text-blue-900">
-                                      Class {cls.class_code}
-                                    </span>
-                                    <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded">
-                                      {cls.number_of_weeks} weeks
-                                    </span>
-                                    {isRegistered && (
-                                      <span className="bg-green-100 text-green-800 px-2 py-0.5 rounded-full text-xs font-semibold">
-                                        Registered
-                                      </span>
-                                    )}
-                                    {isFull && !isRegistered && (
-                                      <span className="bg-red-100 text-red-800 px-2 py-0.5 rounded-full text-xs font-semibold">
-                                        Full
-                                      </span>
-                                    )}
-                                    {deadlinePassed && !isRegistered && (
-                                      <span className="bg-orange-100 text-orange-800 px-2 py-0.5 rounded-full text-xs font-semibold">
-                                        Deadline Passed
-                                      </span>
-                                    )}
-                                  </div>
-                                  <div className="flex items-center gap-2 text-sm">
-                                    <span className="font-semibold text-gray-900">
-                                      👨‍🏫 {cls.tutor_name}
-                                    </span>
-                                  </div>
-                                </div>
-                              </div>
-
-                              {/* Registration Deadline */}
-                              {cls.registration_deadline && (
-                                <div className={`flex items-center gap-2 text-xs ${deadlinePassed ? 'text-orange-600' : 'text-blue-600'}`}>
-                                  <Calendar className="h-3 w-3" />
-                                  <span className="font-medium">
-                                    Registration {deadlinePassed ? 'closed' : 'deadline'}: {formatDeadline(cls.registration_deadline)}
-                                  </span>
-                                </div>
-                              )}
-
-                              {/* Description */}
-                              {cls.description && (
-                                <p className="text-sm text-gray-600">
-                                  {cls.description}
-                                </p>
-                              )}
-
-                              {/* Weekly Schedule */}
-                              <div className="bg-white border border-blue-200 rounded p-3 space-y-2">
-                                <p className="text-xs font-semibold text-gray-700 uppercase">Weekly Schedule:</p>
-                                <div className="flex flex-wrap gap-2">
-                                  {cls.time_slots.map((slot) => (
-                                    <div 
-                                      key={slot.id}
-                                      className="flex items-center gap-1 text-xs bg-purple-50 px-2 py-1 rounded border border-purple-200"
-                                    >
-                                      <Clock className="h-3 w-3 text-purple-600" />
-                                      <span className="font-medium">
-                                        {getDayName(slot.dayOfWeek)} {periodToTime(slot.startPeriod)}-{periodToTime(slot.endPeriod)}
-                                      </span>
-                                      <span className="text-gray-600">(P{slot.startPeriod}-{slot.endPeriod})</span>
+                            return (
+                              <div
+                                key={cls.id}
+                                className="bg-blue-50/50 border-l-4 border-blue-400 rounded-lg p-4 hover:bg-blue-50 transition-colors"
+                              >
+                                <div className="space-y-3">
+                                  {/* Class Header */}
+                                  <div className="flex items-start justify-between">
+                                    <div className="flex-1">
+                                      <div className="flex items-center gap-2 mb-1 flex-wrap">
+                                        <span className="text-lg font-bold text-blue-900">
+                                          Class #{cls.id}
+                                        </span>
+                                        {cls.num_of_weeks && (
+                                          <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded">
+                                            {cls.num_of_weeks} weeks
+                                          </span>
+                                        )}
+                                        <span className="text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded">
+                                          Semester {cls.semester}
+                                        </span>
+                                        {isRegistered && (
+                                          <span className="bg-green-100 text-green-800 px-2 py-0.5 rounded-full text-xs font-semibold">
+                                            Registered
+                                          </span>
+                                        )}
+                                        {isFull && !isRegistered && (
+                                          <span className="bg-red-100 text-red-800 px-2 py-0.5 rounded-full text-xs font-semibold">
+                                            Full
+                                          </span>
+                                        )}
+                                        {deadlinePassed && !isRegistered && (
+                                          <span className="bg-orange-100 text-orange-800 px-2 py-0.5 rounded-full text-xs font-semibold">
+                                            Deadline Passed
+                                          </span>
+                                        )}
+                                      </div>
+                                      <div className="flex items-center gap-2 text-sm">
+                                        <span className="font-semibold text-gray-900">
+                                          👨‍🏫 {cls.tutor_name}
+                                        </span>
+                                      </div>
                                     </div>
-                                  ))}
-                                </div>
-                                <p className="text-xs text-gray-600 mt-1">
-                                  {cls.time_slots.length} session{cls.time_slots.length !== 1 ? 's' : ''} per week
-                                </p>
-                              </div>
+                                  </div>
 
-                              {/* Enrollment & Actions */}
-                              <div className="flex items-center justify-between pt-2 border-t border-blue-200">
-                                <div className="flex items-center gap-1">
-                                  <Users className="h-4 w-4 text-gray-600" />
-                                  <span className={`text-sm font-medium ${isFull ? "text-red-600" : "text-gray-700"}`}>
-                                    {cls.current_enrolled} / {cls.max_students} enrolled
-                                    {isFull && " (Full)"}
-                                  </span>
-                                </div>
+                                  {/* Registration Deadline */}
+                                  {cls.registration_deadline && (
+                                    <div className={`flex items-center gap-2 text-xs ${deadlinePassed ? 'text-orange-600' : 'text-blue-600'}`}>
+                                      <Calendar className="h-3 w-3" />
+                                      <span className="font-medium">
+                                        Registration {deadlinePassed ? 'closed' : 'deadline'}: {formatDeadline(cls.registration_deadline)}
+                                      </span>
+                                    </div>
+                                  )}
 
-                                <div className="flex gap-2">
-                                  {isRegistered ? (
-                                    <>
-                                      <Button 
-                                        variant="outline" 
-                                        size="sm"
-                                        onClick={() => handleCancelRegistration(cls.id, cls)}
-                                        className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-300"
-                                      >
-                                        Cancel
-                                      </Button>
-                                      {cls.meeting_link && (
+                                  {/* Description */}
+                                  {cls.description && (
+                                    <p className="text-sm text-gray-600">
+                                      {cls.description}
+                                    </p>
+                                  )}
+
+                                  {/* Schedule */}
+                                  <div className="bg-white border border-blue-200 rounded p-3 space-y-2">
+                                    <p className="text-xs font-semibold text-gray-700 uppercase">Schedule:</p>
+                                    <div className="flex items-center gap-2 text-sm">
+                                      <Clock className="h-4 w-4 text-purple-600" />
+                                      <span className="font-medium">
+                                        {getDayName(cls.week_day)} {periodToTime(cls.start_time)}-{periodToTime(cls.end_time)}
+                                      </span>
+                                      <span className="text-gray-600">(Periods {cls.start_time}-{cls.end_time})</span>
+                                    </div>
+                                    {cls.location && (
+                                      <p className="text-xs text-gray-600">
+                                        📍 {cls.location}
+                                      </p>
+                                    )}
+                                  </div>
+
+                                  {/* Enrollment & Actions */}
+                                  <div className="flex items-center justify-between pt-2 border-t border-blue-200">
+                                    <div className="flex items-center gap-1">
+                                      <Users className="h-4 w-4 text-gray-600" />
+                                      <span className={`text-sm font-medium ${isFull ? "text-red-600" : "text-gray-700"}`}>
+                                        {cls.current_enrolled} / {cls.capacity} enrolled
+                                        {isFull && " (Full)"}
+                                      </span>
+                                    </div>
+
+                                    <div className="flex gap-2">
+                                      {isRegistered ? (
+                                        <>
+                                          <Button 
+                                            variant="outline" 
+                                            size="sm"
+                                            onClick={() => handleCancelRegistration(cls.id, cls)}
+                                            className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-300"
+                                          >
+                                            Cancel
+                                          </Button>
+                                          {cls.meeting_link && (
+                                            <Button 
+                                              size="sm"
+                                              className="bg-blue-600 hover:bg-blue-700"
+                                              asChild
+                                            >
+                                              <a href={cls.meeting_link} target="_blank" rel="noopener noreferrer">
+                                                Join <ExternalLink className="ml-1 h-3 w-3" />
+                                              </a>
+                                            </Button>
+                                          )}
+                                        </>
+                                      ) : (
                                         <Button 
                                           size="sm"
                                           className="bg-blue-600 hover:bg-blue-700"
-                                          asChild
+                                          disabled={!canRegister || isCurrentlyRegistering}
+                                          onClick={() => handleRegister(cls.id, cls)}
                                         >
-                                          <a href={cls.meeting_link} target="_blank" rel="noopener noreferrer">
-                                            Join <ExternalLink className="ml-1 h-3 w-3" />
-                                          </a>
+                                          {isCurrentlyRegistering ? (
+                                            <>
+                                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                              Registering...
+                                            </>
+                                          ) : isFull ? "Full" : deadlinePassed ? "Closed" : "Register"}
                                         </Button>
                                       )}
-                                    </>
-                                  ) : (
-                                    <Button 
-                                      size="sm"
-                                      className="bg-blue-600 hover:bg-blue-700"
-                                      disabled={!canRegister}
-                                      onClick={() => handleRegister(cls.id, cls)}
-                                    >
-                                      {isFull ? "Full" : deadlinePassed ? "Closed" : "Register"}
-                                    </Button>
-                                  )}
+                                    </div>
+                                  </div>
                                 </div>
                               </div>
-                            </div>
-                          </div>
-                        );
-                      })
+                            );
+                          })
+                        )}
+                      </div>
                     )}
-                  </div>
-                )}
-              </Card>
+                  </Card>
                 );
               })}
             </div>
