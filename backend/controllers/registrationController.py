@@ -74,6 +74,25 @@ class RegistrationController:
             }
 
     @staticmethod
+    async def get_registrations_by_mentee(mentee_id: str) -> Dict[str, Any]:
+        """
+        Get all class registrations for a mentee
+        """
+        try:
+            registrations = await RegistrationModel.get_registrations_by_mentee(mentee_id)
+            return {
+                "success": True,
+                "registrations": registrations,
+                "count": len(registrations),
+                "message": "Registrations retrieved successfully"
+            }
+        except Exception as e:
+            return {
+                "success": False,
+                "error": str(e)
+            }
+
+    @staticmethod
     async def check_time_conflict(mentee_id: str, class_id: int) -> Dict[str, Any]:
         """
         Check for time conflicts

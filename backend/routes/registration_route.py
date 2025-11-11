@@ -93,6 +93,17 @@ async def reschedule_class(
         )
     
 
+@router.get("/{mentee_id}")
+async def get_registrations_by_mentee(mentee_id: str):
+    """
+    Get all class registrations for a mentee
+    """
+    result = await RegistrationController.get_registrations_by_mentee(mentee_id)
+    
+    if result["success"]:
+        return result
+    else:
+        raise HTTPException(status_code=500, detail=result["error"])
 
 @router.get("/check-conflict")
 async def check_time_conflict(mentee_id: str, class_id: int):

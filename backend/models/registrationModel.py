@@ -299,6 +299,37 @@ class RegistrationModel:
                 "rescheduled_at": result[0]['registration_log']
             }
         }
+    
+    @staticmethod
+    async def get_registrations_by_mentee(mentee_id: str) -> List[Dict[str, Any]]:
+        """
+        Get all class registrations for a mentee
+        """
+        query = """
+            SELECT 
+                cr.class_id,
+                cr.mentee_id,
+                cr.registration_log,
+                c.subject_id,
+                c.tutor_id,
+                c.location,
+                c.capacity,
+                c.current_enrolled,
+                c.num_of_weeks,
+                c.class_status,
+                c.start_time,
+                c.end_time,
+                c.week_day,
+                c.semester,
+                s.subject_name,
+                s.subject_code
+            FROM class_registrations cr
+            JOIN classes c ON cr.class_id = c.id
+            JOIN subjects s ON c.subject_id = s.id
+            WHERE cr.mentee_id = $1
+        """
+        registrations = await db.execute_query(query, mentee_id)
+        return registrations
 
     @staticmethod
     async def check_time_conflict(mentee_id: str, class_id: int) -> Dict[str, Any]:
