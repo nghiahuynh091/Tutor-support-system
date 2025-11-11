@@ -2,29 +2,7 @@ import { createContext, useContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import api from '@/lib/api'; 
 import { AxiosError } from 'axios';
-
-export type UserRole = 'mentee' | 'tutor' | 'coordinator' | 'admin';
-
-export interface User {
-  id: string; 
-  email: string;
-  full_name: string; 
-  role: UserRole;
-  avatar?: string;
-}
-
-// Kiểu dữ liệu BE trả về khi login thành công
-export interface LoginResponse {
-  success: boolean;
-  token: string;
-  user: User;
-  message: string;
-}
-
-// Kiểu dữ liệu BE trả về khi có lỗi
-export interface ApiError {
-  detail: string;
-}
+import type { User, LoginResponse, ApiError, UserRole } from '@/types/apiTypes';
 
 interface AuthContextType {
   user: User | null;
@@ -32,6 +10,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<UserRole>;
   logout: () => void;
   isAuthenticated: boolean;
+  isLoading: boolean;
   currentRole: UserRole;
   setCurrentRole: (role: UserRole) => void;
 }
@@ -42,19 +21,27 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [currentRole, setCurrentRole] = useState<UserRole>('mentee');
+  const [isLoading, setIsLoading] = useState(true);
 
   // Check if user is already logged in on mount
   useEffect(() => {
-    const savedToken = localStorage.getItem('token');
-    const savedUser = localStorage.getItem('user');
-    const savedRole = localStorage.getItem('currentRole') as UserRole;
-    
-    if (savedToken && savedUser) {
-      setUser(JSON.parse(savedUser));
-      setToken(savedToken);
-      if (savedRole) {
-        setCurrentRole(savedRole);
+    try {
+      const savedToken = localStorage.getItem('token');
+      const savedUser = localStorage.getItem('user');
+      const savedRole = localStorage.getItem('currentRole') as UserRole;
+      
+      if (savedToken && savedUser) {
+        setUser(JSON.parse(savedUser));
+        setToken(savedToken);
+        if (savedRole) {
+          setCurrentRole(savedRole);
+        }
       }
+    } catch (error) {
+      console.error("Failed to load auth state from storage", error);
+      localStorage.clear(); 
+    } finally {
+      setIsLoading(false); 
     }
   }, []);
 
@@ -113,10 +100,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       login,
       logout,
       isAuthenticated: !!token, 
+      isLoading,
       currentRole,
       setCurrentRole: handleSetCurrentRole
     }}>
-      {children}
+      {!isLoading && children}
     </AuthContext.Provider>
   );
 };

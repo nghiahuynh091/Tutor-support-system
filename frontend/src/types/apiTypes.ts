@@ -3,7 +3,7 @@ export interface User {
   id: string;
   email: string;
   full_name: string;
-  role: string;
+  role: UserRole;
 }
 
 export interface LoginResponse {
@@ -16,3 +16,5 @@ export interface LoginResponse {
 export interface ApiError {
   detail: string;
 }
+
+export type UserRole = 'mentee' | 'tutor' | 'coordinator' | 'admin';
