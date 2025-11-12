@@ -12,17 +12,16 @@ export function HomePage() {
 
   // Redirect based on role when user is authenticated
   useEffect(() => {
-    if (isAuthenticated && location.pathname === '/') {
+    if (isAuthenticated && location.pathname === "/") {
       switch (currentRole) {
-        case 'mentee':
-          // Stay on home page
-          navigate('/sessions', { replace: true });
+        case "mentee":
+          navigate("/mentee/home", { replace: true });
           break;
-        case 'tutor':
-          navigate('/tutor/sessions', { replace: true });
+        case "tutor":
+          navigate("/tutor/sessions", { replace: true });
           break;
-        case 'coordinator':
-          navigate('/coordinator/dashboard', { replace: true });
+        case "coordinator":
+          navigate("/coordinator/dashboard", { replace: true });
           break;
       }
     }
@@ -32,19 +31,19 @@ export function HomePage() {
     if (!isAuthenticated) return null;
 
     switch (currentRole) {
-      case 'mentee':
+      case "mentee":
         return (
-          <Button 
+          <Button
             size="lg"
             className="bg-blue-600 hover:bg-blue-700 text-white"
-            onClick={() => navigate("/sessions")}
+            onClick={() => navigate("/mentee/home")}
           >
             Browse Available Sessions
           </Button>
         );
-      case 'tutor':
+      case "tutor":
         return (
-          <Button 
+          <Button
             size="lg"
             className="bg-blue-600 hover:bg-blue-700 text-white"
             onClick={() => navigate("/tutor/sessions")}
@@ -52,9 +51,9 @@ export function HomePage() {
             Manage My Sessions
           </Button>
         );
-      case 'coordinator':
+      case "coordinator":
         return (
-          <Button 
+          <Button
             size="lg"
             className="bg-blue-600 hover:bg-blue-700 text-white"
             onClick={() => navigate("/coordinator/dashboard")}
@@ -70,7 +69,6 @@ export function HomePage() {
       <Header />
 
       <div className="container mx-auto px-8 py-12">
-
         {/* Main Content */}
         <main>
           <div className="max-w-3xl mx-auto text-center mb-16">
@@ -91,10 +89,13 @@ export function HomePage() {
                 <div className="inline-block bg-blue-100 text-blue-800 px-4 py-2 rounded-full text-sm font-semibold mb-2">
                   For Students
                 </div>
-                <h3 className="text-2xl font-bold text-gray-900">Find Your Perfect Tutor</h3>
+                <h3 className="text-2xl font-bold text-gray-900">
+                  Find Your Perfect Tutor
+                </h3>
                 <p className="text-lg text-gray-600">
-                  Connect with experienced tutors who can help you succeed in your studies.
-                  Book sessions, access learning resources, and track your academic progress all in one place.
+                  Connect with experienced tutors who can help you succeed in
+                  your studies. Book sessions, access learning resources, and
+                  track your academic progress all in one place.
                 </p>
               </div>
               <div className="flex-1 bg-gradient-to-br from-blue-50 to-blue-100 p-8 rounded-2xl shadow-lg">
@@ -122,10 +123,13 @@ export function HomePage() {
                 <div className="inline-block bg-blue-100 text-blue-800 px-4 py-2 rounded-full text-sm font-semibold mb-2">
                   For Tutors
                 </div>
-                <h3 className="text-2xl font-bold text-gray-900">Share Your Knowledge</h3>
+                <h3 className="text-2xl font-bold text-gray-900">
+                  Share Your Knowledge
+                </h3>
                 <p className="text-lg text-gray-600">
-                  Join our community of educators and help students achieve their academic goals.
-                  Manage your schedule, connect with students, and access teaching resources efficiently.
+                  Join our community of educators and help students achieve
+                  their academic goals. Manage your schedule, connect with
+                  students, and access teaching resources efficiently.
                 </p>
               </div>
               <div className="flex-1 bg-gradient-to-br from-blue-50 to-blue-100 p-8 rounded-2xl shadow-lg">
