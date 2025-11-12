@@ -38,6 +38,7 @@ export type Class = {
   current_enrolled: number;
   number_of_weeks: number;
   meeting_link: string | null;
+  registration_deadline?: string;
   time_slots: TimeSlot[];
   sessions: Session[];
   created_at: string;

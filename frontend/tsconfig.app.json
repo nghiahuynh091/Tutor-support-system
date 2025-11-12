@@ -24,8 +24,7 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true,
     
-    /* Path mapping */
-    "baseUrl": ".",
+    /* Path mapping - Modern approach using moduleResolution: bundler */
     "paths": {
       "@/*": ["./src/*"]
     }
