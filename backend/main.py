@@ -12,7 +12,7 @@ from middleware.database import DatabaseMiddleware
 from routes import user_route, system_route, class_route
 
 #tạo mới tránh conflict
-from routes import registration_route
+from routes import registration_route, admin_route
 
 app = FastAPI(
     title=settings.API_TITLE,
@@ -43,6 +43,9 @@ app.include_router(class_route.router)
 
 # registration modules
 app.include_router(registration_route.router)
+
+# admin modules
+app.include_router(admin_route.router)
 
 
 if __name__ == "__main__":
