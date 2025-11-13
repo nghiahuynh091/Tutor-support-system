@@ -20,8 +20,8 @@ export function HomePage() {
         case "tutor":
           navigate("/tutor/sessions", { replace: true });
           break;
-        case "coordinator":
-          navigate("/coordinator/dashboard", { replace: true });
+        case "admin":
+          navigate("/admin/dashboard", { replace: true });
           break;
       }
     }
@@ -51,12 +51,12 @@ export function HomePage() {
             Manage My Sessions
           </Button>
         );
-      case "coordinator":
+      case "admin":
         return (
           <Button
             size="lg"
             className="bg-blue-600 hover:bg-blue-700 text-white"
-            onClick={() => navigate("/coordinator/dashboard")}
+            onClick={() => navigate("/admin/dashboard")}
           >
             View Dashboard
           </Button>

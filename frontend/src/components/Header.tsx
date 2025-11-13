@@ -10,7 +10,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-
 export function Header() {
   const navigate = useNavigate();
   const { isAuthenticated, user, logout } = useAuth();
@@ -24,9 +23,9 @@ export function Header() {
     <div className="w-full bg-blue-800 text-white">
       <div className="container mx-auto px-8 py-4">
         <div className="flex justify-between items-center">
-          <div 
+          <div
             className="flex items-center gap-4 cursor-pointer group"
-            onClick={() => navigate('/')}
+            onClick={() => navigate("/")}
           >
             <h1 className="text-2xl font-bold group-hover:text-blue-200 transition-colors">
               Tutor Support System
@@ -39,9 +38,16 @@ export function Header() {
                   <DropdownMenuTrigger asChild>
                     <button className="flex items-center gap-2 focus:outline-none">
                       <Avatar className="cursor-pointer hover:opacity-80">
-                        <AvatarImage src={user?.avatar} alt={user?.name || user?.email} />
+                        <AvatarImage
+                          src={user?.avatar}
+                          alt={user?.full_name || user?.email}
+                        />
                         <AvatarFallback className="bg-blue-600 text-white">
-                          {(user?.name?.[0] || user?.email?.[0] || '?').toUpperCase()}
+                          {(
+                            user?.full_name?.[0] ||
+                            user?.email?.[0] ||
+                            "?"
+                          ).toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
                     </button>
@@ -51,17 +57,17 @@ export function Header() {
                       className="cursor-pointer"
                       onClick={() => {
                         switch (user?.role) {
-                          case "coordinator":
-                            navigate('/coordinator/profile');
+                          case "admin":
+                            navigate("/admin/profile");
                             break;
                           case "mentee":
-                            navigate('/mentee/profile');
+                            navigate("/mentee/profile");
                             break;
                           case "tutor":
-                            navigate('/tutor/profile');
+                            navigate("/tutor/profile");
                             break;
                           default:
-                            navigate('/profile');
+                            navigate("/profile");
                         }
                       }}
                     >
@@ -78,10 +84,10 @@ export function Header() {
                 </DropdownMenu>
               </>
             ) : (
-              <Button 
-                size="lg" 
+              <Button
+                size="lg"
                 className="px-8 bg-white text-blue-800 hover:bg-blue-50"
-                onClick={() => navigate('/login')}
+                onClick={() => navigate("/login")}
               >
                 Login
               </Button>

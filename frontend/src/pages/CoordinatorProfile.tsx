@@ -16,8 +16,8 @@ export function CoordinatorProfile() {
           ID="2559091"
           avatarUrl="https://i.pravatar.cc/150?img=47"
           location="Ho Chi Minh City, Vietnam"
-          role="coordinator"
-          Faculty="Engineering"
+          role="admin"
+          Faculty="Administration"
         />
       </div>
       <Footer />

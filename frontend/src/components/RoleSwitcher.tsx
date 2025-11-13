@@ -10,24 +10,24 @@ export function RoleSwitcher() {
   if (!isAuthenticated) return null;
 
   const roles: { value: UserRole; label: string }[] = [
-    { value: 'mentee', label: 'Mentee' },
-    { value: 'tutor', label: 'Tutor' },
-    { value: 'coordinator', label: 'Coordinator' },
+    { value: "mentee", label: "Mentee" },
+    { value: "tutor", label: "Tutor" },
+    { value: "admin", label: "Admin" },
   ];
 
   const handleRoleChange = (role: UserRole) => {
     setCurrentRole(role);
-    
+
     // Navigate to appropriate page based on role
     switch (role) {
-      case 'mentee':
-        navigate('/sessions');
+      case "mentee":
+        navigate("/sessions");
         break;
-      case 'tutor':
-        navigate('/tutor/sessions');
+      case "tutor":
+        navigate("/tutor/sessions");
         break;
-      case 'coordinator':
-        navigate('/coordinator/dashboard');
+      case "admin":
+        navigate("/admin/dashboard");
         break;
     }
   };

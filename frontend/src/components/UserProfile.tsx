@@ -1,7 +1,6 @@
 import React, { useState } from "react";
-import { Plus, Trash2} from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-
 
 interface UserProfileProps {
   name: string;
@@ -10,7 +9,7 @@ interface UserProfileProps {
   location?: string;
   ID?: string;
   Faculty?: string;
-  role?: "mentee" | "tutor" | "coordinator";
+  role?: "mentee" | "tutor" | "coordinator" | "admin";
 }
 
 const UserProfile: React.FC<UserProfileProps> = ({
@@ -22,8 +21,8 @@ const UserProfile: React.FC<UserProfileProps> = ({
   role,
   Faculty,
 }) => {
-
-  const label = role === "tutor" ? "Expertise" : role === "mentee" ? "Needs" : null;
+  const label =
+    role === "tutor" ? "Expertise" : role === "mentee" ? "Needs" : null;
 
   const menteeNeeds = [
     "Math",
@@ -32,7 +31,7 @@ const UserProfile: React.FC<UserProfileProps> = ({
     "Biology",
     "English",
     "Computer Science",
-  ]
+  ];
 
   const tutorExpertise = [
     "Math",
@@ -67,7 +66,7 @@ const UserProfile: React.FC<UserProfileProps> = ({
 
   const removeItem = (item: string) => {
     setSelectedItems(selectedItems.filter((i) => i !== item));
-  }
+  };
 
   const handleSave = () => {
     if (selectedItems.length === 0) {
@@ -76,7 +75,7 @@ const UserProfile: React.FC<UserProfileProps> = ({
     }
     setIsSaved(true);
     setError("");
-  }
+  };
 
   return (
     <div className="max-w-md mx-auto bg-white shadow-lg rounded-lg overflow-hidden">
@@ -90,85 +89,95 @@ const UserProfile: React.FC<UserProfileProps> = ({
           <h2 className="text-xl font-semibold text-gray-800">{name}</h2>
           <p className="text-sm text-gray-600">{email}</p>
           {ID && <p className="text-sm text-gray-500">ID: {ID}</p>}
-          {location && <p className="text-sm text-gray-500">Location: {location}</p>}
-          {Faculty && <p className="text-sm text-gray-500">Faculty: {Faculty}</p>}
+          {location && (
+            <p className="text-sm text-gray-500">Location: {location}</p>
+          )}
+          {Faculty && (
+            <p className="text-sm text-gray-500">Faculty: {Faculty}</p>
+          )}
 
           {/* Editable Bio Section */}
           {label && (
-  <div className="space-y-2 text-sm text-gray-700">
-    {!isSaved ? (
-      <>
-        <div className="flex justify-between items-center">
-          <Button
-            type="button"
-            size="sm"
-            className="bg-blue-600 hover:bg-blue-700 text-white"
-            onClick={addItem}
-          >
-            <Plus className="h-4 w-4 mr-1" />
-            Add {label}
-          </Button>
-        </div>
+            <div className="space-y-2 text-sm text-gray-700">
+              {!isSaved ? (
+                <>
+                  <div className="flex justify-between items-center">
+                    <Button
+                      type="button"
+                      size="sm"
+                      className="bg-blue-600 hover:bg-blue-700 text-white"
+                      onClick={addItem}
+                    >
+                      <Plus className="h-4 w-4 mr-1" />
+                      Add {label}
+                    </Button>
+                  </div>
 
-        <div className="flex gap-2">
-          <select
-            className="w-full border rounded p-2 text-sm"
-            value={newItem}
-            onChange={(e) => {
-              setNewItem(e.target.value);
-              setError("");
-            }}
-          >
-            <option value="" disabled hidden>Select {label.toLowerCase()}</option>
-            {options.map((opt) => (
-              <option key={opt} value={opt}>
-                {opt}
-              </option>
-            ))}
-          </select>
-        </div>
+                  <div className="flex gap-2">
+                    <select
+                      className="w-full border rounded p-2 text-sm"
+                      value={newItem}
+                      onChange={(e) => {
+                        setNewItem(e.target.value);
+                        setError("");
+                      }}
+                    >
+                      <option value="" disabled hidden>
+                        Select {label.toLowerCase()}
+                      </option>
+                      {options.map((opt) => (
+                        <option key={opt} value={opt}>
+                          {opt}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
 
-        {error && <p className="text-sm text-red-600 mt-1">{error}</p>}
+                  {error && (
+                    <p className="text-sm text-red-600 mt-1">{error}</p>
+                  )}
 
-        {selectedItems.length === 0 ? (
-          <p className="text-gray-500 italic">No {label.toLowerCase()} added yet</p>
-        ) : (
-          <ul className="space-y-1">
-            {selectedItems.map((item) => (
-              <li
-                key={item}
-                className="flex justify-between items-center bg-gray-100 px-3 py-2 rounded"
-              >
-                <span>{item}</span>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => removeItem(item)}
-                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </li>
-            ))}
-          </ul>
-        )}
+                  {selectedItems.length === 0 ? (
+                    <p className="text-gray-500 italic">
+                      No {label.toLowerCase()} added yet
+                    </p>
+                  ) : (
+                    <ul className="space-y-1">
+                      {selectedItems.map((item) => (
+                        <li
+                          key={item}
+                          className="flex justify-between items-center bg-gray-100 px-3 py-2 rounded"
+                        >
+                          <span>{item}</span>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => removeItem(item)}
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
 
-        <Button
-          type="button"
-          className="mt-3 bg-green-600 hover:bg-green-700 text-white"
-          onClick={handleSave}
-        >
-          Save {label}
-        </Button>
-      </>
-    ) : (
-      <p className="text-sm text-gray-700">
-        <strong>{label}:</strong> {selectedItems.join(", ")}
-      </p>
-    )}
-  </div>
-)}
+                  <Button
+                    type="button"
+                    className="mt-3 bg-green-600 hover:bg-green-700 text-white"
+                    onClick={handleSave}
+                  >
+                    Save {label}
+                  </Button>
+                </>
+              ) : (
+                <p className="text-sm text-gray-700">
+                  <strong>{label}:</strong> {selectedItems.join(", ")}
+                </p>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>

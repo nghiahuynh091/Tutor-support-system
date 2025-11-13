@@ -4,6 +4,9 @@ import api from "@/lib/api";
 import { AxiosError } from "axios";
 import type { User, LoginResponse, ApiError, UserRole } from "@/types/apiTypes";
 
+// Re-export UserRole for convenience
+export type { UserRole } from "@/types/apiTypes";
+
 interface AuthContextType {
   user: User | null;
   token: string | null;
