@@ -21,6 +21,8 @@ import { CoordinatorProfile } from "./pages/CoordinatorProfile";
 import { MenteeProfile } from "./pages/MenteeProfile";
 import { TutorProfile } from "./pages/TutorProfile";
 import Card from "./pages/SessionManager/Card";
+import { UserManagement } from "./pages/UserManagement";
+import { ViewReports } from "./pages/ViewReports";
 
 function App() {
   return (
@@ -79,15 +81,12 @@ function App() {
           <Route path="/tutor/profile" element={<TutorProfile />} />
         </Route>
 
-        {/* Coordinator Routes */}
-        <Route
-          element={<ProtectedRoute allowedRoles={["coordinator", "admin"]} />}
-        >
-          <Route
-            path="/coordinator/dashboard"
-            element={<CoordinatorDashboard />}
-          />
-          <Route path="/coordinator/profile" element={<CoordinatorProfile />} />
+        {/* Admin Routes */}
+        <Route element={<ProtectedRoute allowedRoles={["admin"]} />}>
+          <Route path="/admin/dashboard" element={<CoordinatorDashboard />} />
+          <Route path="/admin/profile" element={<CoordinatorProfile />} />
+          <Route path="/admin/users" element={<UserManagement />} />
+          <Route path="/admin/reports" element={<ViewReports />} />
         </Route>
       </Routes>
     </BrowserRouter>
