@@ -13,3 +13,5 @@ class UserRegisterSchema(BaseModel):
 class UserLoginSchema(BaseModel):
     email: EmailStr = Field(..., example="admin@example.com")
     password: str = Field(..., example="password5")
+    # email: EmailStr = Field(..., example="nghiaadmin@example.com")
+    # password: str = Field(..., example="nghiaadmin")
