@@ -307,6 +307,7 @@ class RegistrationModel:
         """
         query = """
             SELECT 
+                c.id,
                 cr.class_id,
                 cr.mentee_id,
                 cr.registration_log,
@@ -321,6 +322,7 @@ class RegistrationModel:
                 c.end_time,
                 c.week_day,
                 c.semester,
+                c.registration_deadline,
                 s.subject_name,
                 s.subject_code
             FROM class_registrations cr
