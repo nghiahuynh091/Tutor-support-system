@@ -84,3 +84,68 @@ class UserModel:
         result = await db.execute_query(query, email)
         return result[0] if result else None
 
+    @staticmethod
+    async def get_user_by_id(user_id: str) -> Optional[Dict[str, Any]]:
+        """Return user profile joined with mentee/tutor details."""
+        query = """
+            SELECT
+                u.id,
+                u.email,
+                u.full_name,
+                u.faculty,
+                u.bio,
+                ur.role,
+                t.major AS tutor_major,
+                t.expertise_areas,
+                m.major AS mentee_major,
+                m.learning_needs
+            FROM "user" AS u
+            LEFT JOIN user_roles AS ur ON u.id = ur.user_id
+            LEFT JOIN tutor AS t ON u.id = t.user_id
+            LEFT JOIN mentee AS m ON u.id = m.user_id
+            WHERE u.id = $1;
+        """
+        result = await db.execute_query(query, user_id)
+        return result[0] if result else None
+
+    @staticmethod
+    async def update_user_detail(user_id: str, role: str, field: str, value: str) -> Dict[str, Any]:
+        """Update the mentee/tutor detail field (upsert if necessary).
+
+        field should be one of: 'learning_needs' (for mentee) or 'expertise_areas' (for tutor)
+        """
+        # Use pool directly for transactional upsert
+        async with db.pool.acquire() as conn:
+            async with conn.transaction():
+                if role == "mentee" and field == "learning_needs":
+                    # Try update first
+                    res = await conn.execute(
+                        "UPDATE mentee SET learning_needs=$1 WHERE user_id=$2",
+                        value,
+                        user_id,
+                    )
+                    if res == "UPDATE 0":
+                        await conn.execute(
+                            "INSERT INTO mentee (user_id, learning_needs) VALUES ($1, $2)",
+                            user_id,
+                            value,
+                        )
+
+                elif role == "tutor" and field == "expertise_areas":
+                    res = await conn.execute(
+                        "UPDATE tutor SET expertise_areas=$1 WHERE user_id=$2",
+                        value,
+                        user_id,
+                    )
+                    if res == "UPDATE 0":
+                        await conn.execute(
+                            "INSERT INTO tutor (user_id, expertise_areas) VALUES ($1, $2)",
+                            user_id,
+                            value,
+                        )
+                else:
+                    raise ValueError("Invalid role/field combination")
+
+        # Return the updated profile
+        return await UserModel.get_user_by_id(user_id)
+

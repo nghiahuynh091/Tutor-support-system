@@ -3,7 +3,7 @@ from controllers.userController import UserController
 from middleware.auth import verify_token, authorize
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from typing import Dict, Any
-from schemas.user_schema import UserRegisterSchema, UserLoginSchema
+from schemas.user_schema import UserRegisterSchema, UserLoginSchema, UserUpdateSchema
 
 security = HTTPBearer()
 
@@ -45,3 +45,23 @@ async def login_user(credentials: UserLoginSchema):
         return result
     else:
         raise HTTPException(status_code=401, detail=result["error"])
+
+
+@router.get("/me")
+async def get_my_profile(current_user: dict = Depends(verify_token)):
+    """Return the current authenticated user's profile."""
+    result = await UserController.get_current_user(current_user)
+    if result["success"]:
+        return result
+    else:
+        raise HTTPException(status_code=404, detail=result["error"])
+
+
+@router.patch("/me")
+async def update_my_profile(update_data: UserUpdateSchema, current_user: dict = Depends(verify_token)):
+    """Update the current user's mentee/tutor field (learning_needs or expertise_areas)."""
+    result = await UserController.update_profile(current_user, update_data.model_dump())
+    if result["success"]:
+        return result
+    else:
+        raise HTTPException(status_code=400, detail=result["error"])
