@@ -63,3 +63,12 @@ class ClassController:
                 "error": f"Failed to fetch classes: {str(e)}",
                 "classes": []
             }
+
+    @staticmethod
+    async def create_class(tutor_id: str, class_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Create a class and recurring sessions."""
+        try:
+            result = await ClassModel.create_class_and_sessions(tutor_id, class_data)
+            return {"success": True, "class": {"id": result.get("id")}, "sessions_created": result.get("sessions_created", 0)}
+        except Exception as e:
+            return {"success": False, "error": f"Failed to create class: {str(e)}"}

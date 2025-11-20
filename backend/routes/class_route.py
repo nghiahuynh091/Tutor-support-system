@@ -1,6 +1,8 @@
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Depends
 from typing import Optional, List
 from controllers.classController import ClassController
+from middleware.auth import verify_token, authorize
+from schemas.class_schema import CreateClassSchema
 
 
 # Create router
@@ -45,3 +47,15 @@ async def get_class_by_subject(subject_id: int):
         return result
     else:
         raise HTTPException(status_code=500, detail=result["error"])
+
+
+@router.post("/")
+async def create_class(class_payload: CreateClassSchema, current_user: dict = Depends(authorize(["tutor"]))):
+    """Create a new class and recurring sessions (tutor only)."""
+    tutor_id = current_user.get("sub")
+    # Convert payload to dict and pass to controller
+    result = await ClassController.create_class(tutor_id, class_payload.model_dump())
+    if result["success"]:
+        return result
+    else:
+        raise HTTPException(status_code=400, detail=result["error"])
