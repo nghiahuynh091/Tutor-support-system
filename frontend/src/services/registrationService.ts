@@ -103,9 +103,9 @@ export const registrationService = {
    * Get mentee's registered classes
    */
   getMyRegistrations: async (menteeId: string): Promise<Class[]> => {
-    const response = await api.get(`/registrations/${menteeId}`);
-    // Backend trả về { success: true, data: [...] }
-    return response.data.data || [];
+    const response = await api.get(`/registrations/mentee/${menteeId}`);
+    // Backend trả về { success: true, registrations: [...], count: number }
+    return response.data.registrations || [];
   },
 
   /**

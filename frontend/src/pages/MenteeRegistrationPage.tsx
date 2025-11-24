@@ -84,6 +84,10 @@ export function MenteeRegistrationPage() {
         registrationService.getMyRegistrations(menteeId)
       ]);
 
+      console.log('📚 All classes loaded:', allClasses.length);
+      console.log('✅ My registrations:', myRegistrations);
+      console.log('📋 Registration IDs:', myRegistrations.map(r => r.id));
+
       // Group classes by subject
       const subjectsMap = new Map<number, Subject>();
 
@@ -105,6 +109,7 @@ export function MenteeRegistrationPage() {
       
       // Extract registered class IDs
       const registeredIds = new Set(myRegistrations.map(cls => cls.id));
+      console.log('🎯 Registered class IDs Set:', Array.from(registeredIds));
       setRegisteredClasses(registeredIds);
     } catch (error) {
       console.error('Failed to load data:', error);
@@ -205,7 +210,7 @@ export function MenteeRegistrationPage() {
     }
   };
 
-  const handleCancelRegistration = async (classId: number, classItem: Class) => {
+  const handleCancelRegistration = async (classId: number) => {
     if (!menteeId) return;
 
     if (!window.confirm(`Are you sure you want to cancel registration for Class ${classId}?`)) {
@@ -407,6 +412,7 @@ export function MenteeRegistrationPage() {
                         ) : (
                           subject.classes.map((cls) => {
                             const isRegistered = registeredClasses.has(cls.id);
+                            console.log(`Class ${cls.id}: isRegistered=${isRegistered}, registeredClasses=`, Array.from(registeredClasses));
                             const isFull = cls.current_enrolled >= cls.capacity;
                             const deadlinePassed = cls.registration_deadline ? isDeadlinePassed(cls.registration_deadline) : false;
                             const canRegister = !isRegistered && !isFull && !deadlinePassed;
@@ -503,11 +509,15 @@ export function MenteeRegistrationPage() {
 
                                     <div className="flex gap-2">
                                       {isRegistered ? (
-                                        <>
+                                        <div className="flex items-center gap-2">
+                                          <div className="flex items-center gap-1.5 bg-green-100 text-green-800 px-3 py-1.5 rounded-lg">
+                                            <CheckCircle className="w-4 h-4" />
+                                            <span className="text-sm font-semibold">Registered</span>
+                                          </div>
                                           <Button 
                                             variant="outline" 
                                             size="sm"
-                                            onClick={() => handleCancelRegistration(cls.id, cls)}
+                                            onClick={() => handleCancelRegistration(cls.id)}
                                             className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-300"
                                           >
                                             Cancel
@@ -523,11 +533,11 @@ export function MenteeRegistrationPage() {
                                               </a>
                                             </Button>
                                           )}
-                                        </>
+                                        </div>
                                       ) : (
                                         <Button 
                                           size="sm"
-                                          className="bg-blue-600 hover:bg-blue-700"
+                                          className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
                                           disabled={!canRegister || isCurrentlyRegistering}
                                           onClick={() => handleRegister(cls.id, cls)}
                                         >
