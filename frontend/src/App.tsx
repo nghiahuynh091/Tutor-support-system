@@ -46,17 +46,17 @@ function App() {
           />
           <Route path="/mentee/schedule" element={<MenteeSchedulePage />} />
           {/* <Route path="/sessions" element={<MenteeSessions />} /> */}
-          <Route path="/mentee/sessions" element={<MySessionsPage />} />
+          <Route path="/mentee/history" element={<MySessionsPage />} />
           <Route
-            path="/mentee/sessions/feedback/:id"
+            path="/mentee/sessions/feedback/:classId/:sessionId"
             element={<FeedbackPage />}
           />
           <Route
-            path="/mentee/sessions/assignments"
+            path="/mentee/assignments"
             element={<MenteeAssignmentsPage />}
           />
           <Route
-            path="/mentee/sessions/quiz/:id"
+            path="/mentee/quiz/:id"
             element={<MenteeQuizAttemptPage />}
           />
           <Route path="/mentee/profile" element={<MenteeProfile />} />

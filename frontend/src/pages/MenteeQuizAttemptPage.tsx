@@ -58,7 +58,7 @@ export const MenteeQuizAttemptPage: React.FC = () => {
 
   const finalizeSubmit = (auto = false) => {
     alert(auto ? "⏰ Time’s up! Auto-submitting quiz." : "✅ Quiz submitted!");
-    navigate("/mentee/sessions/assignments");
+    navigate("/mentee/assignments");
   };
 
   return (
