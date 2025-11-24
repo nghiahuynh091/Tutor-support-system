@@ -1,8 +1,11 @@
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import UserProfile from "@/components/UserProfile"; // Assuming you have this component
+import { useAuth } from "@/contexts/AuthContext";
 
 export function MenteeProfile() {
+  const { user } = useAuth();
+
   return (
     <div className="min-h-screen bg-white">
       <Header />
@@ -11,9 +14,9 @@ export function MenteeProfile() {
           My Profile
         </h2>
         <UserProfile
-          name="Kane Lee"
-          email="CAD.asdf@example.com"
-          ID="2550011"
+          name={user?.full_name || "Mentee Name"}
+          email={user?.email || "mentee@example.com"}
+          ID={user?.id || "MENTEE_ID"}
           avatarUrl="https://i.pravatar.cc/150?img=47"
           location="Ho Chi Minh City, Vietnam"
           role="mentee"
