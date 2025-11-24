@@ -1,85 +1,84 @@
 import { useState, useEffect } from "react";
+import api from "@/lib/api"
 
 interface Resource {
   id: number;
   title: string;
   type: "Local" | "HCMUT_LIBRARY";
-  fileUrl?: string; // link to uploaded file or external URL
+  fileUrl?: string;
   fileName?: string;
 }
 
-function LearningResources() {
-  const [resources, setResources] = useState<Resource[]>(() => {
-    const saved = localStorage.getItem("learningResources");
-    return saved ? JSON.parse(saved) : [];
-  });
-
+function LearningResources({ sessionId }: { sessionId: number }) {
+  const [resources, setResources] = useState<Resource[]>([]);
   const [adding, setAdding] = useState(false);
   const [selectedType, setSelectedType] = useState<"Local" | "HCMUT_LIBRARY" | "">("");
   const [title, setTitle] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [link, setLink] = useState("");
 
+  // Fetch session resources from backend
   useEffect(() => {
-    localStorage.setItem("learningResources", JSON.stringify(resources));
-  }, [resources]);
+    api
+      .get(`/materials/session/${sessionId}`)
+      .then((res) => setResources(res.data))
+      .catch((err) => console.error("Failed to fetch resources", err));
+  }, [sessionId]);
 
-  const handleAddClick = () => {
-    setAdding(true);
-  };
+  const handleAddResource = async () => {
+    if (!selectedType) return alert("Please select a resource type.");
 
-  const handleAddResource = () => {
-    if (!selectedType) {
-      alert("Please select a resource type.");
-      return;
-    }
+    try {
+      let newResource: Resource;
 
-    if (selectedType === "Local") {
-      if (title.trim() === "") {
-        alert("Please enter a title.");
-        return;
-      }
+      if (selectedType === "Local") {
+        if (!file && !link) return alert("Upload a file or enter a link.");
+        const formData = new FormData();
+        if (file) formData.append("file", file);
+        // Using a dummy tutor_id; replace with actual logged-in tutor id
+        const tutor_id = localStorage.getItem("tutor_id") || "00000000-0000-0000-0000-000000000000";
 
-      let newResource: Resource = {
-        id: Date.now(),
-        title,
-        type: "Local",
-      };
+        const response = await api.post(`/materials/session/${sessionId}`, formData, {
+          params: { tutor_id },
+          headers: { "Content-Type": "multipart/form-data" },
+        });
 
-      if (file) {
-        const fileUrl = URL.createObjectURL(file);
-        newResource.fileUrl = fileUrl;
-        newResource.fileName = file.name;
-      } else if (link.trim() !== "") {
-        newResource.fileUrl = link.trim();
-        newResource.fileName = link.trim();
+        newResource = {
+          id: response.data.resource_id,
+          title: title || file?.name || link,
+          type: "Local",
+          fileUrl: file ? URL.createObjectURL(file) : link,
+          fileName: file?.name || link,
+        };
       } else {
-        alert("Please upload a file or enter a link.");
-        return;
+        newResource = {
+          id: Date.now(),
+          title: "Imported from HCMUT_LIBRARY",
+          type: "HCMUT_LIBRARY",
+        };
       }
 
-      setResources([...resources, newResource]);
+      setResources((prev) => [...prev, newResource]);
+      setAdding(false);
+      setSelectedType("");
+      setTitle("");
+      setFile(null);
+      setLink("");
+    } catch (err) {
+      console.error("Failed to upload resource", err);
+      alert("Error uploading resource");
     }
-
-    if (selectedType === "HCMUT_LIBRARY") {
-      const newResource: Resource = {
-        id: Date.now(),
-        title: "Imported from HCMUT_LIBRARY",
-        type: "HCMUT_LIBRARY",
-      };
-      setResources([...resources, newResource]);
-    }
-
-    setAdding(false);
-    setTitle("");
-    setSelectedType("");
-    setFile(null);
-    setLink("");
   };
 
-  const handleRemoveResource = (id: number) => {
-    if (confirm("Are you sure you want to remove this resource?")) {
-      setResources(resources.filter((r) => r.id !== id));
+  const handleRemoveResource = async (id: number) => {
+    if (!confirm("Are you sure you want to remove this resource?")) return;
+
+    try {
+      await api.delete(`/materials/${id}`);
+      setResources((prev) => prev.filter((r) => r.id !== id));
+    } catch (err) {
+      console.error("Failed to delete resource", err);
+      alert("Error deleting resource");
     }
   };
 
@@ -88,58 +87,33 @@ function LearningResources() {
       <h3>📚 Learning Resources</h3>
 
       {resources.length === 0 ? (
-        <p>No learning resources added yet.</p>
+        <p>No learning resources yet.</p>
       ) : (
-        <table
-          style={{
-            width: "100%",
-            borderCollapse: "collapse",
-            marginTop: "10px",
-            backgroundColor: "#f8fbff",
-            border: "1px solid #b3d9ff",
-            borderRadius: "10px",
-            overflow: "hidden",
-          }}
-        >
+        <table style={{ width: "100%", borderCollapse: "collapse", marginTop: 10, backgroundColor: "#f8fbff" }}>
           <thead>
             <tr style={{ backgroundColor: "#cce6ff" }}>
-              <th style={{ padding: "8px", textAlign: "left" }}>Title</th>
-              <th style={{ padding: "8px" }}>Type</th>
-              <th style={{ padding: "8px" }}>Resource</th>
-              <th style={{ padding: "8px" }}>Action</th>
+              <th>Title</th>
+              <th>Type</th>
+              <th>Resource</th>
+              <th>Action</th>
             </tr>
           </thead>
           <tbody>
             {resources.map((r) => (
               <tr key={r.id}>
-                <td style={{ padding: "8px" }}>{r.title}</td>
-                <td style={{ padding: "8px", textAlign: "center" }}>{r.type}</td>
-                <td style={{ padding: "8px", textAlign: "center" }}>
+                <td>{r.title}</td>
+                <td>{r.type}</td>
+                <td>
                   {r.fileUrl ? (
-                    <a
-                      href={r.fileUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{ color: "#007BFF", textDecoration: "underline" }}
-                    >
+                    <a href={r.fileUrl} target="_blank" rel="noopener noreferrer">
                       {r.fileName || "Open"}
                     </a>
                   ) : (
                     "-"
                   )}
                 </td>
-                <td style={{ padding: "8px", textAlign: "center" }}>
-                  <button
-                    style={{
-                      backgroundColor: "#dc3545",
-                      color: "white",
-                      border: "none",
-                      padding: "5px 10px",
-                      borderRadius: "6px",
-                      cursor: "pointer",
-                    }}
-                    onClick={() => handleRemoveResource(r.id)}
-                  >
+                <td>
+                  <button onClick={() => handleRemoveResource(r.id)} style={{ backgroundColor: "#dc3545", color: "white" }}>
                     Remove
                   </button>
                 </td>
@@ -149,143 +123,27 @@ function LearningResources() {
         </table>
       )}
 
-      {!adding && (
-        <button
-          onClick={handleAddClick}
-          style={{
-            marginTop: "15px",
-            padding: "8px 15px",
-            borderRadius: "8px",
-            backgroundColor: "#007BFF",
-            color: "white",
-            border: "none",
-            cursor: "pointer",
-          }}
-        >
-          ➕ Add Learning Resource
-        </button>
-      )}
+      {!adding && <button onClick={() => setAdding(true)}>➕ Add Learning Resource</button>}
 
       {adding && (
-        <div
-          style={{
-            marginTop: "15px",
-            padding: "10px",
-            border: "1px solid #b3d9ff",
-            borderRadius: "8px",
-            backgroundColor: "#f0f8ff",
-          }}
-        >
-          <h4>Add New Resource</h4>
-
-          <label>
-            <strong>Select Type:</strong>
-          </label>
-          <div style={{ marginTop: "5px" }}>
-            <select
-              value={selectedType}
-              onChange={(e) => setSelectedType(e.target.value as "Local" | "HCMUT_LIBRARY")}
-              style={{
-                padding: "5px",
-                borderRadius: "6px",
-                border: "1px solid #66b3ff",
-              }}
-            >
-              <option value="">-- Select --</option>
-              <option value="Local">Local Resource</option>
-              <option value="HCMUT_LIBRARY">HCMUT_LIBRARY</option>
-            </select>
-          </div>
+        <div>
+          <label>Select Type:</label>
+          <select value={selectedType} onChange={(e) => setSelectedType(e.target.value as "Local" | "HCMUT_LIBRARY")}>
+            <option value="">-- Select --</option>
+            <option value="Local">Local</option>
+            <option value="HCMUT_LIBRARY">HCMUT_LIBRARY</option>
+          </select>
 
           {selectedType === "Local" && (
             <>
-              <div style={{ marginTop: "10px" }}>
-                <label>
-                  <strong>Enter Title:</strong>
-                </label>
-                <input
-                  type="text"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  placeholder="Enter resource title"
-                  style={{
-                    width: "100%",
-                    padding: "6px",
-                    marginTop: "5px",
-                    borderRadius: "6px",
-                    border: "1px solid #ccc",
-                  }}
-                />
-              </div>
-
-              <div style={{ marginTop: "10px" }}>
-                <label>
-                  <strong>Upload File:</strong>
-                </label>
-                <input
-                  type="file"
-                  accept=".pdf,.doc,.docx,.ppt,.pptx,.txt,.jpg,.png"
-                  onChange={(e) => setFile(e.target.files?.[0] || null)}
-                  style={{ display: "block", marginTop: "5px" }}
-                />
-              </div>
-
-              <div style={{ marginTop: "10px" }}>
-                <label>
-                  <strong>Or enter a link:</strong>
-                </label>
-                <input
-                  type="url"
-                  value={link}
-                  onChange={(e) => setLink(e.target.value)}
-                  placeholder="https://example.com/resource"
-                  style={{
-                    width: "100%",
-                    padding: "6px",
-                    marginTop: "5px",
-                    borderRadius: "6px",
-                    border: "1px solid #ccc",
-                  }}
-                />
-              </div>
+              <input type="text" placeholder="Title" value={title} onChange={(e) => setTitle(e.target.value)} />
+              <input type="file" onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFile(e.target.files?.[0] || null)} />
+              <input type="url" placeholder="Or link" value={link} onChange={(e) => setLink(e.target.value)} />
             </>
           )}
 
-          {selectedType === "HCMUT_LIBRARY" && (
-            <p style={{ color: "#0066cc", marginTop: "10px" }}>
-              🔗 (Integration with HCMUT_LIBRARY will be available soon.)
-            </p>
-          )}
-
-          <div style={{ marginTop: "15px" }}>
-            <button
-              onClick={handleAddResource}
-              style={{
-                backgroundColor: "#28a745",
-                color: "white",
-                padding: "6px 12px",
-                borderRadius: "8px",
-                border: "none",
-                marginRight: "10px",
-                cursor: "pointer",
-              }}
-            >
-              Save
-            </button>
-            <button
-              onClick={() => setAdding(false)}
-              style={{
-                backgroundColor: "#6c757d",
-                color: "white",
-                padding: "6px 12px",
-                borderRadius: "8px",
-                border: "none",
-                cursor: "pointer",
-              }}
-            >
-              Cancel
-            </button>
-          </div>
+          <button onClick={handleAddResource}>Save</button>
+          <button onClick={() => setAdding(false)}>Cancel</button>
         </div>
       )}
     </div>
