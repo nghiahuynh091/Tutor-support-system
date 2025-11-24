@@ -1,7 +1,14 @@
+from supabase import create_client
+import os
 from typing import List, Dict, Any, Optional
 from db.database import db
 from uuid import UUID
 from datetime import datetime
+
+# Initialize Supabase client directly
+supabase_url = os.getenv("SUPABASE_URL")
+supabase_key = os.getenv("SUPABASE_KEY")
+supabase = create_client(supabase_url, supabase_key)
 
 class LearningResource:
     @staticmethod
@@ -13,16 +20,29 @@ class LearningResource:
             WHERE cr.class_id = $1
             ORDER BY lr.id DESC
         """
-        return await db.execute_query(query, class_id)
+        resources = await db.execute_query(query, class_id)
+        
+        # Add file URLs to each resource
+        for resource in resources:
+            if resource.get('resource_source'):
+                try:
+                    resource['file_url'] = supabase.storage.from_("learning-resources").get_public_url(resource['resource_source'])
+                except Exception as e:
+                    print(f"Error generating file URL for resource {resource['id']}: {e}")
+                    resource['file_url'] = None
+        
+        return resources
 
     @staticmethod
-    async def createResource(tutor_id: UUID, file_type: str, resource_source: str, title: str) -> Optional[int]:
+    async def createResource(tutor_id: UUID, file_type: str, resource_source: str, 
+                           title: str) -> Optional[int]:
         query = """
             INSERT INTO learning_resources(tutor_id, file_type, resource_source, title, created_at)
             VALUES($1, $2, $3, $4, $5)
             RETURNING id
         """
-        result = await db.execute_single(query, tutor_id, file_type, resource_source, title, datetime.utcnow())
+        result = await db.execute_single(query, tutor_id, file_type, resource_source, 
+                                       title, datetime.utcnow())
         return result['id'] if result else None
     
     @staticmethod
@@ -38,17 +58,40 @@ class LearningResource:
         query = """
             SELECT * FROM learning_resources WHERE id = $1
         """
-        return await db.execute_single(query, learning_resource_id)
+        resource = await db.execute_single(query, learning_resource_id)
+        
+        # Add file URL
+        if resource and resource.get('resource_source'):
+            try:
+                resource['file_url'] = supabase.storage.from_("learning-resources").get_public_url(resource['resource_source'])
+            except Exception as e:
+                print(f"Error generating file URL for resource {learning_resource_id}: {e}")
+                resource['file_url'] = None
+        
+        return resource
     
     @staticmethod
-    async def updateResource(resource_id: int, file_type: str, resource_source: str, title: str ):
+    async def updateResource(resource_id: int, file_type: str, resource_source: str, title: str):
         query = """
             UPDATE learning_resources
             SET file_type = $1, resource_source = $2, title = $3
             WHERE id = $4        
         """
         await db.execute_command(query, file_type, resource_source, title, resource_id)
+    
     @staticmethod
     async def deleteResource(resource_id: int):
+        # First get the resource to delete from storage
+        resource = await LearningResource.getMaterial(resource_id)
+        
+        # Delete from Supabase storage
+        if resource and resource.get('resource_source'):
+            try:
+                supabase.storage.from_("learning-resources").remove([resource['resource_source']])
+                print(f"Deleted file from Supabase storage: {resource['resource_source']}")
+            except Exception as e:
+                print(f"Error deleting file from storage: {e}")
+        
+        # Delete from database (first from class_resources due to foreign key constraint)
         await db.execute_command("DELETE FROM class_resources WHERE resource_id = $1", resource_id)
         await db.execute_command("DELETE FROM learning_resources WHERE id = $1", resource_id)
