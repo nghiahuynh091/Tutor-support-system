@@ -14,6 +14,8 @@ from routes import user_route, system_route, class_route
 #tạo mới tránh conflict
 from routes import registration_route, admin_route
 
+from routes import learning_route
+
 from routes.FeedbackAndProgressTracking import assignmentRoute, feedbackRoute, progressRoute, submissionRoute
 
 app = FastAPI(
@@ -52,6 +54,9 @@ app.include_router(registration_route.router)
 
 # admin modules
 app.include_router(admin_route.router)
+
+#learning modules
+app.include_router(learning_route.router)
 
 
 if __name__ == "__main__":
