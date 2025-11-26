@@ -1,252 +1,340 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Search, Clock, ChevronDown, ChevronRight } from "lucide-react";
-import { Header } from "@/components/Header";
-import type { Class, Subject } from "@/types";
-import { useNavigate } from "react-router-dom";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { 
+  Search, 
+  Clock, 
+  ChevronDown, 
+  ChevronUp, 
+  CheckCircle2, 
+  MessageSquare,
+  User,
+  CalendarDays,
+  MapPin,
+  Star
+} from "lucide-react";
+import { Header } from "@/components/Header";
+import { useNavigate } from "react-router-dom";
 
-// 🧩 Mock Data for Demonstration (replace with your Supabase fetch later)
-const MOCK_CLASSES: Class[] = [
+// ------------------------------------------------------------------
+// 🧩 TYPES (Based on your PostgreSQL Schema)
+// ------------------------------------------------------------------
+
+type SessionStatus = "scheduled" | "completed" | "cancelled";
+
+interface Session {
+  class_id: number;
+  session_id: number;       // matches schema
+  session_date_time: string; // timestamp with time zone (ISO string)
+  session_status: SessionStatus;
+  location: string;
+  meeting_notes?: string;
+  // UI specific fields 
+  attended: boolean; 
+  topic: string; 
+  duration_mins: number; 
+}
+
+interface ClassWithSessions {
+  id: number;               // matches schema classes.id
+  subject_name: string;     // joined from subjects table
+  subject_code: string;     // joined from subjects table
+  tutor_name: string;       // joined from users table
+  num_of_weeks: number;
+  current_enrolled: number;
+  class_status: string;
+  sessions: Session[];      // The 1:N relationship
+}
+
+// ------------------------------------------------------------------
+// 🧩 MOCK DATA 
+// ------------------------------------------------------------------
+
+const MOCK_CLASSES: ClassWithSessions[] = [
   {
-    id: "class-1",
-    subject_id: 1,
+    id: 1,
     subject_name: "Advanced Mathematics",
     subject_code: "MATH301",
-    class_code: "CC01",
-    description: "Calculus and Linear Algebra review sessions",
-    tutor_id: "tutor-1",
     tutor_name: "Dr. Sarah Johnson",
-    max_students: 10,
+    num_of_weeks: 4,
     current_enrolled: 5,
-    number_of_weeks: 4,
-    meeting_link: "https://meet.google.com/abc-defg-hij",
-    time_slots: [
-      { id: "ts1", dayOfWeek: 1, startPeriod: 2, endPeriod: 4 },
-      { id: "ts2", dayOfWeek: 3, startPeriod: 8, endPeriod: 10 },
+    class_status: "active",
+    sessions: [
+      {
+        class_id: 1,
+        session_id: 1,
+        session_date_time: "2025-11-01T09:00:00+07:00",
+        session_status: "completed",
+        location: "Online (Google Meet)",
+        attended: true,
+        topic: "Limits and Continuity",
+        duration_mins: 90,
+      },
+      {
+        class_id: 101,
+        session_id: 2,
+        session_date_time: "2025-11-08T09:00:00+07:00",
+        session_status: "completed",
+        location: "Online (Google Meet)",
+        attended: true,
+        topic: "Derivatives Introduction",
+        duration_mins: 90,
+      },
+      {
+        class_id: 101,
+        session_id: 3,
+        session_date_time: "2025-11-15T09:00:00+07:00",
+        session_status: "scheduled",
+        location: "Online (Google Meet)",
+        attended: false,
+        topic: "Applications of Derivatives",
+        duration_mins: 90,
+      },
+      {
+        class_id: 101,
+        session_id: 4,
+        session_date_time: "2025-11-22T09:00:00+07:00",
+        session_status: "scheduled",
+        location: "Online (Google Meet)",
+        attended: false,
+        topic: "Integrals Overview",
+        duration_mins: 90,
+      },
     ],
-    sessions: [],
-    created_at: "2025-10-25T10:00:00",
   },
   {
-    id: "class-3",
-    subject_id: 2,
-    subject_name: "Data Structures",
+    id: 205,
+    subject_name: "Data Structures & Algo",
     subject_code: "CS202",
-    class_code: "CC01",
-    description: "Trees, Graphs, and Algorithm Analysis",
-    tutor_id: "tutor-2",
     tutor_name: "Prof. Michael Chen",
-    max_students: 12,
+    num_of_weeks: 6,
     current_enrolled: 8,
-    number_of_weeks: 4,
-    meeting_link: "https://zoom.us/j/123456789",
-    time_slots: [
-      { id: "ts3", dayOfWeek: 2, startPeriod: 2, endPeriod: 4 },
-      { id: "ts4", dayOfWeek: 5, startPeriod: 2, endPeriod: 4 },
+    class_status: "active",
+    sessions: [
+      {
+        class_id: 205,
+        session_id: 1,
+        session_date_time: "2025-11-02T14:00:00+07:00",
+        session_status: "completed",
+        location: "Room H6-202",
+        attended: false, // Missed
+        topic: "Linked Lists & Arrays",
+        duration_mins: 120,
+      },
+      {
+        class_id: 205,
+        session_id: 2,
+        session_date_time: "2025-11-09T14:00:00+07:00",
+        session_status: "scheduled",
+        location: "Room H6-202",
+        attended: false,
+        topic: "Stacks and Queues",
+        duration_mins: 120,
+      },
     ],
-    sessions: [],
-    created_at: "2025-10-27T10:00:00",
   },
 ];
 
-const DAYS_OF_WEEK = ["", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+// ------------------------------------------------------------------
+// 🛠️ HELPER FUNCTIONS
+// ------------------------------------------------------------------
 
-const periodToTime = (period: number): string => {
-  const hour = period + 5;
-  return `${hour.toString().padStart(2, "0")}:00`;
+const formatDateTime = (isoString: string) => {
+  const date = new Date(isoString);
+  return {
+    date: date.toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+    time: date.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }),
+    fullDate: date.toLocaleDateString("en-US", { weekday: 'short', year: 'numeric', month: 'long', day: 'numeric' })
+  };
 };
 
-export function MySessionsPage() {
-    const navigate = useNavigate();
-    const [searchQuery, setSearchQuery] = useState("");
-    const [classes, setClasses] = useState<Class[]>(MOCK_CLASSES);
-    const [subjects, setSubjects] = useState<Subject[]>([]);
-    const [expandedSubjectId, setExpandedSubjectId] = useState<number | null>(null);
-    
-    // Group attended classes by subject
-    useEffect(() => {
-        const subjectMap = new Map<number, Subject>();
-        classes.forEach((classItem) => {
-            if (!subjectMap.has(classItem.subject_id)) {
-                subjectMap.set(classItem.subject_id, {
-                    id: classItem.subject_id,
-                    subject_name: classItem.subject_name,
-          subject_code: classItem.subject_code,
-          classes: [],
-        });
-    }
-    subjectMap.get(classItem.subject_id)!.classes.push(classItem);
-});
-setSubjects(Array.from(subjectMap.values()));
-}, [classes]);
+// ------------------------------------------------------------------
+// ⚛️ COMPONENT
+// ------------------------------------------------------------------
 
-  const toggleSubject = (subjectId: number) => {
-    setExpandedSubjectId(expandedSubjectId === subjectId ? null : subjectId);
+export function MySessionsPage() {
+  const navigate = useNavigate();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [classes] = useState<ClassWithSessions[]>(MOCK_CLASSES);
+  // Default expanded to show the sessions immediately if desired, or keep empty
+  const [expandedClassIds, setExpandedClassIds] = useState<Set<number>>(new Set());
+
+  const toggleClassExpansion = (classId: number) => {
+    setExpandedClassIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(classId)) next.delete(classId);
+      else next.add(classId);
+      return next;
+    });
   };
 
+  const handleFeedbackClick = (classId: number, sessionId: number) => {
+    // Navigate to the specific feedback route
+    navigate(`/mentee/sessions/feedback/${classId}/${sessionId}`);
+  };
+
+  // Filter Logic
+  const filteredClasses = classes.filter((cls) =>
+    cls.subject_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    cls.tutor_name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white">
+    <div className="min-h-screen bg-gray-50/50">
       <Header />
 
-      <main className="container mx-auto px-4 md:px-8 py-8">
-        <div className="mb-8 flex justify-between items-center">
-          <div>
-            <h1 className="text-4xl font-bold mb-2 text-blue-900">My Sessions</h1>
-            <p className="text-gray-600">View all sessions you’ve attended</p>
-          </div>
-          <Button
-            onClick={() => navigate("assignments")}
-            className="bg-blue-600 text-white px-5 py-2 rounded-lg font-semibold hover:bg-blue-700 transition"
-          >
-            Assignments
-          </Button>
-        </div>
+      <main className="container mx-auto px-4 md:px-8 py-8 max-w-5xl">
         <div className="mb-8">
-          <div className="relative max-w-2xl">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-            <Input
-              type="text"
-              placeholder="Search by subject name, code, class, or tutor..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 h-12 text-lg border-blue-200 focus:border-blue-400 focus:ring-blue-400"
-            />
-          </div>
+          <h1 className="text-3xl font-bold text-gray-900">My Classes & Sessions</h1>
+          <p className="text-gray-500 mt-1">Review your learned sessions and provide feedback.</p>
         </div>
-        {subjects.length === 0 ? (
-          <Card className="border-blue-200">
-            <CardContent className="py-12 text-center">
-              <p className="text-gray-600">You have not attended any sessions yet.</p>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="grid md:grid-cols-2 gap-4">
-            {subjects.map((subject) => {
-              const isExpanded = expandedSubjectId === subject.id;
-              const classCount = subject.classes.length;
+
+        {/* Search */}
+        <div className="mb-8 relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+          <Input
+            type="text"
+            placeholder="Search by subject or tutor..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10 h-12 text-lg bg-white border-gray-200 shadow-sm rounded-xl"
+          />
+        </div>
+
+        {/* Classes List */}
+        <div className="space-y-6">
+          {filteredClasses.length === 0 ? (
+            <div className="text-center py-12 bg-white rounded-xl border border-dashed border-gray-300">
+              <p className="text-gray-500">No classes found.</p>
+            </div>
+          ) : (
+            filteredClasses.map((cls) => {
+              const isExpanded = expandedClassIds.has(cls.id);
+              const completedCount = cls.sessions.filter(s => s.session_status === 'completed').length;
 
               return (
-                <Card
-                  key={subject.id}
-                  className="border-blue-200 hover:border-blue-400 hover:shadow-lg transition-all duration-200 bg-white"
+                <Card 
+                  key={cls.id} 
+                  className="overflow-hidden border-gray-200 shadow-sm hover:shadow-md transition-all bg-white"
                 >
-                  {/* Subject Header */}
-                  <CardHeader
-                    className="cursor-pointer hover:bg-blue-50 transition-colors rounded-t-lg"
-                    onClick={() => toggleSubject(subject.id)}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        {isExpanded ? (
-                          <ChevronDown className="h-5 w-5 text-blue-600" />
-                        ) : (
-                          <ChevronRight className="h-5 w-5 text-blue-600" />
-                        )}
-                        <div>
-                          <CardTitle className="text-xl text-blue-900">
-                            {subject.subject_name}
-                          </CardTitle>
-                          <p className="text-sm text-blue-600 font-semibold mt-1">
-                            {subject.subject_code}
-                          </p>
-                        </div>
+                  {/* 1. Class Header Row */}
+                  <div className="p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-2">
+                        <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                          {cls.subject_code}
+                        </Badge>
+                        <h2 className="text-xl font-bold text-gray-900">{cls.subject_name}</h2>
                       </div>
-                      <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
-                        {classCount} {classCount === 1 ? "class" : "classes"}
-                      </span>
+                      
+                      <div className="flex items-center gap-6 text-sm text-gray-600">
+                          <div className="flex items-center gap-2">
+                            <User className="w-4 h-4 text-gray-400" />
+                            <span>{cls.tutor_name}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <CalendarDays className="w-4 h-4 text-gray-400" />
+                            <span>{cls.num_of_weeks} Weeks</span>
+                          </div>
+                      </div>
                     </div>
-                  </CardHeader>
 
-                  {/* Expanded Classes */}
-                  {isExpanded && (
-                    <CardContent className="pt-0 pb-4 space-y-3">
-                      {subject.classes.map((classItem) => (
-                        <div
-                          key={classItem.id}
-                          className="bg-blue-50/50 border-l-4 border-blue-400 rounded-lg p-4 hover:bg-blue-50 transition-colors"
-                        >
-                          <div className="space-y-3">
-                            <div className="flex items-start justify-between">
-                              <div className="flex-1">
-                                <div className="flex items-center gap-2 mb-1">
-                                  <span className="text-lg font-bold text-blue-900">
-                                    Class {classItem.class_code}
-                                  </span>
-                                  <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded">
-                                    {classItem.number_of_weeks} weeks
-                                  </span>
-                                </div>
-                                <div className="text-sm text-gray-800">
-                                  👨‍🏫 {classItem.tutor_name}
-                                </div>
-                              </div>
-                            </div>
-
-                            {classItem.description && (
-                              <p className="text-sm text-gray-600">
-                                {classItem.description}
-                              </p>
-                            )}
-
-                            {/* Schedule */}
-                            <div className="bg-white border border-blue-200 rounded p-3 space-y-2">
-                              <p className="text-xs font-semibold text-gray-700 uppercase">
-                                Weekly Schedule:
-                              </p>
-                              <div className="flex flex-wrap gap-2">
-                                {classItem.time_slots.map((slot) => (
-                                  <div
-                                    key={slot.id}
-                                    className="flex items-center gap-1 text-xs bg-purple-50 px-2 py-1 rounded border border-purple-200"
-                                  >
-                                    <Clock className="h-3 w-3 text-purple-600" />
-                                    <span className="font-medium">
-                                      {DAYS_OF_WEEK[slot.dayOfWeek]}{" "}
-                                      {periodToTime(slot.startPeriod)}-{periodToTime(slot.endPeriod)}
-                                    </span>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                            
-                            {/* Feedback Button */}
-                            <div className="flex justify-end pt-2 border-t border-blue-200">
-                            {(() => {
-                                // 🧩 Replace this condition with your real logic later (e.g., course completion check)
-                                const isDone = true;
-
-                                return (
-                                <Button
-                                    size="sm"
-                                    disabled={!isDone}
-                                    className={`px-4 py-2 font-medium ${
-                                    isDone
-                                        ? "bg-blue-600 hover:bg-blue-700 text-white cursor-pointer"
-                                        : "bg-gray-300 text-gray-500 cursor-not-allowed"
-                                    }`}
-                                    onClick={() => {
-                                    if (isDone) navigate(`/mentee/sessions/feedback/${classItem.id}`);
-                                    }}
-                                >
-                                    Feedback
-                                </Button>
-                                );
-                            })()}
-                            </div>
+                    <div className="flex items-center gap-4">
+                        <div className="text-right hidden md:block">
+                          <span className="text-xs text-gray-500 uppercase font-semibold">Progress</span>
+                          <div className="text-sm">
+                             <span className="font-bold text-gray-900">{completedCount}</span>
+                             <span className="text-gray-400"> / </span>
+                             <span>{cls.sessions.length} Sessions</span>
                           </div>
                         </div>
-                      ))}
-                    </CardContent>
+                        <Button 
+                          // Use a different variant (or none) since we are fully customizing the background
+                          variant="default" // or remove this if you rely purely on className
+                          onClick={() => toggleClassExpansion(cls.id)}
+                          // New ClassName: White text (text-white) on a blue background (bg-blue-600) 
+                          // with a dark blue hover effect (hover:bg-blue-700).
+                          className="bg-blue-600 text-white hover:bg-blue-700"
+                        >
+                          {isExpanded ? "Hide Sessions" : "View Sessions"}
+                          {isExpanded ? <ChevronUp className="ml-2 h-4 w-4" /> : <ChevronDown className="ml-2 h-4 w-4" />}
+                        </Button>
+                    </div>
+                  </div>
+
+                  {/* 2. Sessions List (Accordion Body) */}
+                  {isExpanded && (
+                    <div className="border-t border-gray-100 bg-gray-50/50 p-4 md:p-6 space-y-3">
+                      {cls.sessions.map((session) => {
+                        const { date, time } = formatDateTime(session.session_date_time);
+                        const isCompleted = session.session_status === 'completed';
+                        const isScheduled = session.session_status === 'scheduled';
+
+                        return (
+                          <div 
+                            key={`${session.class_id}-${session.session_id}`}
+                            className="flex flex-col md:flex-row items-center bg-white border border-gray-200 rounded-lg p-4 gap-4"
+                          >
+                            {/* Date Badge */}
+                            <div className={`flex-shrink-0 w-full md:w-auto flex md:flex-col items-center justify-center md:w-20 h-12 md:h-16 rounded-md border gap-2 md:gap-0
+                              ${isCompleted ? 'bg-green-50 text-green-700 border-green-100' : 'bg-blue-50 text-blue-700 border-blue-100'}
+                            `}>
+                               <span className="text-xs font-bold uppercase">{date.split(' ')[0]}</span>
+                               <span className="text-lg font-bold">{date.split(' ')[1]}</span>
+                            </div>
+
+                            {/* Session Info */}
+                            <div className="flex-1 w-full text-center md:text-left">
+                              <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 mb-1">
+                                <h4 className="font-semibold text-gray-900">
+                                  Session {session.session_id}: {session.topic}
+                                </h4>
+                                {/* Status Badges */}
+                                {isCompleted && (
+                                  <Badge variant="secondary" className="bg-gray-100 text-gray-600 border-0">
+                                    <CheckCircle2 className="w-3 h-3 mr-1 text-green-600" /> 
+                                    {session.attended ? "Completed" : "Missed"}
+                                  </Badge>
+                                )}
+                              </div>
+
+                              <div className="flex flex-wrap items-center justify-center md:justify-start gap-x-4 gap-y-1 text-sm text-gray-500">
+                                <span className="flex items-center gap-1">
+                                  <Clock className="w-3 h-3" /> {time} ({session.duration_mins}m)
+                                </span>
+                                <span className="flex items-center gap-1">
+                                  <MapPin className="w-3 h-3" /> {session.location}
+                                </span>
+                              </div>
+                            </div>
+
+                            {/* Actions - Button Logic */}
+                            <div className="flex-shrink-0 w-full md:w-auto">
+                              {isScheduled ? null : (
+                                <Button 
+                                  variant={isCompleted ? "default" : "outline"} // Highlight feedback for completed
+                                  className={`w-full md:w-auto ${isCompleted ? 'bg-indigo-600 hover:bg-indigo-700 text-white' : 'border-gray-300 text-gray-700'}`}
+                                  onClick={() => handleFeedbackClick(session.class_id, session.session_id)}
+                                >
+                                   {isCompleted ? <Star className="w-4 h-4 mr-2" /> : <MessageSquare className="w-4 h-4 mr-2" />}
+                                   Give Feedback
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
                   )}
                 </Card>
               );
-            })}
-          </div>
-        )}
+            })
+          )}
+        </div>
       </main>
     </div>
   );

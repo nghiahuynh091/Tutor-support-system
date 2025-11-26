@@ -202,12 +202,23 @@ export function MenteeSchedulePage() {
                 View and manage your registered classes. You can cancel or reschedule before the deadline.
               </p>
             </div>
-            <button
-              onClick={() => navigate("/mentee/sessions")}
-              className="bg-blue-600 text-white px-5 py-2 rounded-lg font-semibold hover:bg-blue-700 transition"
-            >
-              My Sessions
-            </button>
+            <div className="flex flex-col space-y-1">
+              {/* Button 1: Classes History */}
+              <button
+                onClick={() => navigate("/mentee/history")}
+                className="bg-blue-600 text-white px-2 py-3 rounded-lg font-semibold hover:bg-blue-700 transition"
+              >
+                Sessions History
+              </button>
+
+              {/* Button 2: Assignment (Added Here) */}
+              <button
+                onClick={() => navigate("/mentee/assignments")}
+                className="bg-green-600 text-white px-5 py-2 rounded-lg font-semibold hover:bg-gray-700 transition"
+              >
+                Assignments
+              </button>
+            </div>
           </div>
 
           {/* Success Toast */}

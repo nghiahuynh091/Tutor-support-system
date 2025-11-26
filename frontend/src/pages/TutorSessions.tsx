@@ -153,7 +153,7 @@ export function TutorSessions() {
             <Button
               size="lg"
               className="bg-green-600 hover:bg-green-700 text-white"
-              onClick={() => navigate("/tutor/mentees_list")}
+              onClick={() => navigate("/tutor/progress_class_selection")}
             >
               Progress Track
             </Button>

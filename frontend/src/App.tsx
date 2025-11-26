@@ -8,7 +8,6 @@ import { MenteeSchedulePage } from "./pages/MenteeSchedulePage";
 import { TutorSessions } from "./pages/TutorSessions";
 import { CoordinatorDashboard } from "./pages/CoordinatorDashboard";
 import { FeedbackPage } from "./pages/FeedbackPage";
-import { MenteeProgressPage } from "./pages/MenteeProgressPage";
 import { PrivateNotePage } from "./pages/PrivateNotePage";
 import { ProvideAssignmentPage } from "./pages/ProvideAssignmentPage";
 import { HomeworkPage } from "./pages/HomeworkPage";
@@ -16,7 +15,7 @@ import { QuizPage } from "./pages/QuizPage";
 import { MenteeAssignmentsPage } from "./pages/MenteeAssignmentsPage";
 import { MenteeQuizAttemptPage } from "./pages/MenteeQuizAttemptPage";
 import { MySessionsPage } from "./pages/MySessionsPage";
-import { ProgressTrackingPage } from "./pages/ProgressTrackingPage";
+import { ProgressTrackingPage, ProgressClassSelectionPage } from "./pages/ProgressTrackingPages";
 import { CoordinatorProfile } from "./pages/CoordinatorProfile";
 import { MenteeProfile } from "./pages/MenteeProfile";
 import { TutorProfile } from "./pages/TutorProfile";
@@ -46,17 +45,17 @@ function App() {
           />
           <Route path="/mentee/schedule" element={<MenteeSchedulePage />} />
           {/* <Route path="/sessions" element={<MenteeSessions />} /> */}
-          <Route path="/mentee/sessions" element={<MySessionsPage />} />
+          <Route path="/mentee/history" element={<MySessionsPage />} />
           <Route
-            path="/mentee/sessions/feedback/:id"
+            path="/mentee/sessions/feedback/:classId/:sessionId"
             element={<FeedbackPage />}
           />
           <Route
-            path="/mentee/sessions/assignments"
+            path="/mentee/assignments"
             element={<MenteeAssignmentsPage />}
           />
           <Route
-            path="/mentee/sessions/quiz/:id"
+            path="/mentee/quiz/:classId/:sessionId"
             element={<MenteeQuizAttemptPage />}
           />
           <Route path="/mentee/profile" element={<MenteeProfile />} />
@@ -68,12 +67,9 @@ function App() {
           <Route path="/tutor/mark_attendance/:classId" element={<Card />} />
           <Route path="/assignment" element={<ProvideAssignmentPage />} />
           <Route path="/assignment/homework/:id" element={<HomeworkPage />} />
-          <Route path="/assignment/quiz/:id" element={<QuizPage />} />
-          <Route
-            path="/tutor/mentees_list"
-            element={<ProgressTrackingPage />}
-          />
-          <Route path="/mentee_progress/:id" element={<MenteeProgressPage />} />
+          <Route path="/assignment/quiz/:classId/:sessionId" element={<QuizPage />} />
+          <Route path="/tutor/progress_class_selection" element={<ProgressClassSelectionPage />} />
+          <Route path="/tutor/progress/:classId" element={<ProgressTrackingPage />} />
           <Route
             path="/mentee_progress/:id/private_note"
             element={<PrivateNotePage />}

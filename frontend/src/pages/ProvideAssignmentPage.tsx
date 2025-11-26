@@ -1,27 +1,39 @@
 "use client";
 import { Link } from "react-router-dom";
-import React, { useState } from "react"; // 👈 Import useState
+import React, { useState } from "react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
-// 💡 Placeholder for session data
+// 🆕 Mock Data: IDs are now numbers only
+const mockClasses = [
+  { id: 1, name: "Software Engineering" },
+  { id: 2, name: "Artificial Intelligence" },
+  { id: 3, name: "Computer Vision" },
+];
+
 const mockSessions = [
-  { id: "101", title: "Introduction to React" },
-  { id: "102", title: "TypeScript Fundamentals" },
-  { id: "103", title: "State Management with Hooks" },
+  { id: 1, title: "Introduction" },
+  { id: 102, title: "Advanced Concepts" },
+  { id: 103, title: "Final Review" },
 ];
 
 export function ProvideAssignmentPage() {
+  const [selectedClassId, setSelectedClassId] = useState("");
   const [selectedSessionId, setSelectedSessionId] = useState("");
 
-  const handleAssignmentClick = (type: string) => {
-    if (!selectedSessionId) {
-      alert("Please select a session before choosing an assignment type.");
-      return;
+  const handleClassChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedClassId(e.target.value);
+    setSelectedSessionId(""); // Reset session when class changes
+  };
+
+  // Helper to validate before navigation (optional, mostly for the button onClick)
+  const handleAssignmentClick = (e: React.MouseEvent, type: string) => {
+    if (!selectedClassId || !selectedSessionId) {
+      e.preventDefault();
+      alert("Please select both a Class and a Session.");
     }
-    // Logic will be handled by the <Link> component's 'to' prop
   };
 
   return (
@@ -36,7 +48,28 @@ export function ProvideAssignmentPage() {
           </CardHeader>
           <CardContent className="flex flex-col items-center space-y-6">
             
-            {/* 🆕 Session Dropdown */}
+            {/* Class Dropdown */}
+            <div className="w-full space-y-2">
+              <label htmlFor="class-select" className="block text-lg font-semibold text-gray-700">
+                Class *
+              </label>
+              <select
+                id="class-select"
+                value={selectedClassId}
+                onChange={handleClassChange}
+                className="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 text-base"
+                required
+              >
+                <option value="" disabled>Select a Class</option>
+                {mockClasses.map((cls) => (
+                  <option key={cls.id} value={cls.id}>
+                    Class {cls.id}: {cls.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Session Dropdown */}
             <div className="w-full space-y-2">
               <label htmlFor="session-select" className="block text-lg font-semibold text-gray-700">
                 Session *
@@ -45,10 +78,15 @@ export function ProvideAssignmentPage() {
                 id="session-select"
                 value={selectedSessionId}
                 onChange={(e) => setSelectedSessionId(e.target.value)}
-                className="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 text-base"
+                disabled={!selectedClassId} 
+                className={`w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 text-base ${
+                  !selectedClassId ? "bg-gray-100 text-gray-400 cursor-not-allowed" : "bg-white"
+                }`}
                 required
               >
-                <option value="" disabled>Select a Session Title</option>
+                <option value="" disabled>
+                  {!selectedClassId ? "Select a Class first..." : "Select a Session"}
+                </option>
                 {mockSessions.map((session) => (
                   <option key={session.id} value={session.id}>
                     Session {session.id}: {session.title}
@@ -59,29 +97,30 @@ export function ProvideAssignmentPage() {
             
             {/* Assignment Buttons */}
             <div className="flex justify-around py-4 w-full">
+              {/* Homework Link */}
               <Link 
-                to={selectedSessionId ? `/assignment/homework/${selectedSessionId}` : "#"}
-                onClick={(e) => {
-                  if (!selectedSessionId) {
-                    e.preventDefault();
-                    handleAssignmentClick('homework');
-                  }
-                }}
+                // 🆕 Updated URL structure: /homework/classId/sessionId
+                to={selectedClassId && selectedSessionId ? `/assignment/homework/${selectedClassId}/${selectedSessionId}` : "#"}
+                onClick={(e) => handleAssignmentClick(e, 'homework')}
               >
-                <Button className="bg-blue-800 hover:bg-blue-700 text-white text-lg px-8 py-3" disabled={!selectedSessionId}>
+                <Button 
+                  className="bg-blue-800 hover:bg-blue-700 text-white text-lg px-8 py-3" 
+                  disabled={!selectedClassId || !selectedSessionId}
+                >
                   Homework
                 </Button>
               </Link>
+
+              {/* Quiz Link */}
               <Link
-                to={selectedSessionId ? `/assignment/quiz/${selectedSessionId}` : "#"}
-                onClick={(e) => {
-                  if (!selectedSessionId) {
-                    e.preventDefault();
-                    handleAssignmentClick('quiz');
-                  }
-                }}
+                // 🆕 Updated URL structure: /quiz/classId/sessionId
+                to={selectedClassId && selectedSessionId ? `/assignment/quiz/${selectedClassId}/${selectedSessionId}` : "#"}
+                onClick={(e) => handleAssignmentClick(e, 'quiz')}
               >
-                <Button className="bg-green-700 hover:bg-green-600 text-white text-lg px-8 py-3" disabled={!selectedSessionId}>
+                <Button 
+                  className="bg-green-700 hover:bg-green-600 text-white text-lg px-8 py-3" 
+                  disabled={!selectedClassId || !selectedSessionId}
+                >
                   Quiz
                 </Button>
               </Link>
