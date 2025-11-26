@@ -106,3 +106,51 @@ class UserController:
                 "error": f"Login failed: {str(e)}",
                 "data": None
             }
+
+    @staticmethod
+    async def get_current_user(token_payload: Dict[str, Any]) -> Dict[str, Any]:
+        """Return the current user's profile based on token payload (sub)."""
+        try:
+            user_id = token_payload.get("sub")
+            if not user_id:
+                return {"success": False, "error": "Invalid token payload", "data": None}
+
+            user = await UserModel.get_user_by_id(user_id)
+            if not user:
+                return {"success": False, "error": "User not found", "data": None}
+
+            return {"success": True, "user": user}
+        except Exception as e:
+            return {"success": False, "error": f"Failed to fetch user: {str(e)}", "data": None}
+
+    @staticmethod
+    async def update_profile(token_payload: Dict[str, Any], update_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Update the current user's mentee/tutor field (learning_needs or expertise_areas)."""
+        try:
+            user_id = token_payload.get("sub")
+            role = token_payload.get("role")
+            if not user_id or not role:
+                return {"success": False, "error": "Invalid token payload", "data": None}
+
+            # Only allow mentee -> learning_needs, tutor -> expertise_areas
+            if role == "mentee":
+                new_value = update_data.get("learning_needs")
+                if new_value is None:
+                    return {"success": False, "error": "Missing learning_needs for mentee", "data": None}
+                updated = await UserModel.update_user_detail(user_id, role, "learning_needs", new_value)
+
+            elif role == "tutor":
+                new_value = update_data.get("expertise_areas")
+                if new_value is None:
+                    return {"success": False, "error": "Missing expertise_areas for tutor", "data": None}
+                updated = await UserModel.update_user_detail(user_id, role, "expertise_areas", new_value)
+
+            else:
+                return {"success": False, "error": "Role not allowed to update profile field", "data": None}
+
+            return {"success": True, "user": updated, "message": "Profile updated successfully"}
+
+        except ValueError as ve:
+            return {"success": False, "error": str(ve), "data": None}
+        except Exception as e:
+            return {"success": False, "error": f"Failed to update profile: {str(e)}", "data": None}

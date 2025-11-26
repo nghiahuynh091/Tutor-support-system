@@ -1,8 +1,11 @@
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import UserProfile from "@/components/UserProfile"; // Assuming you have this component
+import { useAuth } from "@/contexts/AuthContext";
 
 export function CoordinatorProfile() {
+  const { user } = useAuth();
+
   return (
     <div className="min-h-screen bg-white">
       <Header />
@@ -11,9 +14,9 @@ export function CoordinatorProfile() {
           My Profile
         </h2>
         <UserProfile
-          name="Jane Doe"
-          email="jane.doe@example.com"
-          ID="2559091"
+          name={user?.full_name || "Admin Name"}
+          email={user?.email || "admin@example.com"}
+          ID={user?.id || "ADMIN_ID"}
           avatarUrl="https://i.pravatar.cc/150?img=47"
           location="Ho Chi Minh City, Vietnam"
           role="admin"

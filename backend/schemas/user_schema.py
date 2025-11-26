@@ -15,3 +15,9 @@ class UserLoginSchema(BaseModel):
     password: str = Field(..., example="password5")
     # email: EmailStr = Field(..., example="nghiaadmin@example.com")
     # password: str = Field(..., example="nghiaadmin")
+
+
+# --- Schema cho việc cập nhật hồ sơ cá nhân (mentees / tutors) ---
+class UserUpdateSchema(BaseModel):
+    learning_needs: Optional[str] = Field(None, example="I need help with calculus and algorithms")
+    expertise_areas: Optional[str] = Field(None, example="Data Structures, Algorithms")
