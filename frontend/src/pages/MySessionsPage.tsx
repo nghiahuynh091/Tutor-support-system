@@ -56,7 +56,7 @@ interface ClassWithSessions {
 
 const MOCK_CLASSES: ClassWithSessions[] = [
   {
-    id: 101,
+    id: 1,
     subject_name: "Advanced Mathematics",
     subject_code: "MATH301",
     tutor_name: "Dr. Sarah Johnson",
@@ -65,7 +65,7 @@ const MOCK_CLASSES: ClassWithSessions[] = [
     class_status: "active",
     sessions: [
       {
-        class_id: 101,
+        class_id: 1,
         session_id: 1,
         session_date_time: "2025-11-01T09:00:00+07:00",
         session_status: "completed",
