@@ -84,7 +84,7 @@ async def update_class_status(
     current_user: dict = Depends(authorize(["admin"]))
 ):
     """
-    Update class status based on registration deadline and enrollment (admin only).
+    Update a single class status based on registration deadline and enrollment (admin only).
     - If deadline has passed and current_enrolled >= capacity/2: status = 'confirmed'
     - If deadline has passed and current_enrolled < capacity/2: status = 'cancelled'
     """
@@ -98,6 +98,23 @@ async def update_class_status(
         raise HTTPException(status_code=400, detail=result["error"])
 
 
+@router.patch("/status/all")
+async def update_all_classes_status(
+    current_user: dict = Depends(authorize(["admin"]))
+):
+    """
+    Update status for ALL scheduled classes based on registration deadline and enrollment (admin only).
+    - If deadline has passed and current_enrolled >= capacity/2: status = 'confirmed'
+    - If deadline has passed and current_enrolled < capacity/2: status = 'cancelled'
+    """
+    result = await ClassController.update_all_classes_status()
+    
+    if result["success"]:
+        return result
+    else:
+        raise HTTPException(status_code=400, detail=result["error"])
+
+
 @router.post("/sessions/create")
 async def create_sessions_for_confirmed_classes(
     current_user: dict = Depends(authorize(["admin"]))
@@ -108,6 +125,51 @@ async def create_sessions_for_confirmed_classes(
     the first occurrence of week_day after registration_deadline.
     """
     result = await ClassController.create_sessions_for_confirmed_classes()
+    
+    if result["success"]:
+        return result
+    else:
+        raise HTTPException(status_code=400, detail=result["error"])
+
+
+@router.post("/{class_id}/confirm")
+async def confirm_class(
+    class_id: int,
+    current_user: dict = Depends(authorize(["admin"]))
+):
+    """
+    Confirm a single class by updating its status and creating sessions (admin only).
+    
+    This endpoint combines two operations:
+    1. Update class status based on registration deadline and enrollment
+       - If current_enrolled >= capacity/2: status = 'confirmed'
+       - If current_enrolled < capacity/2: status = 'cancelled'
+    2. If class is confirmed, automatically create sessions (num_of_weeks sessions)
+    """
+    result = await ClassController.confirm_class(class_id)
+    
+    if result["success"]:
+        return result
+    else:
+        if result["error"] == "Class not found":
+            raise HTTPException(status_code=404, detail=result["error"])
+        raise HTTPException(status_code=400, detail=result["error"])
+
+
+@router.post("/confirm/all")
+async def confirm_all_classes(
+    current_user: dict = Depends(authorize(["admin"]))
+):
+    """
+    Confirm ALL classes by updating their status and creating sessions (admin only).
+    
+    This endpoint combines two operations for all scheduled classes:
+    1. Update all classes status based on registration deadline and enrollment
+       - If current_enrolled >= capacity/2: status = 'confirmed'
+       - If current_enrolled < capacity/2: status = 'cancelled'
+    2. Create sessions for all newly confirmed classes
+    """
+    result = await ClassController.confirm_all_classes()
     
     if result["success"]:
         return result

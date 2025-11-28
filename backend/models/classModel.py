@@ -299,6 +299,91 @@ class ClassModel:
         }
 
     @staticmethod
+    async def update_all_classes_status() -> Dict[str, Any]:
+        """
+        Update status for all classes with 'scheduled' status based on registration deadline and enrollment.
+        - If deadline has passed and current_enrolled >= capacity/2: status = 'confirmed'
+        - If deadline has passed and current_enrolled < capacity/2: status = 'cancelled'
+        """
+        current_time = datetime.now(timezone.utc)
+        
+        # Get all scheduled classes where deadline has passed
+        get_classes_query = """
+            SELECT 
+                id, 
+                registration_deadline, 
+                current_enrolled, 
+                capacity, 
+                class_status
+            FROM classes
+            WHERE class_status = 'scheduled'
+        """
+        
+        classes = await db.execute_query(get_classes_query)
+        
+        if not classes:
+            return {
+                "classes_processed": 0,
+                "confirmed_count": 0,
+                "cancelled_count": 0,
+                "skipped_count": 0,
+                "message": "No scheduled classes found"
+            }
+        
+        confirmed_count = 0
+        cancelled_count = 0
+        skipped_count = 0
+        updated_classes = []
+        
+        for class_data in classes:
+            class_id = class_data['id']
+            registration_deadline = class_data['registration_deadline']
+            current_enrolled = class_data['current_enrolled']
+            capacity = class_data['capacity']
+            
+            # Make registration_deadline timezone-aware if it's naive
+            if registration_deadline.tzinfo is None:
+                registration_deadline = registration_deadline.replace(tzinfo=timezone.utc)
+            
+            # Skip if deadline hasn't passed
+            if registration_deadline > current_time:
+                skipped_count += 1
+                continue
+            
+            # Determine new status based on enrollment
+            min_required = capacity / 2
+            if current_enrolled >= min_required:
+                new_status = 'confirmed'
+                confirmed_count += 1
+            else:
+                new_status = 'cancelled'
+                cancelled_count += 1
+            
+            # Update the class status
+            update_query = """
+                UPDATE classes
+                SET class_status = $1, updated_at = NOW()
+                WHERE id = $2
+                RETURNING id, class_status
+            """
+            await db.execute_query(update_query, new_status, class_id)
+            
+            updated_classes.append({
+                "id": class_id,
+                "status": new_status,
+                "current_enrolled": current_enrolled,
+                "capacity": capacity
+            })
+        
+        return {
+            "classes_processed": len(updated_classes),
+            "confirmed_count": confirmed_count,
+            "cancelled_count": cancelled_count,
+            "skipped_count": skipped_count,
+            "updated_classes": updated_classes,
+            "message": f"Processed {len(updated_classes)} classes. Confirmed: {confirmed_count}, Cancelled: {cancelled_count}, Skipped (deadline not passed): {skipped_count}"
+        }
+    @staticmethod
     def _get_first_weekday_after_date(start_date: datetime, target_weekday: str) -> datetime:
         """
         Get the first occurrence of a specific weekday after a given date.
@@ -440,4 +525,118 @@ class ClassModel:
             "sessions_created": total_sessions_created,
             "details": created_sessions_details,
             "message": f"Successfully created {total_sessions_created} sessions for {classes_processed} classes"
+        }
+
+    @staticmethod
+    async def create_sessions_for_class(class_id: int) -> Dict[str, Any]:
+        """
+        Create sessions for a specific confirmed class.
+        Creates num_of_weeks sessions starting from the first occurrence 
+        of week_day after registration_deadline.
+        """
+        # Get class details
+        get_class_query = """
+            SELECT 
+                c.id,
+                c.num_of_weeks,
+                c.week_day,
+                c.location,
+                c.start_time,
+                c.end_time,
+                c.registration_deadline,
+                c.class_status
+            FROM classes c
+            WHERE c.id = $1
+        """
+        
+        result = await db.execute_query(get_class_query, class_id)
+        
+        if not result:
+            return None
+        
+        class_data = result[0]
+        
+        # Check if class is confirmed
+        if class_data['class_status'] != 'confirmed':
+            return {
+                "class_id": class_id,
+                "sessions_created": 0,
+                "error": f"Class status is '{class_data['class_status']}', not 'confirmed'"
+            }
+        
+        # Check if sessions already exist
+        check_sessions_query = """
+            SELECT COUNT(*) as count FROM sessions WHERE class_id = $1
+        """
+        existing_sessions = await db.execute_query(check_sessions_query, class_id)
+        
+        if existing_sessions and existing_sessions[0]['count'] > 0:
+            return {
+                "class_id": class_id,
+                "sessions_created": 0,
+                "error": "Sessions already exist for this class"
+            }
+        
+        num_of_weeks = class_data['num_of_weeks']
+        week_day = class_data['week_day']
+        location = class_data['location']
+        start_time = class_data['start_time']
+        end_time = class_data['end_time']
+        registration_deadline = class_data['registration_deadline']
+        
+        # Handle timezone for registration_deadline
+        if registration_deadline.tzinfo is not None:
+            registration_deadline = registration_deadline.replace(tzinfo=None)
+        
+        # Get the first session date
+        first_session_date = ClassModel._get_first_weekday_after_date(
+            registration_deadline, 
+            week_day
+        )
+        
+        sessions_created = []
+        
+        # Create sessions for each week
+        for week_num in range(num_of_weeks):
+            session_date = first_session_date + timedelta(weeks=week_num)
+            session_id = week_num + 1
+            
+            insert_session_query = """
+                INSERT INTO sessions (
+                    class_id,
+                    session_id,
+                    session_date,
+                    session_status,
+                    location,
+                    start_time,
+                    end_time,
+                    week_day,
+                    created_at
+                )
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())
+                RETURNING class_id, session_id, session_date
+            """
+            
+            insert_result = await db.execute_query(
+                insert_session_query,
+                class_id,
+                session_id,
+                session_date.date(),
+                'scheduled',
+                location,
+                start_time,
+                end_time,
+                week_day
+            )
+            
+            if insert_result:
+                sessions_created.append({
+                    "session_id": session_id,
+                    "session_date": str(session_date.date())
+                })
+        
+        return {
+            "class_id": class_id,
+            "sessions_created": len(sessions_created),
+            "sessions": sessions_created
         }
