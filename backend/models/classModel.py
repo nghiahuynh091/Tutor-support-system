@@ -110,80 +110,90 @@ class ClassModel:
         return await db.execute_query(query, subject_id)
 
     @staticmethod
-    async def create_class_and_sessions(tutor_id: str, class_data: Dict[str, Any]) -> Dict[str, Any]:
-        """Create a class row and corresponding sessions based on time_slots and number_of_weeks.
+    async def create_class(tutor_id: str, class_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Create a class with all required attributes.
 
-        class_data expected keys: subject_id, description, max_students, number_of_weeks, meeting_link, time_slots
-        time_slots: list of { dayOfWeek, startPeriod, endPeriod }
+        class_data expected keys: subject_id, week_day, class_status, location, capacity, 
+        start_time, end_time, num_of_weeks, registration_deadline, semester
         """
         subject_id = class_data.get("subject_id")
-        description = class_data.get("description")
-        max_students = class_data.get("max_students")
-        number_of_weeks = class_data.get("number_of_weeks")
-        meeting_link = class_data.get("meeting_link")
-        time_slots = class_data.get("time_slots", [])
+        week_day = class_data.get("week_day")
+        class_status = class_data.get("class_status", "scheduled")
+        location = class_data.get("location")
+        capacity = class_data.get("capacity")
+        start_time = class_data.get("start_time")
+        end_time = class_data.get("end_time")
+        num_of_weeks = class_data.get("num_of_weeks")
+        registration_deadline = class_data.get("registration_deadline")
+        semester = class_data.get("semester")
 
-        # Map frontend period to hour (same logic as frontend: hour = period + 5)
-        def period_to_hour(period: int) -> int:
-            return period + 5
+        # Check for time overlap with existing classes for the same tutor
+        overlap_check_query = """
+            SELECT id, start_time, end_time, week_day
+            FROM classes 
+            WHERE tutor_id = $1 
+            AND week_day = $2 
+            AND semester = $3
+            AND class_status != 'cancelled'
+            AND (
+                (start_time <= $4 AND end_time > $4) OR  -- New start_time overlaps
+                (start_time < $5 AND end_time >= $5) OR  -- New end_time overlaps
+                (start_time >= $4 AND end_time <= $5)    -- Existing class is within new time range
+            )
+        """
+        
+        existing_classes = await db.execute_query(
+            overlap_check_query, 
+            tutor_id, 
+            week_day, 
+            semester, 
+            start_time, 
+            end_time
+        )
+        
+        if existing_classes:
+            overlapping_class = existing_classes[0]
+            raise ValueError(
+                f"Time conflict detected! Tutor already has a class on {week_day} "
+                f"from {overlapping_class['start_time']} to {overlapping_class['end_time']} "
+                f"in semester {semester} (Class ID: {overlapping_class['id']})"
+            )
 
-        async with db.pool.acquire() as conn:
-            async with conn.transaction():
-                insert_class_query = """
-                    INSERT INTO classes (tutor_id, subject_id, location, capacity, num_of_weeks, created_at, updated_at)
-                    VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
-                    RETURNING id;
-                """
-                # store meeting_link in location column for now (schema doesn't have meeting_link)
-                class_id = await conn.fetchval(
-                    insert_class_query,
-                    tutor_id,
-                    subject_id,
-                    meeting_link,
-                    max_students,
-                    number_of_weeks,
-                )
+        insert_class_query = """
+            INSERT INTO classes (
+                tutor_id, 
+                subject_id, 
+                week_day, 
+                class_status, 
+                location, 
+                capacity, 
+                start_time, 
+                end_time, 
+                current_enrolled, 
+                num_of_weeks, 
+                registration_deadline, 
+                semester, 
+                created_at, 
+                updated_at
+            )
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW(), NOW())
+            RETURNING id;
+        """
+        
+        class_id = await db.execute_query(
+            insert_class_query,
+            tutor_id,
+            subject_id,
+            week_day,
+            class_status,
+            location,
+            capacity,
+            start_time,
+            end_time,
+            0,  # current_enrolled starts at 0
+            num_of_weeks,
+            registration_deadline,
+            semester
+        )
 
-                # Create sessions: for each week and each time slot
-                sessions_insert = """
-                    INSERT INTO sessions (class_id, session_date_time, session_status, location, current_enrolled, max_enrolled, created_at, updated_at)
-                    VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
-                """
-
-                created_sessions = []
-
-                today = datetime.utcnow()
-
-                for week in range(number_of_weeks):
-                    for slot in time_slots:
-                        day = int(slot.get("dayOfWeek"))
-                        start_period = int(slot.get("startPeriod"))
-
-                        # Compute next date for the requested weekday
-                        # Convert day (1=Mon..7=Sun) to python weekday (Mon=0..Sun=6)
-                        target_weekday = (day - 1) % 7
-                        days_ahead = target_weekday - today.weekday()
-                        if days_ahead <= 0:
-                            days_ahead += 7
-                        # add week offset
-                        days_ahead += week * 7
-
-                        session_date = (today + timedelta(days=days_ahead)).replace(hour=period_to_hour(start_period), minute=0, second=0, microsecond=0)
-
-                        await conn.execute(
-                            sessions_insert,
-                            class_id,
-                            session_date,
-                            'scheduled',
-                            meeting_link,
-                            0,
-                            max_students,
-                        )
-
-                        created_sessions.append({
-                            "class_id": class_id,
-                            "session_date_time": session_date.isoformat(),
-                        })
-
-                # Return created class id and sessions summary
-                return {"id": class_id, "sessions_created": len(created_sessions)}
+        return {"id": class_id[0]['id'] if class_id else None}
