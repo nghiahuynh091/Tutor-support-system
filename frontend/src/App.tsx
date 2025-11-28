@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ProtectedRoute } from "./components/ProtectedRoute";
+import { MenteeLayout } from "./components/MenteeLayout";
 import { HomePage } from "./pages/HomePage";
 import { LoginPage } from "./pages/LoginPage";
 import { MenteeHomePage } from "./pages/MenteeHomePage";
@@ -36,29 +37,18 @@ function App() {
         <Route path="/login" element={<LoginPage />} />
         {/* <Route path="/role-selection" element={<RoleSelectionPage />} /> */}
 
-        {/* Mentee Routes */}
+        {/* Mentee Routes - with MenteeLayout */}
         <Route element={<ProtectedRoute allowedRoles={["mentee"]} />}>
-          <Route path="/mentee/home" element={<MenteeHomePage />} />
-          <Route
-            path="/mentee/registration"
-            element={<MenteeRegistrationPage />}
-          />
-          <Route path="/mentee/schedule" element={<MenteeSchedulePage />} />
-          {/* <Route path="/sessions" element={<MenteeSessions />} /> */}
-          <Route path="/mentee/history" element={<MySessionsPage />} />
-          <Route
-            path="/mentee/sessions/feedback/:classId/:sessionId"
-            element={<FeedbackPage />}
-          />
-          <Route
-            path="/mentee/assignments"
-            element={<MenteeAssignmentsPage />}
-          />
-          <Route
-            path="/mentee/quiz/:classId/:sessionId"
-            element={<MenteeQuizAttemptPage />}
-          />
-          <Route path="/mentee/profile" element={<MenteeProfile />} />
+          <Route element={<MenteeLayout />}>
+            <Route path="/mentee/home" element={<MenteeHomePage />} />
+            <Route path="/mentee/registration" element={<MenteeRegistrationPage />} />
+            <Route path="/mentee/schedule" element={<MenteeSchedulePage />} />
+            <Route path="/mentee/history" element={<MySessionsPage />} />
+            <Route path="/mentee/sessions/feedback/:classId/:sessionId" element={<FeedbackPage />} />
+            <Route path="/mentee/assignments" element={<MenteeAssignmentsPage />} />
+            <Route path="/mentee/quiz/:classId/:sessionId" element={<MenteeQuizAttemptPage />} />
+            <Route path="/mentee/profile" element={<MenteeProfile />} />
+          </Route>
         </Route>
 
         {/* Tutor Routes */}
