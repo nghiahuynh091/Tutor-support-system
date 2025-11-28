@@ -27,8 +27,6 @@ import {
 } from "@/services/registrationService";
 import { useAuth } from "@/contexts/AuthContext";
 
-type ActiveTab = "register" | "myClasses";
-
 const getDayName = (day: number | string): string => {
   if (typeof day === "string") {
     return day.charAt(0).toUpperCase() + day.slice(1).toLowerCase();
@@ -89,9 +87,11 @@ export function MenteeRegistrationPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [registering, setRegistering] = useState<number | null>(null);
-  const [activeTab, setActiveTab] = useState<ActiveTab>("register");
   const [filterOpen, setFilterOpen] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState<string>("all");
+  const [myClassesExpanded, setMyClassesExpanded] = useState<Set<number>>(
+    new Set()
+  );
 
   // Get current mentee ID
   const menteeId = user?.id || "";
@@ -326,13 +326,10 @@ export function MenteeRegistrationPage() {
       <Header />
 
       <div className="container mx-auto px-4 py-16">
-        <div className="max-w-5xl mx-auto">
+        <div className="max-w-6xl mx-auto">
+          {/* Page Header */}
           <div className="mb-8 flex justify-between items-center">
-            <div>
-              <h1 className="text-4xl font-bold text-gray-900">
-                Register for Classes
-              </h1>
-            </div>
+            <h1 className="text-4xl font-bold text-gray-900">Classes</h1>
             <button
               onClick={() => navigate("/mentee/schedule")}
               className="bg-blue-600 text-white px-5 py-2 rounded-lg font-semibold hover:bg-blue-700 transition"
@@ -341,33 +338,9 @@ export function MenteeRegistrationPage() {
             </button>
           </div>
 
-          {/* Tabs */}
-          <div className="flex space-x-1 mb-6 bg-gray-100 p-1 rounded-lg w-fit">
-            <button
-              onClick={() => setActiveTab("register")}
-              className={`px-6 py-2 rounded-md font-medium transition-all ${
-                activeTab === "register"
-                  ? "bg-white text-gray-900 shadow-sm"
-                  : "text-gray-600 hover:text-gray-900"
-              }`}
-            >
-              Register
-            </button>
-            <button
-              onClick={() => setActiveTab("myClasses")}
-              className={`px-6 py-2 rounded-md font-medium transition-all ${
-                activeTab === "myClasses"
-                  ? "bg-white text-gray-900 shadow-sm"
-                  : "text-gray-600 hover:text-gray-900"
-              }`}
-            >
-              My Classes
-            </button>
-          </div>
-
           {/* Search Bar with Filter */}
           <div className="mb-8">
-            <div className="flex gap-3 max-w-3xl">
+            <div className="flex gap-3">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
                 <Input
@@ -536,307 +509,25 @@ export function MenteeRegistrationPage() {
               </div>
             )}
 
-          {/* Subjects List */}
-          {activeTab === "register" && (
-            <>
-              {filteredSubjects.length === 0 ? (
-                <Card className="border-blue-200">
-                  <div className="py-12 text-center">
-                    <p className="text-gray-600">
-                      {searchQuery
-                        ? "No subjects found matching your search."
-                        : "No available subjects at the moment."}
-                    </p>
-                  </div>
-                </Card>
-              ) : (
-                <div className="space-y-4">
-                  {filteredSubjects.map((subject) => {
-                    const isExpanded = expandedSubjects.has(subject.id);
-                    const classCount = subject.classes.length;
+          {/* ===== MY CLASSES SECTION ===== */}
+          <div className="mb-10">
+            <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+              <BookOpen className="w-6 h-6 text-green-600" />
+              My Classes
+            </h2>
 
-                    return (
-                      <Card
-                        key={subject.id}
-                        className="border-blue-200 hover:border-blue-400 hover:shadow-lg transition-all duration-200 bg-white"
-                      >
-                        <div
-                          className="p-4 bg-blue-50 hover:bg-blue-100 cursor-pointer transition-colors flex items-center justify-between"
-                          onClick={() => toggleSubject(subject.id)}
-                        >
-                          <div className="flex-1">
-                            <div className="flex items-center gap-3">
-                              {isExpanded ? (
-                                <ChevronDown className="h-5 w-5 text-blue-600" />
-                              ) : (
-                                <ChevronRight className="h-5 w-5 text-blue-600" />
-                              )}
-                              <div>
-                                <h2 className="text-xl font-bold text-gray-900">
-                                  {subject.subject_name}
-                                </h2>
-                                <p className="text-sm text-blue-600 font-semibold mt-1">
-                                  {subject.subject_code}
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
-                              {classCount}{" "}
-                              {classCount === 1 ? "class" : "classes"}
-                            </span>
-                          </div>
-                        </div>
-
-                        {isExpanded && (
-                          <div className="pt-0 pb-4 px-4 space-y-3">
-                            {subject.classes.length === 0 ? (
-                              <p className="text-gray-500 text-sm text-center py-4">
-                                No available classes at the moment.
-                              </p>
-                            ) : (
-                              subject.classes.map((cls) => {
-                                const isRegistered = registeredClasses.has(
-                                  cls.id
-                                );
-                                console.log(
-                                  `Class ${cls.id}: isRegistered=${isRegistered}, registeredClasses=`,
-                                  Array.from(registeredClasses)
-                                );
-                                const isFull =
-                                  cls.current_enrolled >= cls.capacity;
-                                const deadlinePassed = cls.registration_deadline
-                                  ? isDeadlinePassed(cls.registration_deadline)
-                                  : false;
-                                const canRegister =
-                                  !isRegistered && !isFull && !deadlinePassed;
-                                const isCurrentlyRegistering =
-                                  registering === cls.id;
-
-                                return (
-                                  <div
-                                    key={cls.id}
-                                    className="bg-blue-50/50 border-l-4 border-blue-400 rounded-lg p-4 hover:bg-blue-50 transition-colors"
-                                  >
-                                    <div className="space-y-3">
-                                      {/* Class Header */}
-                                      <div className="flex items-start justify-between">
-                                        <div className="flex-1">
-                                          <div className="flex items-center gap-2 mb-1 flex-wrap">
-                                            <span className="text-lg font-bold text-blue-900">
-                                              Class #{cls.id}
-                                            </span>
-                                            {cls.num_of_weeks && (
-                                              <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded">
-                                                {cls.num_of_weeks} weeks
-                                              </span>
-                                            )}
-                                            <span className="text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded">
-                                              Semester {cls.semester}
-                                            </span>
-                                            {isRegistered && (
-                                              <span className="bg-green-100 text-green-800 px-2 py-0.5 rounded-full text-xs font-semibold">
-                                                Registered
-                                              </span>
-                                            )}
-                                            {isFull && !isRegistered && (
-                                              <span className="bg-red-100 text-red-800 px-2 py-0.5 rounded-full text-xs font-semibold">
-                                                Full
-                                              </span>
-                                            )}
-                                            {deadlinePassed &&
-                                              !isRegistered && (
-                                                <span className="bg-orange-100 text-orange-800 px-2 py-0.5 rounded-full text-xs font-semibold">
-                                                  Deadline Passed
-                                                </span>
-                                              )}
-                                          </div>
-                                          <div className="flex items-center gap-2 text-sm">
-                                            <span className="font-semibold text-gray-900">
-                                              👨‍🏫 {cls.tutor_name}
-                                            </span>
-                                          </div>
-                                        </div>
-                                      </div>
-
-                                      {/* Registration Deadline */}
-                                      {cls.registration_deadline && (
-                                        <div
-                                          className={`flex items-center gap-2 text-xs ${
-                                            deadlinePassed
-                                              ? "text-orange-600"
-                                              : "text-blue-600"
-                                          }`}
-                                        >
-                                          <Calendar className="h-3 w-3" />
-                                          <span className="font-medium">
-                                            Registration{" "}
-                                            {deadlinePassed
-                                              ? "closed"
-                                              : "deadline"}
-                                            :{" "}
-                                            {formatDeadline(
-                                              cls.registration_deadline
-                                            )}
-                                          </span>
-                                        </div>
-                                      )}
-
-                                      {/* Description */}
-                                      {cls.description && (
-                                        <p className="text-sm text-gray-600">
-                                          {cls.description}
-                                        </p>
-                                      )}
-
-                                      {/* Schedule */}
-                                      <div className="bg-white border border-blue-200 rounded p-3 space-y-2">
-                                        <p className="text-xs font-semibold text-gray-700 uppercase">
-                                          Schedule:
-                                        </p>
-                                        <div className="flex items-center gap-2 text-sm">
-                                          <Clock className="h-4 w-4 text-purple-600" />
-                                          <span className="font-medium">
-                                            {getDayName(cls.week_day)}{" "}
-                                            {periodToTime(cls.start_time)}-
-                                            {periodToTime(cls.end_time)}
-                                          </span>
-                                          <span className="text-gray-600">
-                                            (Periods {cls.start_time}-
-                                            {cls.end_time})
-                                          </span>
-                                        </div>
-                                        {cls.location && (
-                                          <p className="text-xs text-gray-600">
-                                            📍 {cls.location}
-                                          </p>
-                                        )}
-                                      </div>
-
-                                      {/* Enrollment & Actions */}
-                                      <div className="flex items-center justify-between pt-2 border-t border-blue-200">
-                                        <div className="flex items-center gap-1">
-                                          <Users className="h-4 w-4 text-gray-600" />
-                                          <span
-                                            className={`text-sm font-medium ${
-                                              isFull
-                                                ? "text-red-600"
-                                                : "text-gray-700"
-                                            }`}
-                                          >
-                                            {cls.current_enrolled} /{" "}
-                                            {cls.capacity} enrolled
-                                            {isFull && " (Full)"}
-                                          </span>
-                                        </div>
-
-                                        <div className="flex gap-2">
-                                          {isRegistered ? (
-                                            <div className="flex items-center gap-2">
-                                              <div className="flex items-center gap-1.5 bg-green-100 text-green-800 px-3 py-1.5 rounded-lg">
-                                                <CheckCircle className="w-4 h-4" />
-                                                <span className="text-sm font-semibold">
-                                                  Registered
-                                                </span>
-                                              </div>
-                                              <Button
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={() =>
-                                                  handleCancelRegistration(
-                                                    cls.id
-                                                  )
-                                                }
-                                                className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-300"
-                                              >
-                                                Cancel
-                                              </Button>
-                                              {cls.meeting_link && (
-                                                <Button
-                                                  size="sm"
-                                                  className="bg-blue-600 hover:bg-blue-700"
-                                                  asChild
-                                                >
-                                                  <a
-                                                    href={cls.meeting_link}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                  >
-                                                    Join{" "}
-                                                    <ExternalLink className="ml-1 h-3 w-3" />
-                                                  </a>
-                                                </Button>
-                                              )}
-                                            </div>
-                                          ) : (
-                                            <Button
-                                              size="sm"
-                                              className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
-                                              disabled={
-                                                !canRegister ||
-                                                isCurrentlyRegistering
-                                              }
-                                              onClick={() =>
-                                                handleRegister(cls.id, cls)
-                                              }
-                                            >
-                                              {isCurrentlyRegistering ? (
-                                                <>
-                                                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                                  Registering...
-                                                </>
-                                              ) : isFull ? (
-                                                "Full"
-                                              ) : deadlinePassed ? (
-                                                "Closed"
-                                              ) : (
-                                                "Register"
-                                              )}
-                                            </Button>
-                                          )}
-                                        </div>
-                                      </div>
-                                    </div>
-                                  </div>
-                                );
-                              })
-                            )}
-                          </div>
-                        )}
-                      </Card>
-                    );
-                  })}
+            {subjects.filter((subject) =>
+              subject.classes.some((cls) => registeredClasses.has(cls.id))
+            ).length === 0 ? (
+              <Card className="border-gray-200 bg-gray-50">
+                <div className="py-8 text-center">
+                  <BookOpen className="h-10 w-10 text-gray-300 mx-auto mb-3" />
+                  <p className="text-gray-500">No registered classes yet</p>
                 </div>
-              )}
-            </>
-          )}
-
-          {/* My Classes Tab */}
-          {activeTab === "myClasses" && (
-            <div className="space-y-4">
-              {subjects.filter((subject) =>
-                subject.classes.some((cls) => registeredClasses.has(cls.id))
-              ).length === 0 ? (
-                <Card className="border-blue-200">
-                  <div className="py-12 text-center">
-                    <BookOpen className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                    <p className="text-gray-600 text-lg font-medium">
-                      No registered classes yet
-                    </p>
-                    <p className="text-gray-500 text-sm mt-1">
-                      Browse the Register tab to find and enroll in classes.
-                    </p>
-                    <Button
-                      className="mt-4 bg-blue-600 hover:bg-blue-700"
-                      onClick={() => setActiveTab("register")}
-                    >
-                      Browse Classes
-                    </Button>
-                  </div>
-                </Card>
-              ) : (
-                subjects
+              </Card>
+            ) : (
+              <div className="space-y-3">
+                {subjects
                   .filter((subject) =>
                     subject.classes.some((cls) => registeredClasses.has(cls.id))
                   )
@@ -844,119 +535,451 @@ export function MenteeRegistrationPage() {
                     const registeredClassesInSubject = subject.classes.filter(
                       (cls) => registeredClasses.has(cls.id)
                     );
+                    const isExpanded = myClassesExpanded.has(subject.id);
 
                     return (
                       <Card
                         key={subject.id}
                         className="border-green-200 bg-white overflow-hidden"
                       >
-                        <div className="p-4 bg-green-50 border-b border-green-200">
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <h2 className="text-xl font-bold text-gray-900">
-                                {subject.subject_name}
-                              </h2>
-                              <p className="text-sm text-green-600 font-semibold mt-1">
-                                {subject.subject_code}
-                              </p>
-                            </div>
-                            <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
-                              <CheckCircle className="w-4 h-4 mr-1" />
-                              Enrolled
+                        {/* Subject Header - Horizontal */}
+                        <div
+                          className="px-4 py-3 bg-green-50 hover:bg-green-100 cursor-pointer transition-colors flex items-center justify-between"
+                          onClick={() => {
+                            const newExpanded = new Set(myClassesExpanded);
+                            if (newExpanded.has(subject.id)) {
+                              newExpanded.delete(subject.id);
+                            } else {
+                              newExpanded.add(subject.id);
+                            }
+                            setMyClassesExpanded(newExpanded);
+                          }}
+                        >
+                          <div className="flex items-center gap-3 min-w-0 flex-1">
+                            {isExpanded ? (
+                              <ChevronDown className="h-5 w-5 text-green-600 flex-shrink-0" />
+                            ) : (
+                              <ChevronRight className="h-5 w-5 text-green-600 flex-shrink-0" />
+                            )}
+                            <h3 className="text-lg font-bold text-gray-900 truncate">
+                              {subject.subject_name}
+                            </h3>
+                            <span className="text-sm text-green-600 font-semibold flex-shrink-0">
+                              {subject.subject_code}
                             </span>
                           </div>
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 flex-shrink-0 ml-2">
+                            <CheckCircle className="w-3 h-3 mr-1" />
+                            {registeredClassesInSubject.length} enrolled
+                          </span>
                         </div>
 
-                        <div className="p-4 space-y-3">
-                          {registeredClassesInSubject.map((cls) => (
-                            <div
-                              key={cls.id}
-                              className="bg-green-50/50 border-l-4 border-green-400 rounded-lg p-4"
-                            >
-                              <div className="space-y-3">
-                                {/* Class Header */}
-                                <div className="flex items-start justify-between">
-                                  <div className="flex-1">
-                                    <div className="flex items-center gap-2 mb-1 flex-wrap">
-                                      <span className="text-lg font-bold text-green-900">
-                                        Class #{cls.id}
-                                      </span>
+                        {/* Expanded - Table Layout */}
+                        {isExpanded && (
+                          <div className="px-4 py-3">
+                            <table className="w-full text-sm">
+                              <thead>
+                                <tr className="border-b border-green-200 text-left text-gray-600">
+                                  <th className="pb-2 font-semibold w-20">
+                                    Class
+                                  </th>
+                                  <th className="pb-2 font-semibold w-32">
+                                    Tutor
+                                  </th>
+                                  <th className="pb-2 font-semibold w-40">
+                                    Schedule
+                                  </th>
+                                  <th className="pb-2 font-semibold w-28">
+                                    Location
+                                  </th>
+                                  <th className="pb-2 font-semibold w-16">
+                                    Weeks
+                                  </th>
+                                  <th className="pb-2 font-semibold w-24 text-right">
+                                    Actions
+                                  </th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {registeredClassesInSubject.map((cls) => (
+                                  <tr
+                                    key={cls.id}
+                                    className="border-b border-green-100 last:border-b-0 hover:bg-green-50/50"
+                                  >
+                                    <td className="py-2.5 font-bold text-green-800">
+                                      #{cls.id}
+                                    </td>
+                                    <td
+                                      className="py-2.5 text-gray-700 truncate max-w-[120px]"
+                                      title={cls.tutor_name}
+                                    >
+                                      {cls.tutor_name}
+                                    </td>
+                                    <td className="py-2.5 text-gray-600">
+                                      <div className="flex items-center gap-1">
+                                        <Clock className="h-3.5 w-3.5 text-purple-500 flex-shrink-0" />
+                                        <span className="truncate">
+                                          {getDayName(cls.week_day)}{" "}
+                                          {periodToTime(cls.start_time)}-
+                                          {periodToTime(cls.end_time)}
+                                        </span>
+                                      </div>
+                                    </td>
+                                    <td
+                                      className="py-2.5 text-gray-500 truncate max-w-[100px]"
+                                      title={cls.location || "TBA"}
+                                    >
+                                      {cls.location || "TBA"}
+                                    </td>
+                                    <td className="py-2.5">
                                       {cls.num_of_weeks && (
                                         <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded">
-                                          {cls.num_of_weeks} weeks
+                                          {cls.num_of_weeks}w
                                         </span>
                                       )}
-                                      <span className="text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded">
-                                        Semester {cls.semester}
-                                      </span>
-                                    </div>
-                                    <div className="flex items-center gap-2 text-sm">
-                                      <span className="font-semibold text-gray-900">
-                                        👨‍🏫 {cls.tutor_name}
-                                      </span>
-                                    </div>
-                                  </div>
-                                </div>
-
-                                {/* Schedule */}
-                                <div className="bg-white border border-green-200 rounded p-3 space-y-2">
-                                  <p className="text-xs font-semibold text-gray-700 uppercase">
-                                    Schedule:
-                                  </p>
-                                  <div className="flex items-center gap-2 text-sm">
-                                    <Clock className="h-4 w-4 text-purple-600" />
-                                    <span className="font-medium">
-                                      {getDayName(cls.week_day)}{" "}
-                                      {periodToTime(cls.start_time)}-
-                                      {periodToTime(cls.end_time)}
-                                    </span>
-                                  </div>
-                                  {cls.location && (
-                                    <p className="text-xs text-gray-600">
-                                      📍 {cls.location}
-                                    </p>
-                                  )}
-                                </div>
-
-                                {/* Actions */}
-                                <div className="flex items-center justify-end gap-2 pt-2 border-t border-green-200">
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() =>
-                                      handleCancelRegistration(cls.id)
-                                    }
-                                    className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-300"
-                                  >
-                                    Cancel Registration
-                                  </Button>
-                                  {cls.meeting_link && (
-                                    <Button
-                                      size="sm"
-                                      className="bg-green-600 hover:bg-green-700"
-                                      asChild
-                                    >
-                                      <a
-                                        href={cls.meeting_link}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                      >
-                                        Join Class{" "}
-                                        <ExternalLink className="ml-1 h-3 w-3" />
-                                      </a>
-                                    </Button>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
+                                    </td>
+                                    <td className="py-2.5 text-right">
+                                      <div className="flex items-center justify-end gap-2">
+                                        {cls.meeting_link && (
+                                          <Button
+                                            size="sm"
+                                            className="bg-green-600 hover:bg-green-700 h-7 text-xs"
+                                            asChild
+                                          >
+                                            <a
+                                              href={cls.meeting_link}
+                                              target="_blank"
+                                              rel="noopener noreferrer"
+                                            >
+                                              Join{" "}
+                                              <ExternalLink className="ml-1 h-3 w-3" />
+                                            </a>
+                                          </Button>
+                                        )}
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          onClick={() =>
+                                            handleCancelRegistration(cls.id)
+                                          }
+                                          className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-300 h-7 text-xs"
+                                        >
+                                          Cancel
+                                        </Button>
+                                      </div>
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        )}
                       </Card>
                     );
-                  })
-              )}
-            </div>
-          )}
+                  })}
+              </div>
+            )}
+          </div>
+
+          {/* ===== REGISTRATION SECTION ===== */}
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+              <Calendar className="w-6 h-6 text-blue-600" />
+              Registration
+            </h2>
+
+            {filteredSubjects.length === 0 ? (
+              <Card className="border-blue-200">
+                <div className="py-12 text-center">
+                  <p className="text-gray-600">
+                    {searchQuery
+                      ? "No subjects found matching your search."
+                      : "No available subjects at the moment."}
+                  </p>
+                </div>
+              </Card>
+            ) : (
+              <Card className="border-blue-200 bg-white overflow-hidden">
+                <div className="max-h-[500px] overflow-y-auto">
+                  <div className="space-y-0 divide-y divide-blue-100">
+                    {filteredSubjects.map((subject) => {
+                      const isExpanded = expandedSubjects.has(subject.id);
+                      const classCount = subject.classes.length;
+
+                      return (
+                        <div key={subject.id}>
+                          {/* Subject Header - Horizontal */}
+                          <div
+                            className="px-4 py-3 bg-blue-50 hover:bg-blue-100 cursor-pointer transition-colors flex items-center justify-between sticky top-0 z-10"
+                            onClick={() => toggleSubject(subject.id)}
+                          >
+                            <div className="flex items-center gap-3 min-w-0 flex-1">
+                              {isExpanded ? (
+                                <ChevronDown className="h-5 w-5 text-blue-600 flex-shrink-0" />
+                              ) : (
+                                <ChevronRight className="h-5 w-5 text-blue-600 flex-shrink-0" />
+                              )}
+                              <h3 className="text-lg font-bold text-gray-900 truncate">
+                                {subject.subject_name}
+                              </h3>
+                              <span className="text-sm text-blue-600 font-semibold flex-shrink-0">
+                                {subject.subject_code}
+                              </span>
+                            </div>
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 flex-shrink-0 ml-2">
+                              {classCount}{" "}
+                              {classCount === 1 ? "class" : "classes"}
+                            </span>
+                          </div>
+
+                          {/* Expanded - Table Layout */}
+                          {isExpanded && (
+                            <div className="px-4 py-3 bg-white">
+                              {subject.classes.length === 0 ? (
+                                <p className="text-gray-500 text-sm text-center py-2">
+                                  No available classes at the moment.
+                                </p>
+                              ) : (
+                                <table className="w-full text-sm">
+                                  <thead>
+                                    <tr className="border-b border-blue-200 text-left text-gray-600">
+                                      <th className="pb-2 font-semibold w-20">
+                                        Class
+                                      </th>
+                                      <th className="pb-2 font-semibold w-20">
+                                        Status
+                                      </th>
+                                      <th className="pb-2 font-semibold w-28">
+                                        Tutor
+                                      </th>
+                                      <th className="pb-2 font-semibold w-36">
+                                        Schedule
+                                      </th>
+                                      <th className="pb-2 font-semibold w-24">
+                                        Location
+                                      </th>
+                                      <th className="pb-2 font-semibold w-14">
+                                        Weeks
+                                      </th>
+                                      <th className="pb-2 font-semibold w-12">
+                                        Sem
+                                      </th>
+                                      <th className="pb-2 font-semibold w-16">
+                                        Slots
+                                      </th>
+                                      <th className="pb-2 font-semibold w-28 text-right">
+                                        Actions
+                                      </th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {subject.classes.map((cls) => {
+                                      const isRegistered =
+                                        registeredClasses.has(cls.id);
+                                      const isFull =
+                                        cls.current_enrolled >= cls.capacity;
+                                      const deadlinePassed =
+                                        cls.registration_deadline
+                                          ? isDeadlinePassed(
+                                              cls.registration_deadline
+                                            )
+                                          : false;
+                                      const canRegister =
+                                        !isRegistered &&
+                                        !isFull &&
+                                        !deadlinePassed;
+                                      const isCurrentlyRegistering =
+                                        registering === cls.id;
+
+                                      return (
+                                        <tr
+                                          key={cls.id}
+                                          className="border-b border-blue-100 last:border-b-0 hover:bg-blue-50/50"
+                                        >
+                                          <td className="py-2.5 font-bold text-blue-800">
+                                            #{cls.id}
+                                          </td>
+                                          <td className="py-2.5">
+                                            {isRegistered ? (
+                                              <span className="bg-green-100 text-green-800 px-1.5 py-0.5 rounded text-xs font-semibold">
+                                                Registered
+                                              </span>
+                                            ) : isFull ? (
+                                              <span className="bg-red-100 text-red-800 px-1.5 py-0.5 rounded text-xs font-semibold">
+                                                Full
+                                              </span>
+                                            ) : deadlinePassed ? (
+                                              <span className="bg-orange-100 text-orange-800 px-1.5 py-0.5 rounded text-xs font-semibold">
+                                                Closed
+                                              </span>
+                                            ) : (
+                                              <span className="bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded text-xs font-semibold">
+                                                Open
+                                              </span>
+                                            )}
+                                          </td>
+                                          <td
+                                            className="py-2.5 text-gray-700 truncate max-w-[100px]"
+                                            title={cls.tutor_name}
+                                          >
+                                            {cls.tutor_name}
+                                          </td>
+                                          <td className="py-2.5 text-gray-600">
+                                            <div className="flex items-center gap-1">
+                                              <Clock className="h-3.5 w-3.5 text-purple-500 flex-shrink-0" />
+                                              <span className="truncate text-xs">
+                                                {getDayName(cls.week_day)}{" "}
+                                                {periodToTime(cls.start_time)}-
+                                                {periodToTime(cls.end_time)}
+                                              </span>
+                                            </div>
+                                          </td>
+                                          <td
+                                            className="py-2.5 text-gray-500 truncate max-w-[90px]"
+                                            title={cls.location || "TBA"}
+                                          >
+                                            {cls.location || "TBA"}
+                                          </td>
+                                          <td className="py-2.5">
+                                            {cls.num_of_weeks && (
+                                              <span className="text-xs bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded">
+                                                {cls.num_of_weeks}w
+                                              </span>
+                                            )}
+                                          </td>
+                                          <td className="py-2.5">
+                                            <span className="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">
+                                              {cls.semester}
+                                            </span>
+                                          </td>
+                                          <td className="py-2.5">
+                                            <div className="flex items-center gap-1 text-xs text-gray-500">
+                                              <Users className="h-3 w-3 flex-shrink-0" />
+                                              <span
+                                                className={
+                                                  isFull
+                                                    ? "text-red-600 font-semibold"
+                                                    : ""
+                                                }
+                                              >
+                                                {cls.current_enrolled}/
+                                                {cls.capacity}
+                                              </span>
+                                            </div>
+                                          </td>
+                                          <td className="py-2.5 text-right">
+                                            <div className="flex items-center justify-end gap-1.5">
+                                              {isRegistered ? (
+                                                <>
+                                                  <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={() =>
+                                                      handleCancelRegistration(
+                                                        cls.id
+                                                      )
+                                                    }
+                                                    className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-300 h-6 text-xs px-2"
+                                                  >
+                                                    Cancel
+                                                  </Button>
+                                                  {cls.meeting_link && (
+                                                    <Button
+                                                      size="sm"
+                                                      className="bg-blue-600 hover:bg-blue-700 h-6 text-xs px-2"
+                                                      asChild
+                                                    >
+                                                      <a
+                                                        href={cls.meeting_link}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                      >
+                                                        Join
+                                                      </a>
+                                                    </Button>
+                                                  )}
+                                                </>
+                                              ) : (
+                                                <Button
+                                                  size="sm"
+                                                  className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed h-6 text-xs px-2"
+                                                  disabled={
+                                                    !canRegister ||
+                                                    isCurrentlyRegistering
+                                                  }
+                                                  onClick={() =>
+                                                    handleRegister(cls.id, cls)
+                                                  }
+                                                >
+                                                  {isCurrentlyRegistering ? (
+                                                    <>
+                                                      <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                                                      ...
+                                                    </>
+                                                  ) : isFull ? (
+                                                    "Full"
+                                                  ) : deadlinePassed ? (
+                                                    "Closed"
+                                                  ) : (
+                                                    "Register"
+                                                  )}
+                                                </Button>
+                                              )}
+                                            </div>
+                                          </td>
+                                        </tr>
+                                      );
+                                    })}
+                                  </tbody>
+                                </table>
+                              )}
+
+                              {/* Deadline info below table if any class has deadline */}
+                              {subject.classes.some(
+                                (cls) => cls.registration_deadline
+                              ) && (
+                                <div className="mt-2 pt-2 border-t border-blue-100">
+                                  {subject.classes
+                                    .filter((cls) => cls.registration_deadline)
+                                    .map((cls) => {
+                                      const deadlinePassed = isDeadlinePassed(
+                                        cls.registration_deadline!
+                                      );
+                                      return (
+                                        <div
+                                          key={cls.id}
+                                          className={`flex items-center gap-1 text-xs ${
+                                            deadlinePassed
+                                              ? "text-orange-600"
+                                              : "text-blue-600"
+                                          }`}
+                                        >
+                                          <Calendar className="h-3 w-3" />
+                                          <span>
+                                            Class #{cls.id}{" "}
+                                            {deadlinePassed
+                                              ? "closed"
+                                              : "deadline"}
+                                            :{" "}
+                                            {formatDeadline(
+                                              cls.registration_deadline!
+                                            )}
+                                          </span>
+                                        </div>
+                                      );
+                                    })}
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </Card>
+            )}
+          </div>
         </div>
       </div>
 
