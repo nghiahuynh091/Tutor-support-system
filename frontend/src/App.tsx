@@ -16,7 +16,10 @@ import { QuizPage } from "./pages/QuizPage";
 import { MenteeAssignmentsPage } from "./pages/MenteeAssignmentsPage";
 import { MenteeQuizAttemptPage } from "./pages/MenteeQuizAttemptPage";
 import { MySessionsPage } from "./pages/MySessionsPage";
-import { ProgressTrackingPage, ProgressClassSelectionPage } from "./pages/ProgressTrackingPages";
+import {
+  ProgressTrackingPage,
+  ProgressClassSelectionPage,
+} from "./pages/ProgressTrackingPages";
 import { CoordinatorProfile } from "./pages/CoordinatorProfile";
 import { MenteeProfile } from "./pages/MenteeProfile";
 import { TutorProfile } from "./pages/TutorProfile";
@@ -41,12 +44,24 @@ function App() {
         <Route element={<ProtectedRoute allowedRoles={["mentee"]} />}>
           <Route element={<MenteeLayout />}>
             <Route path="/mentee/home" element={<MenteeHomePage />} />
-            <Route path="/mentee/registration" element={<MenteeRegistrationPage />} />
+            <Route
+              path="/mentee/registration"
+              element={<MenteeRegistrationPage />}
+            />
             <Route path="/mentee/schedule" element={<MenteeSchedulePage />} />
             <Route path="/mentee/history" element={<MySessionsPage />} />
-            <Route path="/mentee/sessions/feedback/:classId/:sessionId" element={<FeedbackPage />} />
-            <Route path="/mentee/assignments" element={<MenteeAssignmentsPage />} />
-            <Route path="/mentee/quiz/:classId/:sessionId" element={<MenteeQuizAttemptPage />} />
+            <Route
+              path="/mentee/sessions/feedback/:classId/:sessionId"
+              element={<FeedbackPage />}
+            />
+            <Route
+              path="/mentee/assignments"
+              element={<MenteeAssignmentsPage />}
+            />
+            <Route
+              path="/mentee/quiz/:classId/:sessionId"
+              element={<MenteeQuizAttemptPage />}
+            />
             <Route path="/mentee/profile" element={<MenteeProfile />} />
           </Route>
         </Route>
@@ -57,9 +72,18 @@ function App() {
           <Route path="/tutor/mark_attendance/:classId" element={<Card />} />
           <Route path="/assignment" element={<ProvideAssignmentPage />} />
           <Route path="/assignment/homework/:id" element={<HomeworkPage />} />
-          <Route path="/assignment/quiz/:classId/:sessionId" element={<QuizPage />} />
-          <Route path="/tutor/progress_class_selection" element={<ProgressClassSelectionPage />} />
-          <Route path="/tutor/progress/:classId" element={<ProgressTrackingPage />} />
+          <Route
+            path="/assignment/quiz/:classId/:sessionId"
+            element={<QuizPage />}
+          />
+          <Route
+            path="/tutor/progress_class_selection"
+            element={<ProgressClassSelectionPage />}
+          />
+          <Route
+            path="/tutor/progress/:classId"
+            element={<ProgressTrackingPage />}
+          />
           <Route
             path="/mentee_progress/:id/private_note"
             element={<PrivateNotePage />}
