@@ -113,3 +113,57 @@ class ClassController:
                 "error": f"Failed to fetch classes: {str(e)}",
                 "classes": []
             }
+
+    @staticmethod
+    async def update_class_status(class_id: int) -> Dict[str, Any]:
+        """
+        Update class status based on registration deadline and enrollment.
+        - If deadline has passed and current_enrolled >= capacity/2: status = 'confirmed'
+        - If deadline has passed and current_enrolled < capacity/2: status = 'cancelled'
+        """
+        try:
+            result = await ClassModel.update_class_status(class_id)
+            
+            if result is None:
+                return {
+                    "success": False,
+                    "error": "Class not found"
+                }
+            
+            if result.get("updated"):
+                return {
+                    "success": True,
+                    "class": result,
+                    "message": f"Class status updated to '{result.get('status')}'"
+                }
+            else:
+                return {
+                    "success": True,
+                    "class": result,
+                    "message": result.get("message", "No update needed")
+                }
+        except Exception as e:
+            return {
+                "success": False,
+                "error": f"Failed to update class status: {str(e)}"
+            }
+
+    @staticmethod
+    async def create_sessions_for_confirmed_classes() -> Dict[str, Any]:
+        """
+        Create sessions for all confirmed classes that don't have sessions yet.
+        For each confirmed class, create num_of_weeks sessions.
+        """
+        try:
+            result = await ClassModel.create_sessions_for_confirmed_classes()
+            
+            return {
+                "success": True,
+                "data": result,
+                "message": result.get("message", "Sessions created successfully")
+            }
+        except Exception as e:
+            return {
+                "success": False,
+                "error": f"Failed to create sessions: {str(e)}"
+            }

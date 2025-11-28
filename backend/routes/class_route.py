@@ -76,3 +76,40 @@ async def get_classes_by_tutor(
         return result
     else:
         raise HTTPException(status_code=500, detail=result["error"])
+
+
+@router.patch("/{class_id}/status")
+async def update_class_status(
+    class_id: int,
+    current_user: dict = Depends(authorize(["admin"]))
+):
+    """
+    Update class status based on registration deadline and enrollment (admin only).
+    - If deadline has passed and current_enrolled >= capacity/2: status = 'confirmed'
+    - If deadline has passed and current_enrolled < capacity/2: status = 'cancelled'
+    """
+    result = await ClassController.update_class_status(class_id)
+    
+    if result["success"]:
+        return result
+    else:
+        if result["error"] == "Class not found":
+            raise HTTPException(status_code=404, detail=result["error"])
+        raise HTTPException(status_code=400, detail=result["error"])
+
+
+@router.post("/sessions/create")
+async def create_sessions_for_confirmed_classes(
+    current_user: dict = Depends(authorize(["admin"]))
+):
+    """
+    Create sessions for all confirmed classes that don't have sessions yet (admin only).
+    For each confirmed class, creates num_of_weeks sessions starting from
+    the first occurrence of week_day after registration_deadline.
+    """
+    result = await ClassController.create_sessions_for_confirmed_classes()
+    
+    if result["success"]:
+        return result
+    else:
+        raise HTTPException(status_code=400, detail=result["error"])
