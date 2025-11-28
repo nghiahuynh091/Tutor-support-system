@@ -59,3 +59,20 @@ async def create_class(class_payload: CreateClassSchema, current_user: dict = De
         return result
     else:
         raise HTTPException(status_code=400, detail=result["error"])
+    
+@router.get("/tutor/{tutor_id}")
+async def get_classes_by_tutor(
+    tutor_id: str,
+    current_user: dict = Depends(authorize(["tutor", "admin"]))
+):
+    """Get classes by tutor ID"""
+    # Ensure tutor can only access their own classes (unless admin)
+    if current_user.get("role") != "admin" and current_user.get("sub") != tutor_id:
+        raise HTTPException(status_code=403, detail="Access denied")
+    
+    result = await ClassController.get_classes_by_tutor(tutor_id)
+    
+    if result["success"]:
+        return result
+    else:
+        raise HTTPException(status_code=500, detail=result["error"])

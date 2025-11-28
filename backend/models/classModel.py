@@ -197,3 +197,35 @@ class ClassModel:
         )
 
         return {"id": class_id[0]['id'] if class_id else None}
+    
+    @staticmethod
+    async def get_classes_by_tutor(tutor_id: str) -> List[Dict[str, Any]]:
+        """Get all classes by tutor ID"""
+        query = """
+            SELECT 
+                c.id,
+                c.subject_id,
+                c.tutor_id,
+                c.week_day,
+                c.class_status,
+                c.location,
+                c.capacity,
+                c.start_time,
+                c.end_time,
+                c.current_enrolled,
+                c.num_of_weeks,
+                c.registration_deadline,
+                c.semester,
+                c.created_at,
+                c.updated_at,
+                s.subject_name,
+                s.subject_code,
+                u.full_name as tutor_name,
+                u.email as tutor_email
+            FROM classes c
+            JOIN subjects s ON c.subject_id = s.id
+            LEFT JOIN "user" u ON c.tutor_id = u.id
+            WHERE c.tutor_id = $1
+            ORDER BY c.created_at DESC
+        """
+        return await db.execute_query(query, tutor_id)

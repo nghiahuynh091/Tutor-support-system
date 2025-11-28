@@ -16,6 +16,8 @@ from routes import registration_route, admin_route
 
 from routes import learning_route
 
+from routes import subject_route
+
 from routes.FeedbackAndProgressTracking import assignmentRoute, feedbackRoute, progressRoute, submissionRoute
 
 app = FastAPI(
@@ -57,6 +59,9 @@ app.include_router(admin_route.router)
 
 #learning modules
 app.include_router(learning_route.router)
+
+#subject modules
+app.include_router(subject_route.router)
 
 
 if __name__ == "__main__":

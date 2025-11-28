@@ -95,3 +95,21 @@ class ClassController:
                 "success": False, 
                 "error": f"Failed to create class: {str(e)}"
             }
+        
+    @staticmethod
+    async def get_classes_by_tutor(tutor_id: str) -> Dict[str, Any]:
+        """Get classes by tutor ID"""
+        try:
+            classes = await ClassModel.get_classes_by_tutor(tutor_id)
+            return {
+                "success": True,
+                "classes": classes,
+                "count": len(classes),
+                "message": "Classes retrieved successfully"
+            }
+        except Exception as e:
+            return {
+                "success": False,
+                "error": f"Failed to fetch classes: {str(e)}",
+                "classes": []
+            }
