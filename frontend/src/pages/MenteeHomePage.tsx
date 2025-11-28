@@ -3,7 +3,13 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, Calendar, BookOpen, Clock } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Calendar,
+  BookOpen,
+  Clock,
+} from "lucide-react";
 
 // Wallpaper images - using placeholder URLs (replace with actual images)
 const wallpapers = [
@@ -51,7 +57,9 @@ export function MenteeHomePage() {
   };
 
   const goToPrevious = () => {
-    setCurrentSlide((prev) => (prev - 1 + wallpapers.length) % wallpapers.length);
+    setCurrentSlide(
+      (prev) => (prev - 1 + wallpapers.length) % wallpapers.length
+    );
   };
 
   const goToNext = () => {
@@ -143,13 +151,16 @@ export function MenteeHomePage() {
                 <Clock className="w-6 h-6 text-white" />
               </div>
               <div className="flex-1">
-                <p className="text-amber-800 font-semibold">Next Session Coming Up</p>
+                <p className="text-amber-800 font-semibold">
+                  Next Session Coming Up
+                </p>
                 <p className="text-amber-700">
-                  <span className="font-bold">Mathematics - Calculus 1</span> • Monday, 2:00 PM • Room A101
+                  <span className="font-bold">Mathematics - Calculus 1</span> •
+                  Monday, 2:00 PM • Room A101
                 </p>
               </div>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 className="border-amber-400 text-amber-700 hover:bg-amber-100"
                 onClick={() => navigate("/mentee/schedule")}
               >
@@ -160,7 +171,7 @@ export function MenteeHomePage() {
 
           {/* Quick Actions */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card 
+            <Card
               className="p-8 hover:shadow-xl transition-all duration-300 cursor-pointer border-2 border-transparent hover:border-blue-300"
               onClick={() => navigate("/mentee/schedule")}
             >
@@ -169,9 +180,12 @@ export function MenteeHomePage() {
                   <Calendar className="w-8 h-8 text-blue-600" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">View My Schedule</h3>
+                  <h3 className="text-xl font-bold text-gray-900 mb-2">
+                    View My Schedule
+                  </h3>
                   <p className="text-gray-600 mb-4">
-                    Check your upcoming sessions, manage your calendar, and track your learning progress.
+                    Check your upcoming sessions, manage your calendar, and
+                    track your learning progress.
                   </p>
                   <Button className="bg-blue-600 hover:bg-blue-700">
                     Go to Schedule
@@ -180,7 +194,7 @@ export function MenteeHomePage() {
               </div>
             </Card>
 
-            <Card 
+            <Card
               className="p-8 hover:shadow-xl transition-all duration-300 cursor-pointer border-2 border-transparent hover:border-green-300"
               onClick={() => navigate("/mentee/registration")}
             >
@@ -189,9 +203,12 @@ export function MenteeHomePage() {
                   <BookOpen className="w-8 h-8 text-green-600" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">Browse Classes</h3>
+                  <h3 className="text-xl font-bold text-gray-900 mb-2">
+                    Browse Classes
+                  </h3>
                   <p className="text-gray-600 mb-4">
-                    Explore available subjects and enroll in new classes to expand your knowledge.
+                    Explore available subjects and enroll in new classes to
+                    expand your knowledge.
                   </p>
                   <Button className="bg-green-600 hover:bg-green-700">
                     Browse Classes
