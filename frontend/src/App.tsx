@@ -6,6 +6,7 @@ import { LoginPage } from "./pages/LoginPage";
 import { MenteeHomePage } from "./pages/MenteeHomePage";
 import { MenteeRegistrationPage } from "./pages/MenteeRegistrationPage";
 import { MenteeSchedulePage } from "./pages/MenteeSchedulePage";
+import { MenteeSessionDetailPage } from "./pages/MenteeSessionDetailPage";
 import { TutorSessions } from "./pages/TutorSessions";
 import { CoordinatorDashboard } from "./pages/CoordinatorDashboard";
 import { FeedbackPage } from "./pages/FeedbackPage";
@@ -49,6 +50,10 @@ function App() {
               element={<MenteeRegistrationPage />}
             />
             <Route path="/mentee/schedule" element={<MenteeSchedulePage />} />
+            <Route
+              path="/mentee/session/:classId/:sessionId"
+              element={<MenteeSessionDetailPage />}
+            />
             <Route path="/mentee/history" element={<MySessionsPage />} />
             <Route
               path="/mentee/sessions/feedback/:classId/:sessionId"
