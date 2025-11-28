@@ -488,9 +488,10 @@ class ClassModel:
                         start_time,
                         end_time,
                         week_day,
-                        created_at
+                        created_at,
+                        updated_at
                     )
-                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())
+                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())
                     RETURNING class_id, session_id, session_date
                 """
                 
@@ -611,9 +612,10 @@ class ClassModel:
                     start_time,
                     end_time,
                     week_day,
-                    created_at
+                    created_at,
+                    updated_at
                 )
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())
                 RETURNING class_id, session_id, session_date
             """
             
