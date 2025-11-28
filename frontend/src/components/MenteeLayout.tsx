@@ -29,12 +29,19 @@ export function MenteeLayout() {
   const isActive = (path: string) => location.pathname === path;
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Navigation Header */}
-      <header className="bg-blue-700 text-white shadow-lg sticky top-0 z-50">
-        <div className="flex items-center justify-between h-16 px-6">
+    <div className="min-h-screen bg-gray-50 overscroll-none">
+      {/* Navigation Header - Fixed position, won't move on overscroll */}
+      <header 
+        className="bg-blue-700 text-white shadow-lg fixed top-0 left-0 right-0 z-50"
+        style={{ height: '64px' }}
+      >
+        {/* Main Header Bar */}
+        <div 
+          className="flex justify-between px-6"
+          style={{ height: '64px' }}
+        >
           {/* Logo, App Name, and Navigation Links */}
-          <div className="flex items-center h-full">
+          <div className="flex">
             {/* Logo and App Name */}
             <div
               className="flex items-center space-x-3 cursor-pointer pr-8"
@@ -48,17 +55,23 @@ export function MenteeLayout() {
               </h1>
             </div>
 
-            {/* Navigation Links - next to app name, full height buttons */}
-            <nav className="hidden md:flex items-center h-full">
+            {/* Navigation Links */}
+            <nav className="hidden md:flex">
               {navItems.map((item) => (
                 <button
                   key={item.path}
                   onClick={() => navigate(item.path)}
-                  className={`h-full px-6 font-medium transition-all duration-200 border-b-2 ${
+                  className={`px-6 font-medium transition-colors duration-200 flex items-center ${
                     isActive(item.path)
-                      ? "bg-blue-800 text-white border-white"
-                      : "text-white hover:bg-blue-600 border-transparent"
+                      ? "bg-blue-600 text-white"
+                      : "text-white bg-transparent hover:bg-blue-600/50"
                   }`}
+                  style={{ 
+                    height: '64px', 
+                    borderRadius: '0px',
+                    margin: 0,
+                    padding: '0 24px'
+                  }}
                 >
                   {item.label}
                 </button>
@@ -67,9 +80,9 @@ export function MenteeLayout() {
           </div>
 
           {/* Right Side - Notifications and Profile */}
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center gap-4">
             {/* Notification Bell */}
-            <button className="relative p-2 rounded-full hover:bg-blue-600 transition-colors">
+            <button className="relative w-10 h-10 rounded-full hover:bg-blue-600 transition-colors flex items-center justify-center">
               <Bell className="w-5 h-5" />
               <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
             </button>
@@ -77,7 +90,7 @@ export function MenteeLayout() {
             {/* User Profile Dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="flex items-center space-x-2 focus:outline-none">
+                <button className="w-10 h-10 flex items-center justify-center focus:outline-none">
                   <Avatar className="w-9 h-9 border-2 border-white cursor-pointer hover:opacity-90 transition-opacity">
                     <AvatarImage
                       src={user?.avatar}
@@ -142,8 +155,8 @@ export function MenteeLayout() {
         </nav>
       </header>
 
-      {/* Main Content */}
-      <main>
+      {/* Main Content - with top padding to account for fixed header */}
+      <main className="pt-[64px]">
         <Outlet />
       </main>
     </div>
