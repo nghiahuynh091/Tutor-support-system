@@ -1,10 +1,12 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ProtectedRoute } from "./components/ProtectedRoute";
+import { MenteeLayout } from "./components/MenteeLayout";
 import { HomePage } from "./pages/HomePage";
 import { LoginPage } from "./pages/LoginPage";
 import { MenteeHomePage } from "./pages/MenteeHomePage";
 import { MenteeRegistrationPage } from "./pages/MenteeRegistrationPage";
 import { MenteeSchedulePage } from "./pages/MenteeSchedulePage";
+import { MenteeSessionDetailPage } from "./pages/MenteeSessionDetailPage";
 import { TutorSessions } from "./pages/TutorSessions";
 import { CoordinatorDashboard } from "./pages/CoordinatorDashboard";
 import { FeedbackPage } from "./pages/FeedbackPage";
@@ -15,7 +17,10 @@ import { QuizPage } from "./pages/QuizPage";
 import { MenteeAssignmentsPage } from "./pages/MenteeAssignmentsPage";
 import { MenteeQuizAttemptPage } from "./pages/MenteeQuizAttemptPage";
 import { MySessionsPage } from "./pages/MySessionsPage";
-import { ProgressTrackingPage, ProgressClassSelectionPage } from "./pages/ProgressTrackingPages";
+import {
+  ProgressTrackingPage,
+  ProgressClassSelectionPage,
+} from "./pages/ProgressTrackingPages";
 import { CoordinatorProfile } from "./pages/CoordinatorProfile";
 import { MenteeProfile } from "./pages/MenteeProfile";
 import { TutorProfile } from "./pages/TutorProfile";
@@ -36,29 +41,34 @@ function App() {
         <Route path="/login" element={<LoginPage />} />
         {/* <Route path="/role-selection" element={<RoleSelectionPage />} /> */}
 
-        {/* Mentee Routes */}
+        {/* Mentee Routes - with MenteeLayout */}
         <Route element={<ProtectedRoute allowedRoles={["mentee"]} />}>
-          <Route path="/mentee/home" element={<MenteeHomePage />} />
-          <Route
-            path="/mentee/registration"
-            element={<MenteeRegistrationPage />}
-          />
-          <Route path="/mentee/schedule" element={<MenteeSchedulePage />} />
-          {/* <Route path="/sessions" element={<MenteeSessions />} /> */}
-          <Route path="/mentee/history" element={<MySessionsPage />} />
-          <Route
-            path="/mentee/sessions/feedback/:classId/:sessionId"
-            element={<FeedbackPage />}
-          />
-          <Route
-            path="/mentee/assignments"
-            element={<MenteeAssignmentsPage />}
-          />
-          <Route
-            path="/mentee/quiz/:classId/:sessionId"
-            element={<MenteeQuizAttemptPage />}
-          />
-          <Route path="/mentee/profile" element={<MenteeProfile />} />
+          <Route element={<MenteeLayout />}>
+            <Route path="/mentee/home" element={<MenteeHomePage />} />
+            <Route
+              path="/mentee/registration"
+              element={<MenteeRegistrationPage />}
+            />
+            <Route path="/mentee/schedule" element={<MenteeSchedulePage />} />
+            <Route
+              path="/mentee/session/:classId/:sessionId"
+              element={<MenteeSessionDetailPage />}
+            />
+            <Route path="/mentee/history" element={<MySessionsPage />} />
+            <Route
+              path="/mentee/sessions/feedback/:classId/:sessionId"
+              element={<FeedbackPage />}
+            />
+            <Route
+              path="/mentee/assignments"
+              element={<MenteeAssignmentsPage />}
+            />
+            <Route
+              path="/mentee/quiz/:classId/:sessionId"
+              element={<MenteeQuizAttemptPage />}
+            />
+            <Route path="/mentee/profile" element={<MenteeProfile />} />
+          </Route>
         </Route>
 
         {/* Tutor Routes */}
@@ -67,9 +77,18 @@ function App() {
           <Route path="/tutor/mark_attendance/:classId" element={<Card />} />
           <Route path="/assignment" element={<ProvideAssignmentPage />} />
           <Route path="/assignment/homework/:id" element={<HomeworkPage />} />
-          <Route path="/assignment/quiz/:classId/:sessionId" element={<QuizPage />} />
-          <Route path="/tutor/progress_class_selection" element={<ProgressClassSelectionPage />} />
-          <Route path="/tutor/progress/:classId" element={<ProgressTrackingPage />} />
+          <Route
+            path="/assignment/quiz/:classId/:sessionId"
+            element={<QuizPage />}
+          />
+          <Route
+            path="/tutor/progress_class_selection"
+            element={<ProgressClassSelectionPage />}
+          />
+          <Route
+            path="/tutor/progress/:classId"
+            element={<ProgressTrackingPage />}
+          />
           <Route
             path="/mentee_progress/:id/private_note"
             element={<PrivateNotePage />}

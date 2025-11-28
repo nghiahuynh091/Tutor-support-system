@@ -1,455 +1,698 @@
 import { useState, useEffect } from "react";
-import { Header } from "@/components/Header";
-import { Footer } from "@/components/Footer";
+import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ChevronDown, ChevronUp, Clock, AlertCircle, CheckCircle, Users, ExternalLink } from "lucide-react";
-import type { Class } from "@/types";
-import { useNavigate } from "react-router-dom";
+import {
+  ChevronLeft,
+  ChevronRight,
+  MapPin,
+  User,
+  X,
+  Calendar,
+  BookOpen,
+  ExternalLink,
+} from "lucide-react";
 
-interface RegisteredClass extends Class {
-  deadlineRegister: string;
-  status: 'Active' | 'Confirmed';
+// Types for calendar sessions
+interface CalendarSession {
+  id: string;
+  class_id: string;
+  subject_name: string;
+  subject_code: string;
+  class_code: string;
+  tutor_name: string;
+  date: Date;
+  start_time: string;
+  end_time: string;
+  location: string;
+  description: string;
+  meeting_link: string | null;
+  status: "scheduled" | "completed" | "cancelled";
 }
 
-// Mock data - replace with actual API calls
-const mockRegisteredClasses: RegisteredClass[] = [
-  {
-    id: "c1",
-    subject_id: 1,
-    subject_name: "Calculus 1",
-    subject_code: "MT1003",
-    class_code: "CC01",
-    description: "calculus basics",
-    tutor_id: "t1",
-    tutor_name: "Prof. Phung Trong Thuc",
-    max_students: 20,
-    current_enrolled: 15,
-    number_of_weeks: 12,
-    meeting_link: null,
-    time_slots: [
-      { id: "ts1", dayOfWeek: 1, startPeriod: 2, endPeriod: 4 },
-      { id: "ts2", dayOfWeek: 4, startPeriod: 8, endPeriod: 10 }
-    ],
-    sessions: [],
-    created_at: "2025-01-01",
-    deadlineRegister: "2025-11-02T23:59:00",
-    status: "Active"
-  },
-  {
-    id: "c3",
-    subject_id: 2,
-    subject_name: "Physics 1",
-    subject_code: "PH1003",
-    class_code: "CC03",
-    description: "Basic physics",
-    tutor_id: "t3",
-    tutor_name: "Prof. Dau The Phiet",
-    max_students: 18,
-    current_enrolled: 12,
-    number_of_weeks: 12,
-    meeting_link: null,
-    time_slots: [
-      { id: "ts4", dayOfWeek: 1, startPeriod: 10, endPeriod: 12 },
-      { id: "ts5", dayOfWeek: 3, startPeriod: 10, endPeriod: 12 }
-    ],
-    sessions: [],
-    created_at: "2025-01-01",
-    deadlineRegister: "2025-10-25T23:59:00",
-    status: "Confirmed"
+type ViewMode = "week" | "month";
+
+// Mock data - replace with API call
+const generateMockSessions = (
+  startDate: Date,
+  viewMode: ViewMode
+): CalendarSession[] => {
+  const sessions: CalendarSession[] = [];
+  const subjects = [
+    {
+      name: "Calculus 1",
+      code: "MT1003",
+      tutor: "Prof. Phung Trong Thuc",
+      classCode: "CC01",
+    },
+    {
+      name: "Physics 1",
+      code: "PH1003",
+      tutor: "Prof. Dau The Phiet",
+      classCode: "CC03",
+    },
+    {
+      name: "Programming",
+      code: "CS1001",
+      tutor: "Dr. Nguyen Van A",
+      classCode: "CC05",
+    },
+    {
+      name: "Data Structures",
+      code: "CS2001",
+      tutor: "Dr. Tran Van B",
+      classCode: "CC07",
+    },
+    {
+      name: "Linear Algebra",
+      code: "MT2003",
+      tutor: "Prof. Le Van C",
+      classCode: "CC09",
+    },
+  ];
+
+  // Generate sessions based on view mode
+  const daysToGenerate = viewMode === "week" ? 7 : 35;
+
+  for (let dayOffset = 0; dayOffset < daysToGenerate; dayOffset++) {
+    const sessionDate = new Date(startDate);
+    sessionDate.setDate(sessionDate.getDate() + dayOffset);
+
+    // Skip weekends for some sessions
+    const dayOfWeek = sessionDate.getDay();
+    if (dayOfWeek === 0) continue; // Skip Sunday
+
+    // Generate 1-4 sessions per day randomly
+    const numSessions = dayOfWeek === 6 ? 0 : Math.floor(Math.random() * 3) + 1;
+
+    for (let i = 0; i < numSessions; i++) {
+      const subjectIdx = (dayOffset + i) % subjects.length;
+      const subject = subjects[subjectIdx];
+      const startHour = 8 + i * 2;
+
+      sessions.push({
+        id: `session-${dayOffset}-${i}`,
+        class_id: `class-${subjectIdx}`,
+        subject_name: subject.name,
+        subject_code: subject.code,
+        class_code: subject.classCode,
+        tutor_name: subject.tutor,
+        date: new Date(sessionDate),
+        start_time: `${startHour.toString().padStart(2, "0")}:00`,
+        end_time: `${(startHour + 2).toString().padStart(2, "0")}:00`,
+        location: `Room ${String.fromCharCode(65 + (i % 5))}${
+          100 + subjectIdx
+        }`,
+        description: `Weekly session for ${subject.name}. Please bring your materials and be prepared for the lecture.`,
+        meeting_link:
+          i % 2 === 0 ? "https://meet.google.com/abc-defg-hij" : null,
+        status: sessionDate < new Date() ? "completed" : "scheduled",
+      });
+    }
   }
-];
 
-const getDayName = (day: number): string => {
-  const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-  return days[day] || 'Unknown';
+  return sessions;
 };
 
-const periodToTime = (period: number): string => {
-  const hour = period + 5;
-  return `${hour.toString().padStart(2, '0')}:00`;
+// Get the start of the week (Monday)
+const getWeekStart = (date: Date): Date => {
+  const d = new Date(date);
+  const day = d.getDay();
+  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+  d.setDate(diff);
+  d.setHours(0, 0, 0, 0);
+  return d;
 };
 
-const isBeforeDeadline = (deadline: string): boolean => {
-  return new Date() < new Date(deadline);
+// Get the start of the month
+const getMonthStart = (date: Date): Date => {
+  const d = new Date(date);
+  d.setDate(1);
+  d.setHours(0, 0, 0, 0);
+  return d;
+};
+
+// Get calendar grid start (Monday of the week containing the 1st)
+const getCalendarGridStart = (date: Date): Date => {
+  const monthStart = getMonthStart(date);
+  return getWeekStart(monthStart);
+};
+
+// Format week range for display (e.g., "24-30 November 2025")
+const formatWeekRange = (startDate: Date, endDate: Date): string => {
+  const startDay = startDate.getDate();
+  const endDay = endDate.getDate();
+  const month = endDate.toLocaleDateString("en-US", { month: "long" });
+  const year = endDate.getFullYear();
+
+  // Check if week spans two months
+  if (startDate.getMonth() !== endDate.getMonth()) {
+    const startMonth = startDate.toLocaleDateString("en-US", { month: "long" });
+    return `${startDay} ${startMonth} - ${endDay} ${month} ${year}`;
+  }
+
+  return `${startDay}-${endDay} ${month} ${year}`;
+};
+
+const formatMonthYear = (date: Date): string => {
+  return date.toLocaleDateString("en-US", {
+    month: "long",
+    year: "numeric",
+  });
+};
+
+// Check if date is today
+const isToday = (date: Date): boolean => {
+  const today = new Date();
+  return date.toDateString() === today.toDateString();
+};
+
+// Check if date is in current month
+const isCurrentMonth = (date: Date, referenceDate: Date): boolean => {
+  return (
+    date.getMonth() === referenceDate.getMonth() &&
+    date.getFullYear() === referenceDate.getFullYear()
+  );
 };
 
 export function MenteeSchedulePage() {
   const navigate = useNavigate();
-  const [classes, setClasses] = useState<RegisteredClass[]>([]);
-  const [expandedClasses, setExpandedClasses] = useState<Set<string>>(new Set());
-  const [showRescheduleModal, setShowRescheduleModal] = useState(false);
-  const [selectedClassForReschedule, setSelectedClassForReschedule] = useState<RegisteredClass | null>(null);
-  const [availableClasses, setAvailableClasses] = useState<Class[]>([]);
-  const [showSuccessToast, setShowSuccessToast] = useState(false);
-  const [successMessage, setSuccessMessage] = useState("");
+  const [viewMode, setViewMode] = useState<ViewMode>("week");
+  const [currentDate, setCurrentDate] = useState<Date>(new Date());
+  const [sessions, setSessions] = useState<CalendarSession[]>([]);
+  const [selectedSession, setSelectedSession] =
+    useState<CalendarSession | null>(null);
+  const [showMoreModal, setShowMoreModal] = useState<{
+    date: Date;
+    sessions: CalendarSession[];
+  } | null>(null);
 
+  // Calculate start date based on view mode
+  const startDate =
+    viewMode === "week"
+      ? getWeekStart(currentDate)
+      : getCalendarGridStart(currentDate);
+
+  // Generate days array
+  const days =
+    viewMode === "week"
+      ? Array.from({ length: 7 }, (_, i) => {
+          const day = new Date(startDate);
+          day.setDate(day.getDate() + i);
+          return day;
+        })
+      : Array.from({ length: 35 }, (_, i) => {
+          const day = new Date(startDate);
+          day.setDate(day.getDate() + i);
+          return day;
+        });
+
+  // Load sessions when date or view changes
   useEffect(() => {
-    // Load registered classes - replace with API call
-    setClasses(mockRegisteredClasses);
-  }, []);
+    const mockSessions = generateMockSessions(startDate, viewMode);
+    setSessions(mockSessions);
+  }, [currentDate, viewMode]);
 
-  const toggleClass = (classId: string) => {
-    const newExpanded = new Set(expandedClasses);
-    if (newExpanded.has(classId)) {
-      newExpanded.delete(classId);
+  // Navigation functions
+  const goToPrevious = () => {
+    const newDate = new Date(currentDate);
+    if (viewMode === "week") {
+      newDate.setDate(newDate.getDate() - 7);
     } else {
-      newExpanded.add(classId);
+      newDate.setMonth(newDate.getMonth() - 1);
     }
-    setExpandedClasses(newExpanded);
+    setCurrentDate(newDate);
   };
 
-  const handleCancel = (cls: RegisteredClass) => {
-    if (window.confirm(`Cancel registration for Class ${cls.class_code}?`)) {
-      // Call API to cancel registration
-      setClasses(classes.filter(c => c.id !== cls.id));
-      setSuccessMessage("Cancelled successfully.");
-      setShowSuccessToast(true);
-      setTimeout(() => setShowSuccessToast(false), 3000);
+  const goToNext = () => {
+    const newDate = new Date(currentDate);
+    if (viewMode === "week") {
+      newDate.setDate(newDate.getDate() + 7);
+    } else {
+      newDate.setMonth(newDate.getMonth() + 1);
+    }
+    setCurrentDate(newDate);
+  };
+
+  const goToToday = () => {
+    setCurrentDate(new Date());
+  };
+
+  // Get sessions for a specific day
+  const getSessionsForDay = (date: Date): CalendarSession[] => {
+    return sessions.filter(
+      (session) => session.date.toDateString() === date.toDateString()
+    );
+  };
+
+  // Get status color
+  const getStatusColor = (status: CalendarSession["status"]) => {
+    switch (status) {
+      case "scheduled":
+        return "bg-blue-500";
+      case "completed":
+        return "bg-gray-400";
+      case "cancelled":
+        return "bg-red-500";
+      default:
+        return "bg-gray-500";
     }
   };
 
-  const handleReschedule = (cls: RegisteredClass) => {
-    setSelectedClassForReschedule(cls);
-    
-    // Mock available classes for the same subject
-    const mockAvailable: Class[] = [
-      {
-        id: "c2",
-        subject_id: cls.subject_id,
-        subject_name: cls.subject_name,
-        subject_code: cls.subject_code,
-        class_code: "CC02",
-        description: "Alternative schedule",
-        tutor_id: "t2",
-        tutor_name: "Prof. Johnson",
-        max_students: 25,
-        current_enrolled: 20,
-        number_of_weeks: 12,
-        meeting_link: null,
-        time_slots: [
-          { id: "ts3", dayOfWeek: 2, startPeriod: 3, endPeriod: 5 },
-        ],
-        sessions: [],
-        created_at: "2025-01-01"
-      },
-      {
-        id: "c4",
-        subject_id: cls.subject_id,
-        subject_name: cls.subject_name,
-        subject_code: cls.subject_code,
-        class_code: "CC04",
-        description: "Evening classes",
-        tutor_id: "t4",
-        tutor_name: "Dr. Williams",
-        max_students: 20,
-        current_enrolled: 18,
-        number_of_weeks: 12,
-        meeting_link: null,
-        time_slots: [
-          { id: "ts6", dayOfWeek: 3, startPeriod: 12, endPeriod: 14 },
-        ],
-        sessions: [],
-        created_at: "2025-01-01"
-      }
-    ];
-    
-    setAvailableClasses(mockAvailable);
-    setShowRescheduleModal(true);
-  };
-
-  const confirmReschedule = (newClass: Class) => {
-    if (!selectedClassForReschedule) return;
-
-    // Cancel old class and register for new one
-    const updatedClasses = classes.filter(c => c.id !== selectedClassForReschedule.id);
-    
-    // Add the new class with the same deadline and status structure
-    const newRegisteredClass: RegisteredClass = {
-      ...newClass,
-      deadlineRegister: selectedClassForReschedule.deadlineRegister,
-      status: "Active"
-    };
-    
-    updatedClasses.push(newRegisteredClass);
-    setClasses(updatedClasses);
-    
-    setShowRescheduleModal(false);
-    setSuccessMessage(`Rescheduled to Class ${newClass.class_code} (${newClass.subject_name}).`);
-    setShowSuccessToast(true);
-    setTimeout(() => setShowSuccessToast(false), 3000);
-  };
-
-  // Group classes by subject
-  const groupedBySubject = classes.reduce((acc, cls) => {
-    if (!acc[cls.subject_name]) {
-      acc[cls.subject_name] = [];
+  const getStatusBgColor = (status: CalendarSession["status"]) => {
+    switch (status) {
+      case "scheduled":
+        return "bg-blue-50 border-blue-200 hover:bg-blue-100";
+      case "completed":
+        return "bg-gray-50 border-gray-200 hover:bg-gray-100";
+      case "cancelled":
+        return "bg-red-50 border-red-200 hover:bg-red-100";
+      default:
+        return "bg-gray-50 border-gray-200 hover:bg-gray-100";
     }
-    acc[cls.subject_name].push(cls);
-    return acc;
-  }, {} as Record<string, RegisteredClass[]>);
+  };
+
+  // Max sessions to show per day
+  const maxVisibleSessions = viewMode === "week" ? 3 : 2;
+
+  // Navigate to session detail page
+  const handleViewDetails = (session: CalendarSession) => {
+    navigate(`/mentee/session/${session.class_id}/${session.id}`);
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-sky-50 to-white">
-      <Header />
-      
-      <div className="container mx-auto px-4 py-16">
-        <div className="max-w-5xl mx-auto">
-          <div className="mb-8 flex justify-between items-center">
+    <div className="min-h-screen bg-gray-50 py-6">
+      <div className="container mx-auto px-4">
+        <div className="max-w-7xl mx-auto">
+          {/* Header */}
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
             <div>
-              <h1 className="text-4xl font-bold text-gray-900 mb-2">My Schedule</h1>
-              <p className="text-gray-600">
-                View and manage your registered classes. You can cancel or reschedule before the deadline.
-              </p>
+              <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+                <Calendar className="w-8 h-8 text-blue-600" />
+                My Schedule
+              </h1>
             </div>
-            <div className="flex flex-col space-y-1">
-              {/* Button 1: Classes History */}
-              <button
-                onClick={() => navigate("/mentee/history")}
-                className="bg-blue-600 text-white px-2 py-3 rounded-lg font-semibold hover:bg-blue-700 transition"
-              >
-                Sessions History
-              </button>
 
-              {/* Button 2: Assignment (Added Here) */}
-              <button
-                onClick={() => navigate("/mentee/assignments")}
-                className="bg-green-600 text-white px-5 py-2 rounded-lg font-semibold hover:bg-gray-700 transition"
+            {/* Controls */}
+            <div className="flex items-center space-x-4 mt-4 md:mt-0">
+              {/* View Mode Toggle */}
+              <div
+                className="rounded-lg border border-gray-300 bg-gray-100"
+                style={{
+                  padding: "2px",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  height: "fit-content",
+                }}
               >
-                Assignments
-              </button>
+                <button
+                  onClick={() => setViewMode("week")}
+                  className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all ${
+                    viewMode === "week"
+                      ? "bg-blue-500 text-gray-50 shadow-sm"
+                      : "text-black hover:text-white bg-white"
+                  }`}
+                >
+                  Week
+                </button>
+                <button
+                  onClick={() => setViewMode("month")}
+                  className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all ${
+                    viewMode === "month"
+                      ? "bg-blue-500 text-gray-50 shadow-sm"
+                      : "text-black hover:text-white bg-white"
+                  }`}
+                >
+                  Month
+                </button>
+              </div>
+
+              {/* Navigation - Always visible */}
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={goToPrevious}
+                  className="flex items-center gap-1 text-gray-700 border-gray-300"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                  <span>Previous</span>
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={goToToday}
+                  className="px-4 text-gray-700 border-gray-300"
+                >
+                  Today
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={goToNext}
+                  className="flex items-center gap-1 text-gray-700 border-gray-300"
+                >
+                  <span>Next</span>
+                  <ChevronRight className="w-4 h-4" />
+                </Button>
+              </div>
             </div>
           </div>
 
-          {/* Success Toast */}
-          {showSuccessToast && (
-            <div className="fixed top-4 right-4 bg-green-500 text-white px-6 py-4 rounded-lg shadow-lg flex items-center space-x-2 z-50 animate-in slide-in-from-right">
-              <CheckCircle className="w-5 h-5" />
-              <span className="font-medium">{successMessage}</span>
-            </div>
-          )}
+          {/* Date Range Title */}
+          <div className="text-center mb-6">
+            <h2 className="text-xl font-semibold text-gray-700">
+              {viewMode === "week"
+                ? formatWeekRange(days[0], days[6])
+                : formatMonthYear(currentDate)}
+            </h2>
+          </div>
 
-          {/* Reschedule Modal */}
-          {showRescheduleModal && selectedClassForReschedule && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-              <Card className="max-w-2xl w-full mx-4 p-6 bg-white max-h-[80vh] overflow-y-auto">
-                <h3 className="text-2xl font-bold text-gray-900 mb-4">
-                  Reschedule {selectedClassForReschedule.subject_name}
-                </h3>
-                <p className="text-gray-600 mb-6">
-                  Select an alternative class to switch to:
-                </p>
+          {/* Calendar Grid */}
+          <div
+            className={`grid ${
+              viewMode === "week" ? "grid-cols-7" : "grid-cols-7"
+            } gap-2`}
+          >
+            {/* Day Headers for Month View */}
+            {viewMode === "month" && (
+              <>
+                {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map(
+                  (day) => (
+                    <div
+                      key={day}
+                      className="text-center py-2 text-sm font-medium text-gray-500"
+                    >
+                      {day}
+                    </div>
+                  )
+                )}
+              </>
+            )}
 
-                <div className="space-y-4 mb-6">
-                  {availableClasses.map((cls) => {
-                    const isFull = cls.current_enrolled >= cls.max_students;
-                    
-                    return (
-                      <Card key={cls.id} className={`p-4 border-2 ${isFull ? 'opacity-50' : 'hover:border-green-400'}`}>
-                        <div className="flex justify-between items-start mb-3">
-                          <div>
-                            <h4 className="text-lg font-bold text-gray-900">{cls.class_code}</h4>
-                            <p className="text-sm text-gray-600">{cls.description}</p>
-                            <p className="text-sm text-gray-700 mt-1">Tutor: {cls.tutor_name}</p>
-                          </div>
-                          {isFull && (
-                            <span className="bg-red-100 text-red-800 px-2 py-1 rounded text-xs font-semibold">
-                              Full
-                            </span>
-                          )}
-                        </div>
+            {days.map((day, index) => {
+              const daySessions = getSessionsForDay(day);
+              const dayIsToday = isToday(day);
+              const inCurrentMonth =
+                viewMode === "month" ? isCurrentMonth(day, currentDate) : true;
+              const visibleSessions = daySessions.slice(0, maxVisibleSessions);
+              const hiddenCount = daySessions.length - maxVisibleSessions;
 
-                        <div className="mb-3">
-                          <p className="text-sm font-semibold text-gray-700 mb-1">Schedule:</p>
-                          {cls.time_slots.map((slot) => (
-                            <p key={slot.id} className="text-sm text-gray-600">
-                              {getDayName(slot.dayOfWeek)} • Periods {slot.startPeriod}–{slot.endPeriod}
-                            </p>
-                          ))}
-                        </div>
-
-                        <Button
-                          onClick={() => confirmReschedule(cls)}
-                          disabled={isFull}
-                          className={`w-full ${
-                            isFull
-                              ? 'bg-gray-400 cursor-not-allowed'
-                              : 'bg-green-600 hover:bg-green-700'
-                          }`}
-                        >
-                          {isFull ? 'Class Full' : 'Register'}
-                        </Button>
-                      </Card>
-                    );
-                  })}
-                </div>
-
-                <Button 
-                  onClick={() => setShowRescheduleModal(false)}
-                  variant="outline"
-                  className="w-full"
+              return (
+                <Card
+                  key={index}
+                  className={`${
+                    viewMode === "week" ? "min-h-[300px]" : "min-h-[120px]"
+                  } p-2 ${
+                    dayIsToday
+                      ? "ring-2 ring-blue-500 bg-blue-50/50"
+                      : inCurrentMonth
+                      ? "bg-white"
+                      : "bg-gray-50/50"
+                  }`}
                 >
-                  Cancel
-                </Button>
-              </Card>
-            </div>
-          )}
-
-          {/* Classes by Subject */}
-          {Object.keys(groupedBySubject).length === 0 ? (
-            <Card className="p-8 text-center">
-              <p className="text-gray-600">You are not registered for any classes yet.</p>
-              <Button 
-                onClick={() => window.location.href = '/mentee/registration'}
-                className="mt-4 bg-blue-600 hover:bg-blue-700"
-              >
-                Browse Available Classes
-              </Button>
-            </Card>
-          ) : (
-            <div className="space-y-6">
-              {Object.entries(groupedBySubject).map(([subjectName, subjectClasses]) => (
-                <Card key={subjectName} className="overflow-hidden">
-                  <div className="p-4 bg-blue-50">
-                    <h2 className="text-2xl font-bold text-gray-900">{subjectName}</h2>
-                    <p className="text-sm text-gray-600">{subjectClasses.length} class(es) enrolled</p>
+                  {/* Day Header */}
+                  <div
+                    className={`text-center pb-1 mb-2 ${
+                      viewMode === "week" ? "border-b" : ""
+                    } ${dayIsToday ? "border-blue-300" : "border-gray-200"}`}
+                  >
+                    {viewMode === "week" && (
+                      <p className="text-xs font-medium text-gray-500 uppercase">
+                        {day.toLocaleDateString("en-US", { weekday: "short" })}
+                      </p>
+                    )}
+                    <p
+                      className={`${
+                        viewMode === "week" ? "text-2xl" : "text-lg"
+                      } font-bold ${
+                        dayIsToday
+                          ? "text-blue-600"
+                          : inCurrentMonth
+                          ? "text-gray-900"
+                          : "text-gray-400"
+                      }`}
+                    >
+                      {day.getDate()}
+                    </p>
                   </div>
 
-                  <div className="divide-y">
-                    {subjectClasses.map((cls) => {
-                      const canModify = isBeforeDeadline(cls.deadlineRegister);
-                      const isExpanded = expandedClasses.has(cls.id);
-
-                      return (
-                        <div key={cls.id} className="bg-white">
+                  {/* Sessions */}
+                  <div className="space-y-1">
+                    {daySessions.length === 0 ? (
+                      <p
+                        className={`text-center text-gray-400 text-xs ${
+                          viewMode === "week" ? "py-4" : "py-1"
+                        }`}
+                      >
+                        No sessions
+                      </p>
+                    ) : (
+                      <>
+                        {visibleSessions.map((session) => (
                           <div
-                            className="p-4 hover:bg-gray-50 cursor-pointer flex items-center justify-between"
-                            onClick={() => toggleClass(cls.id)}
+                            key={session.id}
+                            onClick={() => setSelectedSession(session)}
+                            className={`p-1.5 rounded border cursor-pointer transition-all ${getStatusBgColor(
+                              session.status
+                            )}`}
                           >
-                            <div className="flex-1">
-                              <div className="flex items-center space-x-3">
-                                <h3 className="text-lg font-bold text-gray-900">Class {cls.class_code}</h3>
-                                {!canModify && (
-                                  <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-semibold">
-                                    Confirmed
-                                  </span>
-                                )}
-                              </div>
-                              <p className="text-sm text-gray-600 mt-1">Tutor: {cls.tutor_name}</p>
-                              <div className="flex items-center space-x-4 mt-2 text-sm text-gray-600">
-                                <div className="flex items-center space-x-1">
-                                  <Clock className="w-4 h-4" />
-                                  <span>Deadline: {new Date(cls.deadlineRegister).toLocaleDateString()}</span>
-                                </div>
-                                <div className="flex items-center space-x-1">
-                                  <AlertCircle className="w-4 h-4" />
-                                  <span>Status: {cls.status}</span>
-                                </div>
-                              </div>
+                            <div className="flex items-center space-x-1">
+                              <div
+                                className={`w-2 h-2 rounded-full flex-shrink-0 ${getStatusColor(
+                                  session.status
+                                )}`}
+                              />
+                              <span className="text-xs font-semibold text-gray-700 truncate">
+                                {session.start_time}
+                              </span>
                             </div>
-                            {isExpanded ? (
-                              <ChevronUp className="w-6 h-6 text-gray-400" />
-                            ) : (
-                              <ChevronDown className="w-6 h-6 text-gray-400" />
+                            <p className="text-xs font-medium text-gray-900 truncate">
+                              {session.subject_name}
+                            </p>
+                            {viewMode === "week" && (
+                              <p className="text-xs text-gray-500 truncate">
+                                {session.location}
+                              </p>
                             )}
                           </div>
-
-                          {isExpanded && (
-                            <div className="p-4 bg-blue-50/30 border-t">
-                              {/* Description */}
-                              {cls.description && (
-                                <p className="text-sm text-gray-600 mb-3">
-                                  {cls.description}
-                                </p>
-                              )}
-
-                              {/* Weekly Schedule */}
-                              <div className="bg-white border border-blue-200 rounded p-3 space-y-2 mb-4">
-                                <p className="text-xs font-semibold text-gray-700 uppercase">Weekly Schedule:</p>
-                                <div className="flex flex-wrap gap-2">
-                                  {cls.time_slots.map((slot) => (
-                                    <div 
-                                      key={slot.id}
-                                      className="flex items-center gap-1 text-xs bg-purple-50 px-2 py-1 rounded border border-purple-200"
-                                    >
-                                      <Clock className="h-3 w-3 text-purple-600" />
-                                      <span className="font-medium">
-                                        {getDayName(slot.dayOfWeek)} {periodToTime(slot.startPeriod)}-{periodToTime(slot.endPeriod)}
-                                      </span>
-                                      <span className="text-gray-600">(P{slot.startPeriod}-{slot.endPeriod})</span>
-                                    </div>
-                                  ))}
-                                </div>
-                                <p className="text-xs text-gray-600 mt-1">
-                                  {cls.time_slots.length} session{cls.time_slots.length !== 1 ? 's' : ''} per week
-                                </p>
-                              </div>
-
-                              {/* Enrollment Info */}
-                              <div className="flex items-center gap-1 mb-4 text-sm">
-                                <Users className="h-4 w-4 text-gray-600" />
-                                <span className="text-gray-700">
-                                  {cls.current_enrolled} / {cls.max_students} enrolled
-                                </span>
-                              </div>
-
-                              {/* Meeting Link */}
-                              {cls.meeting_link && (
-                                <div className="mb-4">
-                                  <Button 
-                                    size="sm"
-                                    className="bg-green-600 hover:bg-green-700 w-full"
-                                    asChild
-                                  >
-                                    <a href={cls.meeting_link} target="_blank" rel="noopener noreferrer">
-                                      Join Class Meeting <ExternalLink className="ml-1 h-3 w-3" />
-                                    </a>
-                                  </Button>
-                                </div>
-                              )}
-
-                              {canModify && (
-                                <div className="flex space-x-3">
-                                  <Button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleCancel(cls);
-                                    }}
-                                    variant="outline"
-                                    className="flex-1 border-red-300 text-red-600 hover:bg-red-50"
-                                  >
-                                    Cancel
-                                  </Button>
-                                  <Button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleReschedule(cls);
-                                    }}
-                                    className="flex-1 bg-blue-600 hover:bg-blue-700"
-                                  >
-                                    Reschedule
-                                  </Button>
-                                </div>
-                              )}
-                              {!canModify && (
-                                <div className="bg-blue-50 border border-blue-200 rounded p-3 text-sm text-blue-800">
-                                  <p>Registration deadline has passed. This class is confirmed and cannot be modified.</p>
-                                </div>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
+                        ))}
+                        {hiddenCount > 0 && (
+                          <button
+                            onClick={() =>
+                              setShowMoreModal({
+                                date: day,
+                                sessions: daySessions,
+                              })
+                            }
+                            className="w-full text-xs font-medium py-1 rounded transition-colors bg-white border border-blue-200 text-blue-600 hover:bg-blue-50 hover:text-blue-800"
+                          >
+                            +{hiddenCount} more
+                          </button>
+                        )}
+                      </>
+                    )}
                   </div>
                 </Card>
-              ))}
+              );
+            })}
+          </div>
+
+          {/* Legend */}
+          <div className="flex items-center justify-center space-x-6 mt-6">
+            <div className="flex items-center space-x-2">
+              <div className="w-3 h-3 rounded-full bg-blue-500" />
+              <span className="text-sm text-gray-600">Scheduled</span>
             </div>
-          )}
+            <div className="flex items-center space-x-2">
+              <div className="w-3 h-3 rounded-full bg-gray-400" />
+              <span className="text-sm text-gray-600">Completed</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <div className="w-3 h-3 rounded-full bg-red-500" />
+              <span className="text-sm text-gray-600">Cancelled</span>
+            </div>
+          </div>
         </div>
       </div>
 
-      <Footer />
+      {/* "More Sessions" Modal */}
+      {showMoreModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <Card className="max-w-md w-full bg-white rounded-xl shadow-2xl overflow-hidden max-h-[80vh] flex flex-col">
+            {/* Modal Header */}
+            <div className="p-4 bg-gray-100 border-b flex items-center justify-between">
+              <div>
+                <h3 className="font-bold text-gray-900">
+                  {showMoreModal.date.toLocaleDateString("en-US", {
+                    weekday: "long",
+                    month: "long",
+                    day: "numeric",
+                  })}
+                </h3>
+                <p className="text-sm text-gray-500">
+                  {showMoreModal.sessions.length} sessions
+                </p>
+              </div>
+              <button
+                onClick={() => setShowMoreModal(null)}
+                className="p-1 hover:bg-gray-200 rounded-full transition-colors"
+              >
+                <X className="w-5 h-5 text-gray-500" />
+              </button>
+            </div>
+
+            {/* Sessions List */}
+            <div className="p-4 overflow-y-auto flex-1 space-y-2">
+              {showMoreModal.sessions.map((session) => (
+                <div
+                  key={session.id}
+                  onClick={() => {
+                    setShowMoreModal(null);
+                    setSelectedSession(session);
+                  }}
+                  className={`p-3 rounded-lg border cursor-pointer transition-all ${getStatusBgColor(
+                    session.status
+                  )}`}
+                >
+                  <div className="flex items-center space-x-2 mb-1">
+                    <div
+                      className={`w-2 h-2 rounded-full ${getStatusColor(
+                        session.status
+                      )}`}
+                    />
+                    <span className="text-sm font-semibold text-gray-700">
+                      {session.start_time} - {session.end_time}
+                    </span>
+                  </div>
+                  <p className="font-medium text-gray-900">
+                    {session.subject_name}
+                  </p>
+                  <p className="text-sm text-gray-500">{session.location}</p>
+                </div>
+              ))}
+            </div>
+          </Card>
+        </div>
+      )}
+
+      {/* Session Detail Modal */}
+      {selectedSession && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <Card className="max-w-lg w-full bg-white rounded-xl shadow-2xl overflow-hidden">
+            {/* Modal Header */}
+            <div
+              className={`p-4 ${getStatusColor(
+                selectedSession.status
+              )} text-white`}
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <BookOpen className="w-5 h-5" />
+                  <span className="text-sm font-medium uppercase">
+                    {selectedSession.status}
+                  </span>
+                </div>
+                <button
+                  onClick={() => setSelectedSession(null)}
+                  className="p-1 hover:bg-white/20 rounded-full transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-6">
+              <h3 className="text-2xl font-bold text-gray-900 mb-1">
+                {selectedSession.subject_name}
+              </h3>
+              <p className="text-gray-500 mb-4">
+                {selectedSession.subject_code} • Class{" "}
+                {selectedSession.class_code}
+              </p>
+
+              <div className="space-y-4">
+                {/* Date & Time */}
+                <div className="flex items-start space-x-3">
+                  <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <Calendar className="w-5 h-5 text-blue-600" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-gray-900">
+                      {selectedSession.date.toLocaleDateString("en-US", {
+                        weekday: "long",
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      })}
+                    </p>
+                    <p className="text-gray-600">
+                      {selectedSession.start_time} - {selectedSession.end_time}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Location */}
+                <div className="flex items-start space-x-3">
+                  <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <MapPin className="w-5 h-5 text-green-600" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-gray-900">Location</p>
+                    <p className="text-gray-600">{selectedSession.location}</p>
+                  </div>
+                </div>
+
+                {/* Tutor */}
+                <div className="flex items-start space-x-3">
+                  <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <User className="w-5 h-5 text-purple-600" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-gray-900">Tutor</p>
+                    <p className="text-gray-600">
+                      {selectedSession.tutor_name}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="mt-6 flex space-x-3">
+                {selectedSession.meeting_link &&
+                  selectedSession.status === "scheduled" && (
+                    <Button
+                      className="flex-1 bg-green-600 hover:bg-green-700"
+                      asChild
+                    >
+                      <a
+                        href={selectedSession.meeting_link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <ExternalLink className="w-4 h-4 mr-2" />
+                        Join Session
+                      </a>
+                    </Button>
+                  )}
+                <Button
+                  className="flex-1 bg-blue-600 hover:bg-blue-700"
+                  onClick={() => handleViewDetails(selectedSession)}
+                >
+                  View Details
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setSelectedSession(null)}
+                >
+                  Close
+                </Button>
+              </div>
+            </div>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }
