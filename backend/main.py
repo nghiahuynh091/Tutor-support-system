@@ -20,6 +20,8 @@ from routes import subject_route
 
 from routes import note_route
 
+from routes import session_route
+
 from routes.FeedbackAndProgressTracking import assignmentRoute, feedbackRoute, progressRoute, submissionRoute
 
 app = FastAPI(
@@ -67,6 +69,9 @@ app.include_router(subject_route.router)
 
 #note modules
 app.include_router(note_route.router)
+
+#session modules
+app.include_router(session_route.router)
 
 
 if __name__ == "__main__":
