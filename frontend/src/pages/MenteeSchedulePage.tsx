@@ -1,16 +1,16 @@
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { 
-  ChevronLeft, 
-  ChevronRight, 
-  Clock, 
-  MapPin, 
-  User, 
+import {
+  ChevronLeft,
+  ChevronRight,
+  Clock,
+  MapPin,
+  User,
   X,
   Calendar,
   BookOpen,
-  ExternalLink
+  ExternalLink,
 } from "lucide-react";
 
 // Types for calendar sessions
@@ -34,24 +34,69 @@ interface CalendarSession {
 const generateMockSessions = (weekStart: Date): CalendarSession[] => {
   const sessions: CalendarSession[] = [];
   const subjects = [
-    { name: "Calculus 1", code: "MT1003", tutor: "Prof. Phung Trong Thuc", classCode: "CC01" },
-    { name: "Physics 1", code: "PH1003", tutor: "Prof. Dau The Phiet", classCode: "CC03" },
-    { name: "Programming", code: "CS1001", tutor: "Dr. Nguyen Van A", classCode: "CC05" },
+    {
+      name: "Calculus 1",
+      code: "MT1003",
+      tutor: "Prof. Phung Trong Thuc",
+      classCode: "CC01",
+    },
+    {
+      name: "Physics 1",
+      code: "PH1003",
+      tutor: "Prof. Dau The Phiet",
+      classCode: "CC03",
+    },
+    {
+      name: "Programming",
+      code: "CS1001",
+      tutor: "Dr. Nguyen Van A",
+      classCode: "CC05",
+    },
   ];
 
   // Generate some sessions for the week
   const sessionPatterns = [
-    { dayOffset: 0, startTime: "08:00", endTime: "10:00", subjectIdx: 0, location: "Room A101" },
-    { dayOffset: 1, startTime: "14:00", endTime: "16:00", subjectIdx: 1, location: "Lab B202" },
-    { dayOffset: 2, startTime: "09:00", endTime: "11:00", subjectIdx: 2, location: "Room C303" },
-    { dayOffset: 3, startTime: "10:00", endTime: "12:00", subjectIdx: 0, location: "Room A101" },
-    { dayOffset: 4, startTime: "13:00", endTime: "15:00", subjectIdx: 1, location: "Lab B202" },
+    {
+      dayOffset: 0,
+      startTime: "08:00",
+      endTime: "10:00",
+      subjectIdx: 0,
+      location: "Room A101",
+    },
+    {
+      dayOffset: 1,
+      startTime: "14:00",
+      endTime: "16:00",
+      subjectIdx: 1,
+      location: "Lab B202",
+    },
+    {
+      dayOffset: 2,
+      startTime: "09:00",
+      endTime: "11:00",
+      subjectIdx: 2,
+      location: "Room C303",
+    },
+    {
+      dayOffset: 3,
+      startTime: "10:00",
+      endTime: "12:00",
+      subjectIdx: 0,
+      location: "Room A101",
+    },
+    {
+      dayOffset: 4,
+      startTime: "13:00",
+      endTime: "15:00",
+      subjectIdx: 1,
+      location: "Lab B202",
+    },
   ];
 
   sessionPatterns.forEach((pattern, idx) => {
     const sessionDate = new Date(weekStart);
     sessionDate.setDate(sessionDate.getDate() + pattern.dayOffset);
-    
+
     const subject = subjects[pattern.subjectIdx];
     sessions.push({
       id: `session-${idx}`,
@@ -65,7 +110,8 @@ const generateMockSessions = (weekStart: Date): CalendarSession[] => {
       end_time: pattern.endTime,
       location: pattern.location,
       description: `Weekly session for ${subject.name}. Please bring your materials and be prepared for the lecture.`,
-      meeting_link: idx % 2 === 0 ? "https://meet.google.com/abc-defg-hij" : null,
+      meeting_link:
+        idx % 2 === 0 ? "https://meet.google.com/abc-defg-hij" : null,
       status: sessionDate < new Date() ? "completed" : "scheduled",
     });
   });
@@ -85,19 +131,19 @@ const getWeekStart = (date: Date): Date => {
 
 // Format date for display
 const formatDate = (date: Date): string => {
-  return date.toLocaleDateString("en-US", { 
-    weekday: "short", 
-    month: "short", 
-    day: "numeric" 
+  return date.toLocaleDateString("en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
   });
 };
 
 const formatFullDate = (date: Date): string => {
-  return date.toLocaleDateString("en-US", { 
-    weekday: "long", 
+  return date.toLocaleDateString("en-US", {
+    weekday: "long",
     year: "numeric",
-    month: "long", 
-    day: "numeric" 
+    month: "long",
+    day: "numeric",
   });
 };
 
@@ -108,9 +154,12 @@ const isToday = (date: Date): boolean => {
 };
 
 export function MenteeSchedulePage() {
-  const [currentWeekStart, setCurrentWeekStart] = useState<Date>(getWeekStart(new Date()));
+  const [currentWeekStart, setCurrentWeekStart] = useState<Date>(
+    getWeekStart(new Date())
+  );
   const [sessions, setSessions] = useState<CalendarSession[]>([]);
-  const [selectedSession, setSelectedSession] = useState<CalendarSession | null>(null);
+  const [selectedSession, setSelectedSession] =
+    useState<CalendarSession | null>(null);
 
   // Generate week days
   const weekDays = Array.from({ length: 7 }, (_, i) => {
@@ -331,7 +380,11 @@ export function MenteeSchedulePage() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <Card className="max-w-lg w-full bg-white rounded-xl shadow-2xl overflow-hidden">
             {/* Modal Header */}
-            <div className={`p-4 ${getStatusColor(selectedSession.status)} text-white`}>
+            <div
+              className={`p-4 ${getStatusColor(
+                selectedSession.status
+              )} text-white`}
+            >
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
                   <BookOpen className="w-5 h-5" />
@@ -354,7 +407,8 @@ export function MenteeSchedulePage() {
                 {selectedSession.subject_name}
               </h3>
               <p className="text-gray-500 mb-4">
-                {selectedSession.subject_code} • Class {selectedSession.class_code}
+                {selectedSession.subject_code} • Class{" "}
+                {selectedSession.class_code}
               </p>
 
               <div className="space-y-4">
@@ -391,13 +445,17 @@ export function MenteeSchedulePage() {
                   </div>
                   <div>
                     <p className="font-semibold text-gray-900">Tutor</p>
-                    <p className="text-gray-600">{selectedSession.tutor_name}</p>
+                    <p className="text-gray-600">
+                      {selectedSession.tutor_name}
+                    </p>
                   </div>
                 </div>
 
                 {/* Description */}
                 <div className="pt-4 border-t">
-                  <p className="font-semibold text-gray-900 mb-2">Description</p>
+                  <p className="font-semibold text-gray-900 mb-2">
+                    Description
+                  </p>
                   <p className="text-gray-600 text-sm">
                     {selectedSession.description}
                   </p>
@@ -406,21 +464,22 @@ export function MenteeSchedulePage() {
 
               {/* Actions */}
               <div className="mt-6 flex space-x-3">
-                {selectedSession.meeting_link && selectedSession.status === "scheduled" && (
-                  <Button
-                    className="flex-1 bg-green-600 hover:bg-green-700"
-                    asChild
-                  >
-                    <a
-                      href={selectedSession.meeting_link}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                {selectedSession.meeting_link &&
+                  selectedSession.status === "scheduled" && (
+                    <Button
+                      className="flex-1 bg-green-600 hover:bg-green-700"
+                      asChild
                     >
-                      <ExternalLink className="w-4 h-4 mr-2" />
-                      Join Session
-                    </a>
-                  </Button>
-                )}
+                      <a
+                        href={selectedSession.meeting_link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <ExternalLink className="w-4 h-4 mr-2" />
+                        Join Session
+                      </a>
+                    </Button>
+                  )}
                 <Button
                   variant="outline"
                   className="flex-1"
