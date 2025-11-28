@@ -31,15 +31,12 @@ export function MenteeLayout() {
   return (
     <div className="min-h-screen bg-gray-50 overscroll-none">
       {/* Navigation Header - Fixed position, won't move on overscroll */}
-      <header 
+      <header
         className="bg-blue-700 text-white shadow-lg fixed top-0 left-0 right-0 z-50"
-        style={{ height: '64px' }}
+        style={{ height: "64px" }}
       >
         {/* Main Header Bar */}
-        <div 
-          className="flex justify-between px-6"
-          style={{ height: '64px' }}
-        >
+        <div className="flex justify-between px-6" style={{ height: "64px" }}>
           {/* Logo, App Name, and Navigation Links */}
           <div className="flex">
             {/* Logo and App Name */}
@@ -66,11 +63,11 @@ export function MenteeLayout() {
                       ? "bg-blue-600 text-white"
                       : "text-white bg-transparent hover:bg-blue-600/50"
                   }`}
-                  style={{ 
-                    height: '64px', 
-                    borderRadius: '0px',
+                  style={{
+                    height: "64px",
+                    borderRadius: "0px",
                     margin: 0,
-                    padding: '0 24px'
+                    padding: "0 24px",
                   }}
                 >
                   {item.label}
