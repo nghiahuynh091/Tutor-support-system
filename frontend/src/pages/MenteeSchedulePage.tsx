@@ -309,8 +309,8 @@ export function MenteeSchedulePage() {
                   onClick={() => setViewMode("week")}
                   className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all ${
                     viewMode === "week"
-                      ? "bg-white text-gray-900 shadow-sm"
-                      : "text-gray-600 hover:text-gray-900"
+                      ? "bg-blue-500 text-gray-50 shadow-sm"
+                      : "text-black hover:text-white bg-white"
                   }`}
                 >
                   Week
@@ -319,8 +319,8 @@ export function MenteeSchedulePage() {
                   onClick={() => setViewMode("month")}
                   className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all ${
                     viewMode === "month"
-                      ? "bg-white text-gray-900 shadow-sm"
-                      : "text-gray-600 hover:text-gray-900"
+                      ? "bg-blue-500 text-gray-50 shadow-sm"
+                      : "text-black hover:text-white bg-white"
                   }`}
                 >
                   Month
