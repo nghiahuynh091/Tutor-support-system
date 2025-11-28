@@ -97,15 +97,30 @@ class RegistrationModel:
         """
         Cancel a class registration
         """
-        # Check if registration exists
+        # Check if registration exists and get class info
         check_query = """
-            SELECT class_id, mentee_id FROM class_registrations
-            WHERE class_id = $1 AND mentee_id = $2
+            SELECT 
+                cr.class_id, 
+                cr.mentee_id,
+                c.registration_deadline,
+                (c.registration_deadline < NOW()) as deadline_passed
+            FROM class_registrations cr
+            JOIN classes c ON cr.class_id = c.id
+            WHERE cr.class_id = $1 AND cr.mentee_id = $2
         """
         existing = await db.execute_query(check_query, class_id, mentee_id)
         
         if not existing:
             return {"success": False, "error": "Registration not found"}
+        
+        reg_data = existing[0]
+        
+        # Check if registration deadline has passed
+        if reg_data['registration_deadline'] and reg_data['deadline_passed']:
+            return {
+                "success": False, 
+                "error": "Cannot cancel registration - registration deadline has passed"
+            }
         
         # Delete registration
         delete_query = """
