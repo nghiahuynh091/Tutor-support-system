@@ -1,140 +1,228 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar, Clock, Plus, Trash2, Users, ChevronDown, ChevronRight, Edit } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { 
+  Calendar, 
+  Clock, 
+  Plus, 
+  Trash2, 
+  Users, 
+  ChevronDown, 
+  ChevronRight, 
+  MapPin,
+  RefreshCw,
+  AlertCircle,
+  ExternalLink,
+  CheckCircle
+} from "lucide-react";
 import { Header } from "@/components/Header";
-import { CreateClassModal } from "@/components/CreateClassModal";
-import type { Class, Subject } from "@/types";
+import { TutorCreateClassModal } from "@/components/TutorCreateClassModal";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { classService, type ClassData, type GroupedSubject } from "@/services/classService";
 
-// Hard-coded mock data for tutor's classes
-const MOCK_TUTOR_CLASSES: Class[] = [
-  {
-    id: "class-1",
-    subject_id: 1,
-    subject_name: "Advanced Mathematics",
-    subject_code: "MATH301",
-    class_code: "CC01",
-    description: "Calculus and Linear Algebra review sessions",
-    tutor_id: "tutor-1",
-    tutor_name: "Dr. Sarah Johnson",
-    max_students: 10,
-    current_enrolled: 5,
-    number_of_weeks: 4,
-    meeting_link: "https://meet.google.com/abc-defg-hij",
-    time_slots: [
-      { id: "ts1", dayOfWeek: 1, startPeriod: 2, endPeriod: 4 },
-      { id: "ts2", dayOfWeek: 3, startPeriod: 8, endPeriod: 10 },
-    ],
-    sessions: [],
-    created_at: "2025-10-25T10:00:00",
-  },
-  {
-    id: "class-2",
-    subject_id: 2,
-    subject_name: "Data Structures",
-    subject_code: "CS202",
-    class_code: "CC01",
-    description: "Trees, Graphs, and Algorithm Analysis",
-    tutor_id: "tutor-1",
-    tutor_name: "Dr. Sarah Johnson",
-    max_students: 12,
-    current_enrolled: 8,
-    number_of_weeks: 4,
-    meeting_link: "https://zoom.us/j/123456789",
-    time_slots: [
-      { id: "ts3", dayOfWeek: 2, startPeriod: 2, endPeriod: 4 },
-      { id: "ts4", dayOfWeek: 5, startPeriod: 2, endPeriod: 4 },
-    ],
-    sessions: [],
-    created_at: "2025-10-26T10:00:00",
-  },
-];
+const DAYS_OF_WEEK: Record<string, string> = {
+  "monday": "Monday",
+  "tuesday": "Tuesday", 
+  "wednesday": "Wednesday",
+  "thursday": "Thursday",
+  "friday": "Friday",
+  "saturday": "Saturday",
+  "sunday": "Sunday"
+};
 
-const DAYS_OF_WEEK = ["", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-
-const periodToTime = (period: number): string => {
-  const hour = period + 5;
+const periodToTime = (hour: number): string => {
   return `${hour.toString().padStart(2, '0')}:00`;
 };
 
 export function TutorSessions() {
-  const [classes, setClasses] = useState<Class[]>(MOCK_TUTOR_CLASSES);
-  const [subjects, setSubjects] = useState<Subject[]>([]);
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [classes, setClasses] = useState<ClassData[]>([]);
+  const [subjects, setSubjects] = useState<GroupedSubject[]>([]);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [expandedSubjectId, setExpandedSubjectId] = useState<number | null>(null);
-  const [expandedClassId, setExpandedClassId] = useState<string | null>(null);
-  const navigate = useNavigate()
+  const [expandedClassId, setExpandedClassId] = useState<number | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
+  
+  // Success toast state
+  const [showSuccessToast, setShowSuccessToast] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
 
-  // Group classes by subject
-  useEffect(() => {
-    const subjectMap = new Map<number, Subject>();
+  // Load tutor's classes from API
+  const loadClasses = useCallback(async () => {
+    if (!user?.id) return;
     
-    classes.forEach((classItem) => {
-      if (!subjectMap.has(classItem.subject_id)) {
-        subjectMap.set(classItem.subject_id, {
-          id: classItem.subject_id,
-          subject_name: classItem.subject_name,
-          subject_code: classItem.subject_code,
-          classes: [],
-        });
-      }
-      subjectMap.get(classItem.subject_id)!.classes.push(classItem);
-    });
+    try {
+      setError(null);
+      const tutorClasses = await classService.getClassesByTutor(user.id);
+      setClasses(tutorClasses);
+      
+      // Group classes by subject
+      const grouped = classService.groupClassesBySubject(tutorClasses);
+      setSubjects(grouped);
+    } catch (err: any) {
+      console.error("Failed to load classes:", err);
+      setError(err.response?.data?.detail || "Failed to load classes");
+    }
+  }, [user?.id]);
 
-    const subjectsList = Array.from(subjectMap.values());
-    setSubjects(subjectsList);
-  }, [classes]);
+  useEffect(() => {
+    const initData = async () => {
+      setLoading(true);
+      await loadClasses();
+      setLoading(false);
+    };
+    
+    if (user?.id) {
+      initData();
+    } else {
+      setLoading(false);
+    }
+  }, [user?.id, loadClasses]);
 
-  const handleCreateClass = (newClass: Class) => {
-    setClasses([...classes, newClass]);
-    alert(`Successfully created class ${newClass.class_code} with ${newClass.sessions.length} sessions!`);
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await loadClasses();
+    setRefreshing(false);
   };
 
-  const handleDeleteClass = (classId: string) => {
-    if (window.confirm("Are you sure you want to delete this class? All sessions will be removed.")) {
-      setClasses((prevClasses) => prevClasses.filter((c) => c.id !== classId));
-      alert("Class deleted successfully!");
+  const showSuccess = (message: string) => {
+    setSuccessMessage(message);
+    setShowSuccessToast(true);
+    setTimeout(() => setShowSuccessToast(false), 3000);
+  };
+
+  const handleCreateSuccess = async () => {
+    // Reload classes after creation
+    await loadClasses();
+    setIsCreateModalOpen(false);
+    showSuccess("Class created successfully!");
+  };
+
+  const handleDeleteClass = async (classId: number, className: string) => {
+    if (!window.confirm(`Are you sure you want to delete class "${className}"? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      const result = await classService.deleteClass(classId);
+      if (result.success) {
+        await loadClasses();
+        showSuccess(`${className} deleted successfully!`);
+      } else {
+        alert(result.error || "Failed to delete class");
+      }
+    } catch (err: any) {
+      alert(err.response?.data?.detail || "Failed to delete class");
     }
   };
 
   const toggleSubject = (subjectId: number) => {
     setExpandedSubjectId(expandedSubjectId === subjectId ? null : subjectId);
     if (expandedSubjectId !== subjectId) {
-      setExpandedClassId(null); // Collapse classes when switching subjects
+      setExpandedClassId(null);
     }
   };
 
-  const toggleClass = (classId: string) => {
+  const toggleClass = (classId: number) => {
     setExpandedClassId(expandedClassId === classId ? null : classId);
   };
 
-  const formatTimeSlot = (dayOfWeek: number, startPeriod: number, endPeriod: number): string => {
-    const day = DAYS_OF_WEEK[dayOfWeek];
-    return `${day} ${periodToTime(startPeriod)}-${periodToTime(endPeriod)} (Period ${startPeriod}-${endPeriod})`;
+  const getScheduleDisplay = (classItem: ClassData): string => {
+    const dayName = DAYS_OF_WEEK[classItem.week_day] || classItem.week_day;
+    return `${dayName} ${periodToTime(classItem.start_time)} - ${periodToTime(classItem.end_time)}`;
   };
 
-  const getWeeklyScheduleSummary = (classItem: Class): string => {
-    return classItem.time_slots
-      .map(ts => `${DAYS_OF_WEEK[ts.dayOfWeek].substring(0, 3)} ${ts.startPeriod}-${ts.endPeriod}`)
-      .join(", ");
+  const getStatusBadge = (status?: string) => {
+    switch (status?.toLowerCase()) {
+      case 'active':
+        return <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Active</Badge>;
+      case 'completed':
+        return <Badge className="bg-gray-100 text-gray-800 hover:bg-gray-100">Completed</Badge>;
+      case 'cancelled':
+        return <Badge className="bg-red-100 text-red-800 hover:bg-red-100">Cancelled</Badge>;
+      default:
+        return <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100">Open</Badge>;
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white">
+        <Header />
+        <div className="flex items-center justify-center h-[calc(100vh-80px)]">
+          <div className="text-center">
+            <RefreshCw className="h-12 w-12 animate-spin text-blue-600 mx-auto mb-4" />
+            <p className="text-gray-600">Loading your classes...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white">
+        <Header />
+        <div className="flex items-center justify-center h-[calc(100vh-80px)]">
+          <Card className="p-8 text-center">
+            <AlertCircle className="h-12 w-12 text-yellow-500 mx-auto mb-4" />
+            <h2 className="text-xl font-semibold mb-2">Authentication Required</h2>
+            <p className="text-gray-600 mb-4">Please log in to view your classes.</p>
+            <Button onClick={() => navigate("/login")}>Go to Login</Button>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white">
       <Header />
       
+      {/* Success Toast */}
+      {showSuccessToast && (
+        <div className="fixed top-4 right-4 bg-green-500 text-white px-6 py-4 rounded-lg shadow-lg flex items-center space-x-2 z-50 animate-in slide-in-from-right">
+          <CheckCircle className="w-5 h-5" />
+          <span className="font-medium">{successMessage}</span>
+        </div>
+      )}
+      
       <main className="container mx-auto px-4 md:px-8 py-8">
-        <div className="flex justify-between items-center mb-8">
+        {/* Header Section */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
           <div>
-            <h1 className="text-4xl font-bold mb-2 text-blue-900">My Classes</h1>
+            <h1 className="text-3xl md:text-4xl font-bold mb-2 text-blue-900">My Classes</h1>
             <p className="text-gray-600">Create and manage your tutoring classes</p>
+            {error && (
+              <p className="text-red-500 text-sm mt-2 flex items-center gap-1">
+                <AlertCircle className="h-4 w-4" />
+                {error}
+              </p>
+            )}
           </div>
           
-          <div className="flex flex-col items-end space-y-3">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+            <Button 
+              variant="outline"
+              size="sm"
+              onClick={handleRefresh}
+              disabled={refreshing}
+              className="border-blue-300 text-blue-600 hover:bg-blue-50"
+            >
+              <RefreshCw className={`mr-2 h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+              Refresh
+            </Button>
+            
             <Button 
               size="lg"
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+              className="bg-blue-600 hover:bg-blue-700 text-white"
               onClick={() => setIsCreateModalOpen(true)}
             >
               <Plus className="mr-2 h-5 w-5" />
@@ -143,11 +231,12 @@ export function TutorSessions() {
 
             <Button 
               size="lg"
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+              variant="outline"
+              className="border-blue-300 text-blue-600 hover:bg-blue-50"
               onClick={() => navigate("/assignment")}
             >
               <Plus className="mr-2 h-5 w-5" />
-              Create Assignment
+              Assignment
             </Button>
 
             <Button
@@ -158,14 +247,17 @@ export function TutorSessions() {
               Progress Track
             </Button>
           </div>
-
         </div>
 
+        {/* Classes Content */}
         {subjects.length === 0 ? (
-          <Card className="border-blue-200">
-            <CardContent className="py-12 text-center">
-              <p className="text-gray-600 mb-4">You haven't created any classes yet.</p>
+          <Card className="border-blue-200 border-dashed">
+            <CardContent className="py-16 text-center">
+              <Calendar className="h-16 w-16 text-blue-300 mx-auto mb-4" />
+              <h3 className="text-xl font-semibold text-gray-700 mb-2">No Classes Yet</h3>
+              <p className="text-gray-500 mb-6">You haven't created any classes yet. Start by creating your first class!</p>
               <Button 
+                size="lg"
                 className="bg-blue-600 hover:bg-blue-700"
                 onClick={() => setIsCreateModalOpen(true)}
               >
@@ -182,7 +274,7 @@ export function TutorSessions() {
               return (
                 <Card 
                   key={subject.id} 
-                  className="border-blue-200 hover:border-blue-400 transition-all duration-200 bg-white"
+                  className="border-blue-200 hover:border-blue-400 transition-all duration-200 bg-white shadow-sm"
                 >
                   {/* Subject Header - Clickable */}
                   <CardHeader 
@@ -197,7 +289,7 @@ export function TutorSessions() {
                           <ChevronRight className="h-5 w-5 text-blue-600" />
                         )}
                         <div>
-                          <CardTitle className="text-2xl text-blue-900">
+                          <CardTitle className="text-xl md:text-2xl text-blue-900">
                             {subject.subject_name}
                           </CardTitle>
                           <p className="text-sm text-blue-600 font-semibold mt-1">
@@ -205,11 +297,9 @@ export function TutorSessions() {
                           </p>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
-                          {subject.classes.length} {subject.classes.length === 1 ? 'class' : 'classes'}
-                        </span>
-                      </div>
+                      <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100">
+                        {subject.classes.length} {subject.classes.length === 1 ? 'class' : 'classes'}
+                      </Badge>
                     </div>
                   </CardHeader>
 
@@ -223,69 +313,70 @@ export function TutorSessions() {
                       ) : (
                         subject.classes.map((classItem) => {
                           const isClassExpanded = expandedClassId === classItem.id;
-                          const isFull = classItem.current_enrolled >= classItem.max_students;
+                          const isFull = classItem.current_enrolled >= classItem.capacity;
                           
                           return (
-                            <div key={classItem.id} className="border-2 border-blue-200 rounded-lg overflow-hidden">
+                            <div key={classItem.id} className="border border-blue-200 rounded-lg overflow-hidden">
                               {/* Class Header - Clickable */}
                               <div 
-                                className="bg-blue-50 p-4 cursor-pointer hover:bg-blue-100 transition-colors"
+                                className="bg-gradient-to-r from-blue-50 to-white p-4 cursor-pointer hover:from-blue-100 hover:to-blue-50 transition-colors"
                                 onClick={() => toggleClass(classItem.id)}
                               >
-                                <div className="flex items-start justify-between">
+                                <div className="flex items-start justify-between gap-4">
                                   <div className="flex items-start gap-3 flex-1">
                                     {isClassExpanded ? (
-                                      <ChevronDown className="h-5 w-5 text-blue-600 mt-1" />
+                                      <ChevronDown className="h-5 w-5 text-blue-600 mt-1 flex-shrink-0" />
                                     ) : (
-                                      <ChevronRight className="h-5 w-5 text-blue-600 mt-1" />
+                                      <ChevronRight className="h-5 w-5 text-blue-600 mt-1 flex-shrink-0" />
                                     )}
-                                    <div className="flex-1">
-                                      <div className="flex items-center gap-2 mb-2">
+                                    <div className="flex-1 min-w-0">
+                                      <div className="flex flex-wrap items-center gap-2 mb-2">
                                         <h3 className="text-lg font-bold text-blue-900">
-                                          Class {classItem.class_code}
+                                          Class #{classItem.id}
                                         </h3>
-                                        <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded">
-                                          {classItem.number_of_weeks} weeks
-                                        </span>
+                                        {getStatusBadge(classItem.class_status)}
+                                        {classItem.num_of_weeks && (
+                                          <Badge variant="outline" className="text-purple-700 border-purple-300">
+                                            {classItem.num_of_weeks} weeks
+                                          </Badge>
+                                        )}
+                                        <Badge variant="outline" className="text-gray-600">
+                                          Semester {classItem.semester}
+                                        </Badge>
                                       </div>
                                       
                                       {classItem.description && (
-                                        <p className="text-sm text-gray-700 mb-2">{classItem.description}</p>
+                                        <p className="text-sm text-gray-600 mb-2 line-clamp-2">{classItem.description}</p>
                                       )}
                                       
                                       <div className="flex flex-wrap gap-4 text-sm text-gray-600">
                                         <div className="flex items-center gap-1">
-                                          <Calendar className="h-4 w-4 text-blue-600" />
-                                          <span>{classItem.time_slots.length} sessions/week</span>
+                                          <Calendar className="h-4 w-4 text-blue-500" />
+                                          <span>{getScheduleDisplay(classItem)}</span>
                                         </div>
                                         <div className="flex items-center gap-1">
-                                          <Users className="h-4 w-4 text-blue-600" />
+                                          <Users className="h-4 w-4 text-blue-500" />
                                           <span className={isFull ? "text-red-600 font-semibold" : ""}>
-                                            {classItem.current_enrolled} / {classItem.max_students} enrolled
+                                            {classItem.current_enrolled}/{classItem.capacity} students
                                             {isFull && " (Full)"}
                                           </span>
                                         </div>
-                                      </div>
-                                      
-                                      <div className="mt-2 text-sm text-blue-700 font-medium">
-                                        📅 {getWeeklyScheduleSummary(classItem)}
+                                        {classItem.location && (
+                                          <div className="flex items-center gap-1">
+                                            <MapPin className="h-4 w-4 text-blue-500" />
+                                            <span>{classItem.location}</span>
+                                          </div>
+                                        )}
                                       </div>
                                     </div>
                                   </div>
                                   
-                                  <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
+                                  <div className="flex gap-2 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
                                     <Button
                                       variant="outline"
                                       size="sm"
-                                      className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                                    >
-                                      <Edit className="h-4 w-4" />
-                                    </Button>
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={() => handleDeleteClass(classItem.id)}
-                                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                      onClick={() => handleDeleteClass(classItem.id, `Class #${classItem.id}`)}
+                                      className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
                                     >
                                       <Trash2 className="h-4 w-4" />
                                     </Button>
@@ -295,22 +386,59 @@ export function TutorSessions() {
 
                               {/* Expanded Class Details */}
                               {isClassExpanded && (
-                                <div className="p-4 bg-white space-y-4">
-                                  {/* Weekly Schedule */}
-                                  <div>
-                                    <h4 className="font-semibold text-gray-900 mb-2">Weekly Schedule:</h4>
-                                    <div className="space-y-2">
-                                      {classItem.time_slots.map((slot) => (
-                                        <div 
-                                          key={slot.id} 
-                                          className="flex items-center gap-2 text-sm bg-purple-50 px-3 py-2 rounded border-l-4 border-purple-400"
-                                        >
-                                          <Clock className="h-4 w-4 text-purple-600" />
-                                          <span className="font-medium text-gray-900">
-                                            {formatTimeSlot(slot.dayOfWeek, slot.startPeriod, slot.endPeriod)}
+                                <div className="p-4 bg-white border-t border-blue-100 space-y-4">
+                                  {/* Schedule Info */}
+                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="bg-blue-50 rounded-lg p-4">
+                                      <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                                        <Clock className="h-4 w-4 text-blue-600" />
+                                        Schedule Details
+                                      </h4>
+                                      <div className="space-y-2 text-sm">
+                                        <div className="flex justify-between">
+                                          <span className="text-gray-600">Day:</span>
+                                          <span className="font-medium">{DAYS_OF_WEEK[classItem.week_day] || classItem.week_day}</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                          <span className="text-gray-600">Time:</span>
+                                          <span className="font-medium">{periodToTime(classItem.start_time)} - {periodToTime(classItem.end_time)}</span>
+                                        </div>
+                                        {classItem.num_of_weeks && (
+                                          <div className="flex justify-between">
+                                            <span className="text-gray-600">Duration:</span>
+                                            <span className="font-medium">{classItem.num_of_weeks} weeks</span>
+                                          </div>
+                                        )}
+                                        {classItem.registration_deadline && (
+                                          <div className="flex justify-between">
+                                            <span className="text-gray-600">Registration Deadline:</span>
+                                            <span className="font-medium">{new Date(classItem.registration_deadline).toLocaleDateString()}</span>
+                                          </div>
+                                        )}
+                                      </div>
+                                    </div>
+
+                                    <div className="bg-green-50 rounded-lg p-4">
+                                      <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                                        <Users className="h-4 w-4 text-green-600" />
+                                        Enrollment
+                                      </h4>
+                                      <div className="space-y-2 text-sm">
+                                        <div className="flex justify-between">
+                                          <span className="text-gray-600">Enrolled:</span>
+                                          <span className="font-medium">{classItem.current_enrolled} students</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                          <span className="text-gray-600">Capacity:</span>
+                                          <span className="font-medium">{classItem.capacity} students</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                          <span className="text-gray-600">Available:</span>
+                                          <span className={`font-medium ${isFull ? 'text-red-600' : 'text-green-600'}`}>
+                                            {isFull ? 'Class Full' : `${classItem.capacity - classItem.current_enrolled} spots`}
                                           </span>
                                         </div>
-                                      ))}
+                                      </div>
                                     </div>
                                   </div>
 
@@ -320,37 +448,28 @@ export function TutorSessions() {
                                       <Button 
                                         variant="outline" 
                                         size="sm" 
-                                        className="w-full"
+                                        className="w-full border-blue-300 text-blue-600 hover:bg-blue-50"
                                         asChild
                                       >
                                         <a href={classItem.meeting_link} target="_blank" rel="noopener noreferrer">
+                                          <ExternalLink className="mr-2 h-4 w-4" />
                                           Join Meeting Link
                                         </a>
                                       </Button>
                                     </div>
                                   )}
-                                  {/* Mark Attendance Button */}
-<div className="pt-3">
-  <Button
-    variant="default"
-    size="sm"
-    className="w-full bg-green-600 hover:bg-green-700 text-white"
-    onClick={() => navigate(`/tutor/mark_attendance/${classItem.id}`)}
-  >
-    Meeting Action
-  </Button>
-</div>
 
-
-                                  {/* Sessions Preview */}
-                                  <div className="pt-3 border-t">
-                                    <h4 className="font-semibold text-gray-900 mb-2">
-                                      Total Sessions: {classItem.sessions.length}
-                                    </h4>
-                                    <p className="text-sm text-gray-600">
-                                      {classItem.time_slots.length} sessions × {classItem.number_of_weeks} weeks = {classItem.sessions.length} total sessions
-                                    </p>
-                                  </div>
+                                  {/* Action Buttons */}
+                                  {/* <div className="pt-3 border-t flex gap-3">
+                                    <Button
+                                      variant="default"
+                                      size="sm"
+                                      className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                                      onClick={() => navigate(`/tutor/mark_attendance/${classItem.id}`)}
+                                    >
+                                      Meeting Action
+                                    </Button>
+                                  </div> */}
                                 </div>
                               )}
                             </div>
@@ -366,14 +485,12 @@ export function TutorSessions() {
         )}
       </main>
 
-      {isCreateModalOpen && (
-        <CreateClassModal
-          onClose={() => setIsCreateModalOpen(false)}
-          onCreateClass={handleCreateClass}
-          tutorName="Dr. Sarah Johnson"
-          existingClasses={classes}
-        />
-      )}
+      {/* Create Class Modal */}
+      <TutorCreateClassModal
+        open={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        onSuccess={handleCreateSuccess}
+      />
     </div>
   );
 }
