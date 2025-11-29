@@ -44,7 +44,7 @@ export function LoginPage() {
           navigate("/mentee/home");
           break;
         case "tutor":
-          navigate("/tutor/sessions");
+          navigate("/tutor/home");
           break;
         case "admin":
           navigate("/admin/dashboard");
