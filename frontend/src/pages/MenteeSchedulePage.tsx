@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,108 +11,15 @@ import {
   Calendar,
   BookOpen,
   ExternalLink,
+  Loader2,
+  AlertCircle,
 } from "lucide-react";
-
-// Types for calendar sessions
-interface CalendarSession {
-  id: string;
-  class_id: string;
-  subject_name: string;
-  subject_code: string;
-  class_code: string;
-  tutor_name: string;
-  date: Date;
-  start_time: string;
-  end_time: string;
-  location: string;
-  description: string;
-  meeting_link: string | null;
-  status: "scheduled" | "completed" | "cancelled";
-}
+import {
+  sessionService,
+  type CalendarSession,
+} from "@/services/sessionService";
 
 type ViewMode = "week" | "month";
-
-// Mock data - replace with API call
-const generateMockSessions = (
-  startDate: Date,
-  viewMode: ViewMode
-): CalendarSession[] => {
-  const sessions: CalendarSession[] = [];
-  const subjects = [
-    {
-      name: "Calculus 1",
-      code: "MT1003",
-      tutor: "Prof. Phung Trong Thuc",
-      classCode: "CC01",
-    },
-    {
-      name: "Physics 1",
-      code: "PH1003",
-      tutor: "Prof. Dau The Phiet",
-      classCode: "CC03",
-    },
-    {
-      name: "Programming",
-      code: "CS1001",
-      tutor: "Dr. Nguyen Van A",
-      classCode: "CC05",
-    },
-    {
-      name: "Data Structures",
-      code: "CS2001",
-      tutor: "Dr. Tran Van B",
-      classCode: "CC07",
-    },
-    {
-      name: "Linear Algebra",
-      code: "MT2003",
-      tutor: "Prof. Le Van C",
-      classCode: "CC09",
-    },
-  ];
-
-  // Generate sessions based on view mode
-  const daysToGenerate = viewMode === "week" ? 7 : 35;
-
-  for (let dayOffset = 0; dayOffset < daysToGenerate; dayOffset++) {
-    const sessionDate = new Date(startDate);
-    sessionDate.setDate(sessionDate.getDate() + dayOffset);
-
-    // Skip weekends for some sessions
-    const dayOfWeek = sessionDate.getDay();
-    if (dayOfWeek === 0) continue; // Skip Sunday
-
-    // Generate 1-4 sessions per day randomly
-    const numSessions = dayOfWeek === 6 ? 0 : Math.floor(Math.random() * 3) + 1;
-
-    for (let i = 0; i < numSessions; i++) {
-      const subjectIdx = (dayOffset + i) % subjects.length;
-      const subject = subjects[subjectIdx];
-      const startHour = 8 + i * 2;
-
-      sessions.push({
-        id: `session-${dayOffset}-${i}`,
-        class_id: `class-${subjectIdx}`,
-        subject_name: subject.name,
-        subject_code: subject.code,
-        class_code: subject.classCode,
-        tutor_name: subject.tutor,
-        date: new Date(sessionDate),
-        start_time: `${startHour.toString().padStart(2, "0")}:00`,
-        end_time: `${(startHour + 2).toString().padStart(2, "0")}:00`,
-        location: `Room ${String.fromCharCode(65 + (i % 5))}${
-          100 + subjectIdx
-        }`,
-        description: `Weekly session for ${subject.name}. Please bring your materials and be prepared for the lecture.`,
-        meeting_link:
-          i % 2 === 0 ? "https://meet.google.com/abc-defg-hij" : null,
-        status: sessionDate < new Date() ? "completed" : "scheduled",
-      });
-    }
-  }
-
-  return sessions;
-};
 
 // Get the start of the week (Monday)
 const getWeekStart = (date: Date): Date => {
@@ -180,22 +87,26 @@ export function MenteeSchedulePage() {
   const [viewMode, setViewMode] = useState<ViewMode>("week");
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
   const [sessions, setSessions] = useState<CalendarSession[]>([]);
+  const [allSessions, setAllSessions] = useState<CalendarSession[]>([]);
   const [selectedSession, setSelectedSession] =
     useState<CalendarSession | null>(null);
   const [showMoreModal, setShowMoreModal] = useState<{
     date: Date;
     sessions: CalendarSession[];
   } | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Calculate start date based on view mode
-  const startDate =
-    viewMode === "week"
+  // Calculate start date based on view mode (memoized to prevent infinite loops)
+  const startDate = useMemo(() => {
+    return viewMode === "week"
       ? getWeekStart(currentDate)
       : getCalendarGridStart(currentDate);
+  }, [viewMode, currentDate]);
 
   // Generate days array
-  const days =
-    viewMode === "week"
+  const days = useMemo(() => {
+    return viewMode === "week"
       ? Array.from({ length: 7 }, (_, i) => {
           const day = new Date(startDate);
           day.setDate(day.getDate() + i);
@@ -206,12 +117,46 @@ export function MenteeSchedulePage() {
           day.setDate(day.getDate() + i);
           return day;
         });
+  }, [viewMode, startDate]);
 
-  // Load sessions when date or view changes
+  // Load all sessions on mount
   useEffect(() => {
-    const mockSessions = generateMockSessions(startDate, viewMode);
-    setSessions(mockSessions);
-  }, [currentDate, viewMode]);
+    const fetchSessions = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+        const data = await sessionService.getMenteeSessions();
+        setAllSessions(data);
+      } catch (err) {
+        console.error("Failed to fetch sessions:", err);
+        setError("Failed to load your schedule. Please try again later.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchSessions();
+  }, []);
+
+  // Filter sessions based on current view when date or view changes
+  useEffect(() => {
+    if (allSessions.length === 0) return;
+
+    const endDate = new Date(startDate);
+    if (viewMode === "week") {
+      endDate.setDate(endDate.getDate() + 6);
+    } else {
+      endDate.setDate(endDate.getDate() + 34);
+    }
+    endDate.setHours(23, 59, 59, 999);
+
+    const filteredSessions = sessionService.filterSessionsByDateRange(
+      allSessions,
+      startDate,
+      endDate
+    );
+    setSessions(filteredSessions);
+  }, [allSessions, startDate, viewMode]);
 
   // Navigation functions
   const goToPrevious = () => {
@@ -368,151 +313,191 @@ export function MenteeSchedulePage() {
             </h2>
           </div>
 
-          {/* Calendar Grid */}
-          <div
-            className={`grid ${
-              viewMode === "week" ? "grid-cols-7" : "grid-cols-7"
-            } gap-2`}
-          >
-            {/* Day Headers for Month View */}
-            {viewMode === "month" && (
-              <>
-                {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map(
-                  (day) => (
-                    <div
-                      key={day}
-                      className="text-center py-2 text-sm font-medium text-gray-500"
-                    >
-                      {day}
-                    </div>
-                  )
-                )}
-              </>
-            )}
+          {/* Loading State */}
+          {isLoading && (
+            <Card className="p-12">
+              <div className="flex flex-col items-center justify-center">
+                <Loader2 className="w-10 h-10 text-blue-600 animate-spin mb-4" />
+                <p className="text-gray-600">Loading your schedule...</p>
+              </div>
+            </Card>
+          )}
 
-            {days.map((day, index) => {
-              const daySessions = getSessionsForDay(day);
-              const dayIsToday = isToday(day);
-              const inCurrentMonth =
-                viewMode === "month" ? isCurrentMonth(day, currentDate) : true;
-              const visibleSessions = daySessions.slice(0, maxVisibleSessions);
-              const hiddenCount = daySessions.length - maxVisibleSessions;
-
-              return (
-                <Card
-                  key={index}
-                  className={`${
-                    viewMode === "week" ? "min-h-[300px]" : "min-h-[120px]"
-                  } p-2 ${
-                    dayIsToday
-                      ? "ring-2 ring-blue-500 bg-blue-50/50"
-                      : inCurrentMonth
-                      ? "bg-white"
-                      : "bg-gray-50/50"
-                  }`}
+          {/* Error State */}
+          {error && !isLoading && (
+            <Card className="p-12 bg-red-50 border-red-200">
+              <div className="flex flex-col items-center justify-center">
+                <AlertCircle className="w-10 h-10 text-red-600 mb-4" />
+                <p className="text-red-600 font-medium mb-4">{error}</p>
+                <Button
+                  onClick={() => window.location.reload()}
+                  variant="outline"
+                  className="border-red-300 text-red-600 hover:bg-red-100"
                 >
-                  {/* Day Header */}
-                  <div
-                    className={`text-center pb-1 mb-2 ${
-                      viewMode === "week" ? "border-b" : ""
-                    } ${dayIsToday ? "border-blue-300" : "border-gray-200"}`}
-                  >
-                    {viewMode === "week" && (
-                      <p className="text-xs font-medium text-gray-500 uppercase">
-                        {day.toLocaleDateString("en-US", { weekday: "short" })}
-                      </p>
+                  Try Again
+                </Button>
+              </div>
+            </Card>
+          )}
+
+          {/* Calendar Grid */}
+          {!isLoading && !error && (
+            <>
+              <div
+                className={`grid ${
+                  viewMode === "week" ? "grid-cols-7" : "grid-cols-7"
+                } gap-2`}
+              >
+                {/* Day Headers for Month View */}
+                {viewMode === "month" && (
+                  <>
+                    {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map(
+                      (day) => (
+                        <div
+                          key={day}
+                          className="text-center py-2 text-sm font-medium text-gray-500"
+                        >
+                          {day}
+                        </div>
+                      )
                     )}
-                    <p
+                  </>
+                )}
+
+                {days.map((day, index) => {
+                  const daySessions = getSessionsForDay(day);
+                  const dayIsToday = isToday(day);
+                  const inCurrentMonth =
+                    viewMode === "month"
+                      ? isCurrentMonth(day, currentDate)
+                      : true;
+                  const visibleSessions = daySessions.slice(
+                    0,
+                    maxVisibleSessions
+                  );
+                  const hiddenCount = daySessions.length - maxVisibleSessions;
+
+                  return (
+                    <Card
+                      key={index}
                       className={`${
-                        viewMode === "week" ? "text-2xl" : "text-lg"
-                      } font-bold ${
+                        viewMode === "week" ? "min-h-[300px]" : "min-h-[120px]"
+                      } p-2 ${
                         dayIsToday
-                          ? "text-blue-600"
+                          ? "ring-2 ring-blue-500 bg-blue-50/50"
                           : inCurrentMonth
-                          ? "text-gray-900"
-                          : "text-gray-400"
+                          ? "bg-white"
+                          : "bg-gray-50/50"
                       }`}
                     >
-                      {day.getDate()}
-                    </p>
-                  </div>
-
-                  {/* Sessions */}
-                  <div className="space-y-1">
-                    {daySessions.length === 0 ? (
-                      <p
-                        className={`text-center text-gray-400 text-xs ${
-                          viewMode === "week" ? "py-4" : "py-1"
+                      {/* Day Header */}
+                      <div
+                        className={`text-center pb-1 mb-2 ${
+                          viewMode === "week" ? "border-b" : ""
+                        } ${
+                          dayIsToday ? "border-blue-300" : "border-gray-200"
                         }`}
                       >
-                        No sessions
-                      </p>
-                    ) : (
-                      <>
-                        {visibleSessions.map((session) => (
-                          <div
-                            key={session.id}
-                            onClick={() => setSelectedSession(session)}
-                            className={`p-1.5 rounded border cursor-pointer transition-all ${getStatusBgColor(
-                              session.status
-                            )}`}
+                        {viewMode === "week" && (
+                          <p className="text-xs font-medium text-gray-500 uppercase">
+                            {day.toLocaleDateString("en-US", {
+                              weekday: "short",
+                            })}
+                          </p>
+                        )}
+                        <p
+                          className={`${
+                            viewMode === "week" ? "text-2xl" : "text-lg"
+                          } font-bold ${
+                            dayIsToday
+                              ? "text-blue-600"
+                              : inCurrentMonth
+                              ? "text-gray-900"
+                              : "text-gray-400"
+                          }`}
+                        >
+                          {day.getDate()}
+                        </p>
+                      </div>
+
+                      {/* Sessions */}
+                      <div className="space-y-1">
+                        {daySessions.length === 0 ? (
+                          <p
+                            className={`text-center text-gray-400 text-xs ${
+                              viewMode === "week" ? "py-4" : "py-1"
+                            }`}
                           >
-                            <div className="flex items-center space-x-1">
+                            No sessions
+                          </p>
+                        ) : (
+                          <>
+                            {visibleSessions.map((session) => (
                               <div
-                                className={`w-2 h-2 rounded-full flex-shrink-0 ${getStatusColor(
+                                key={session.id}
+                                onClick={() => setSelectedSession(session)}
+                                className={`p-1.5 rounded border cursor-pointer transition-all ${getStatusBgColor(
                                   session.status
                                 )}`}
-                              />
-                              <span className="text-xs font-semibold text-gray-700 truncate">
-                                {session.start_time}
-                              </span>
-                            </div>
-                            <p className="text-xs font-medium text-gray-900 truncate">
-                              {session.subject_name}
-                            </p>
-                            {viewMode === "week" && (
-                              <p className="text-xs text-gray-500 truncate">
-                                {session.location}
-                              </p>
+                              >
+                                <div className="flex items-center space-x-1">
+                                  <div
+                                    className={`w-2 h-2 rounded-full flex-shrink-0 ${getStatusColor(
+                                      session.status
+                                    )}`}
+                                  />
+                                  <span className="text-xs font-semibold text-gray-700 truncate">
+                                    {session.start_time}
+                                  </span>
+                                </div>
+                                <p className="text-xs font-medium text-gray-900 truncate">
+                                  {session.subject_name}
+                                </p>
+                                {viewMode === "week" && (
+                                  <p className="text-xs text-gray-500 truncate">
+                                    {session.location}
+                                  </p>
+                                )}
+                              </div>
+                            ))}
+                            {hiddenCount > 0 && (
+                              <button
+                                onClick={() =>
+                                  setShowMoreModal({
+                                    date: day,
+                                    sessions: daySessions,
+                                  })
+                                }
+                                className="w-full text-xs font-medium py-1 rounded transition-colors bg-white border border-blue-200 text-blue-600 hover:bg-blue-50 hover:text-blue-800"
+                              >
+                                +{hiddenCount} more
+                              </button>
                             )}
-                          </div>
-                        ))}
-                        {hiddenCount > 0 && (
-                          <button
-                            onClick={() =>
-                              setShowMoreModal({
-                                date: day,
-                                sessions: daySessions,
-                              })
-                            }
-                            className="w-full text-xs font-medium py-1 rounded transition-colors bg-white border border-blue-200 text-blue-600 hover:bg-blue-50 hover:text-blue-800"
-                          >
-                            +{hiddenCount} more
-                          </button>
+                          </>
                         )}
-                      </>
-                    )}
-                  </div>
-                </Card>
-              );
-            })}
-          </div>
+                      </div>
+                    </Card>
+                  );
+                })}
+              </div>
 
-          {/* Legend */}
-          <div className="flex items-center justify-center space-x-6 mt-6">
-            <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 rounded-full bg-blue-500" />
-              <span className="text-sm text-gray-600">Scheduled</span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 rounded-full bg-gray-400" />
-              <span className="text-sm text-gray-600">Completed</span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 rounded-full bg-red-500" />
-              <span className="text-sm text-gray-600">Cancelled</span>
-            </div>
-          </div>
+              {/* Legend */}
+              <div className="flex items-center justify-center space-x-6 mt-6">
+                <div className="flex items-center space-x-2">
+                  <div className="w-3 h-3 rounded-full bg-blue-500" />
+                  <span className="text-sm text-gray-600">Scheduled</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <div className="w-3 h-3 rounded-full bg-gray-400" />
+                  <span className="text-sm text-gray-600">Completed</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <div className="w-3 h-3 rounded-full bg-red-500" />
+                  <span className="text-sm text-gray-600">Cancelled</span>
+                </div>
+              </div>
+            </>
+          )}
         </div>
       </div>
 
