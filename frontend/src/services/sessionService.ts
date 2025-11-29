@@ -90,6 +90,20 @@ export const sessionService = {
   },
 
   /**
+   * Get all sessions for the logged-in tutor
+   */
+  getTutorSessions: async (): Promise<CalendarSession[]> => {
+    try {
+      const response = await api.get("/sessions/tutor/all");
+      const sessions: SessionApiResponse[] = response.data.sessions || [];
+      return sessions.map(transformSession);
+    } catch (error) {
+      console.error("Failed to fetch tutor sessions:", error);
+      throw error;
+    }
+  },
+
+  /**
    * Get sessions for a specific class
    */
   getSessionsByClass: async (classId: number): Promise<CalendarSession[]> => {
