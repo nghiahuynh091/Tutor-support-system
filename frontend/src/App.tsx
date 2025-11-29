@@ -9,7 +9,9 @@ import { MenteeRegistrationPage } from "./pages/MenteeRegistrationPage";
 import { MenteeSchedulePage } from "./pages/MenteeSchedulePage";
 import { MenteeSessionDetailPage } from "./pages/MenteeSessionDetailPage";
 import { TutorHomePage } from "./pages/TutorHomePage";
-import { TutorSessions } from "./pages/TutorSessions";
+import { TutorMyClassesPage } from "./pages/TutorMyClassesPage";
+import { TutorRegisteringPage } from "./pages/TutorRegisteringPage";
+import { TutorSchedulePage } from "./pages/TutorSchedulePage";
 import { CoordinatorDashboard } from "./pages/CoordinatorDashboard";
 import { FeedbackPage } from "./pages/FeedbackPage";
 import { PrivateNotePage } from "./pages/PrivateNotePage";
@@ -77,7 +79,12 @@ function App() {
         <Route element={<ProtectedRoute allowedRoles={["tutor"]} />}>
           <Route element={<TutorLayout />}>
             <Route path="/tutor/home" element={<TutorHomePage />} />
-            <Route path="/tutor/sessions" element={<TutorSessions />} />
+            <Route path="/tutor/my-classes" element={<TutorMyClassesPage />} />
+            <Route
+              path="/tutor/registering"
+              element={<TutorRegisteringPage />}
+            />
+            <Route path="/tutor/schedule" element={<TutorSchedulePage />} />
             <Route path="/tutor/mark_attendance/:classId" element={<Card />} />
             <Route path="/assignment" element={<ProvideAssignmentPage />} />
             <Route path="/assignment/homework/:id" element={<HomeworkPage />} />

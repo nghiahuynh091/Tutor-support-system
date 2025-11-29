@@ -22,8 +22,9 @@ export function TutorLayout() {
 
   const navItems = [
     { label: "Home", path: "/tutor/home" },
-    { label: "My Classes", path: "/tutor/sessions" },
-    { label: "Assignments", path: "/assignment" },
+    { label: "My Classes", path: "/tutor/my-classes" },
+    { label: "Registering", path: "/tutor/registering" },
+    { label: "Schedule", path: "/tutor/schedule" },
   ];
 
   const isActive = (path: string) => location.pathname === path;
