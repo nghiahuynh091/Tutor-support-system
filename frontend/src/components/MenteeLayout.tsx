@@ -44,9 +44,14 @@ export function MenteeLayout() {
               className="flex items-center space-x-3 cursor-pointer pr-8"
               onClick={() => navigate("/mentee/home")}
             >
-              <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center">
+              {/* <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center">
                 <span className="text-blue-700 font-bold text-xl">T</span>
-              </div>
+              </div> */}
+              <img 
+              src="/logo.svg" 
+              alt="Logo" 
+              className="w-10 h-10 object-contain"
+            />
               <h1 className="text-xl font-bold tracking-tight">
                 Tutor Support System
               </h1>
