@@ -1,12 +1,14 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { MenteeLayout } from "./components/MenteeLayout";
+import { TutorLayout } from "./components/TutorLayout";
 import { HomePage } from "./pages/HomePage";
 import { LoginPage } from "./pages/LoginPage";
 import { MenteeHomePage } from "./pages/MenteeHomePage";
 import { MenteeRegistrationPage } from "./pages/MenteeRegistrationPage";
 import { MenteeSchedulePage } from "./pages/MenteeSchedulePage";
 import { MenteeSessionDetailPage } from "./pages/MenteeSessionDetailPage";
+import { TutorHomePage } from "./pages/TutorHomePage";
 import { TutorSessions } from "./pages/TutorSessions";
 import { CoordinatorDashboard } from "./pages/CoordinatorDashboard";
 import { FeedbackPage } from "./pages/FeedbackPage";
@@ -71,29 +73,32 @@ function App() {
           </Route>
         </Route>
 
-        {/* Tutor Routes */}
+        {/* Tutor Routes - with TutorLayout */}
         <Route element={<ProtectedRoute allowedRoles={["tutor"]} />}>
-          <Route path="/tutor/sessions" element={<TutorSessions />} />
-          <Route path="/tutor/mark_attendance/:classId" element={<Card />} />
-          <Route path="/assignment" element={<ProvideAssignmentPage />} />
-          <Route path="/assignment/homework/:id" element={<HomeworkPage />} />
-          <Route
-            path="/assignment/quiz/:classId/:sessionId"
-            element={<QuizPage />}
-          />
-          <Route
-            path="/tutor/progress_class_selection"
-            element={<ProgressClassSelectionPage />}
-          />
-          <Route
-            path="/tutor/progress/:classId"
-            element={<ProgressTrackingPage />}
-          />
-          <Route
-            path="/mentee_progress/:id/private_note"
-            element={<PrivateNotePage />}
-          />
-          <Route path="/tutor/profile" element={<TutorProfile />} />
+          <Route element={<TutorLayout />}>
+            <Route path="/tutor/home" element={<TutorHomePage />} />
+            <Route path="/tutor/sessions" element={<TutorSessions />} />
+            <Route path="/tutor/mark_attendance/:classId" element={<Card />} />
+            <Route path="/assignment" element={<ProvideAssignmentPage />} />
+            <Route path="/assignment/homework/:id" element={<HomeworkPage />} />
+            <Route
+              path="/assignment/quiz/:classId/:sessionId"
+              element={<QuizPage />}
+            />
+            <Route
+              path="/tutor/progress_class_selection"
+              element={<ProgressClassSelectionPage />}
+            />
+            <Route
+              path="/tutor/progress/:classId"
+              element={<ProgressTrackingPage />}
+            />
+            <Route
+              path="/mentee_progress/:id/private_note"
+              element={<PrivateNotePage />}
+            />
+            <Route path="/tutor/profile" element={<TutorProfile />} />
+          </Route>
         </Route>
 
         {/* Admin Routes */}
