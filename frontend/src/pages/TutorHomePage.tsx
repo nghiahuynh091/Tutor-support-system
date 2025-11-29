@@ -9,9 +9,7 @@ import {
   Calendar,
   BookOpen,
   Clock,
-  Users,
   FileText,
-  TrendingUp,
 } from "lucide-react";
 
 // Wallpaper images for tutor
@@ -173,7 +171,7 @@ export function TutorHomePage() {
             {/* Manage Classes */}
             <Card
               className="p-6 hover:shadow-xl transition-all duration-300 cursor-pointer border-2 border-transparent hover:border-blue-300"
-              onClick={() => navigate("/tutor/sessions")}
+              onClick={() => navigate("/tutor/my-classes")}
             >
               <div className="flex items-start space-x-4">
                 <div className="w-14 h-14 bg-blue-100 rounded-xl flex items-center justify-center flex-shrink-0">
@@ -184,8 +182,8 @@ export function TutorHomePage() {
                     My Classes
                   </h3>
                   <p className="text-gray-600 text-sm mb-3">
-                    Manage your classes, create sessions, and view enrolled
-                    students.
+                    View confirmed classes with active sessions and manage
+                    attendance.
                   </p>
                   <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
                     View Classes
@@ -194,85 +192,51 @@ export function TutorHomePage() {
               </div>
             </Card>
 
-            {/* Assignments */}
+            {/* Registering Classes */}
             <Card
-              className="p-6 hover:shadow-xl transition-all duration-300 cursor-pointer border-2 border-transparent hover:border-green-300"
-              onClick={() => navigate("/assignment")}
+              className="p-6 hover:shadow-xl transition-all duration-300 cursor-pointer border-2 border-transparent hover:border-amber-300"
+              onClick={() => navigate("/tutor/registering")}
             >
               <div className="flex items-start space-x-4">
-                <div className="w-14 h-14 bg-green-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                  <FileText className="w-7 h-7 text-green-600" />
+                <div className="w-14 h-14 bg-amber-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <FileText className="w-7 h-7 text-amber-600" />
                 </div>
                 <div className="flex-1">
                   <h3 className="text-lg font-bold text-gray-900 mb-1">
-                    Assignments
+                    Registering
                   </h3>
                   <p className="text-gray-600 text-sm mb-3">
-                    Create homework, quizzes, and manage student submissions.
+                    Create new classes and manage classes awaiting confirmation.
                   </p>
-                  <Button size="sm" className="bg-green-600 hover:bg-green-700">
+                  <Button size="sm" className="bg-amber-600 hover:bg-amber-700">
                     Manage
                   </Button>
                 </div>
               </div>
             </Card>
 
-            {/* Progress Tracking */}
+            {/* Schedule */}
             <Card
-              className="p-6 hover:shadow-xl transition-all duration-300 cursor-pointer border-2 border-transparent hover:border-purple-300"
-              onClick={() => navigate("/tutor/progress_class_selection")}
+              className="p-6 hover:shadow-xl transition-all duration-300 cursor-pointer border-2 border-transparent hover:border-green-300"
+              onClick={() => navigate("/tutor/schedule")}
             >
               <div className="flex items-start space-x-4">
-                <div className="w-14 h-14 bg-purple-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                  <TrendingUp className="w-7 h-7 text-purple-600" />
+                <div className="w-14 h-14 bg-green-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <Calendar className="w-7 h-7 text-green-600" />
                 </div>
                 <div className="flex-1">
                   <h3 className="text-lg font-bold text-gray-900 mb-1">
-                    Progress Track
+                    Schedule
                   </h3>
                   <p className="text-gray-600 text-sm mb-3">
-                    Monitor student progress and provide personalized feedback.
+                    View your teaching schedule in weekly or monthly calendar
+                    view.
                   </p>
-                  <Button
-                    size="sm"
-                    className="bg-purple-600 hover:bg-purple-700"
-                  >
-                    Track
+                  <Button size="sm" className="bg-green-600 hover:bg-green-700">
+                    View Schedule
                   </Button>
                 </div>
               </div>
-            </Card>
-          </div>
-
-          {/* Statistics Overview */}
-          <div className="mt-8 grid grid-cols-2 md:grid-cols-4 gap-4">
-            <Card className="p-4 text-center">
-              <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                <BookOpen className="w-5 h-5 text-blue-600" />
-              </div>
-              <p className="text-2xl font-bold text-gray-900">5</p>
-              <p className="text-sm text-gray-500">Active Classes</p>
-            </Card>
-            <Card className="p-4 text-center">
-              <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                <Users className="w-5 h-5 text-green-600" />
-              </div>
-              <p className="text-2xl font-bold text-gray-900">48</p>
-              <p className="text-sm text-gray-500">Total Students</p>
-            </Card>
-            <Card className="p-4 text-center">
-              <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                <Calendar className="w-5 h-5 text-amber-600" />
-              </div>
-              <p className="text-2xl font-bold text-gray-900">12</p>
-              <p className="text-sm text-gray-500">Sessions This Week</p>
-            </Card>
-            <Card className="p-4 text-center">
-              <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                <FileText className="w-5 h-5 text-purple-600" />
-              </div>
-              <p className="text-2xl font-bold text-gray-900">8</p>
-              <p className="text-sm text-gray-500">Pending Submissions</p>
             </Card>
           </div>
         </div>
