@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
   ChevronLeft,
+  ChevronDown,
   Calendar,
   Clock,
   MapPin,
@@ -16,7 +17,10 @@ import {
   AlertCircle,
   Download,
   MessageSquare,
+  StickyNote,
+  Loader2,
 } from "lucide-react";
+import { noteService, type Note } from "@/services/noteService";
 
 interface SessionDetail {
   id: string;
@@ -90,15 +94,41 @@ export function MenteeSessionDetailPage() {
   const navigate = useNavigate();
   const [session, setSession] = useState<SessionDetail | null>(null);
   const [loading, setLoading] = useState(true);
+  const [notes, setNotes] = useState<Note[]>([]);
+  const [notesLoading, setNotesLoading] = useState(false);
+  const [notesExpanded, setNotesExpanded] = useState(true);
 
   useEffect(() => {
-    // Simulate API call
+    // Simulate API call for session
     setTimeout(() => {
       if (classId && sessionId) {
         setSession(getMockSessionDetail(classId, sessionId));
       }
       setLoading(false);
     }, 500);
+  }, [classId, sessionId]);
+
+  // Fetch notes from API
+  useEffect(() => {
+    const fetchNotes = async () => {
+      if (!classId || !sessionId) return;
+
+      try {
+        setNotesLoading(true);
+        const fetchedNotes = await noteService.getNotesBySession(
+          parseInt(classId),
+          parseInt(sessionId)
+        );
+        setNotes(fetchedNotes);
+      } catch (error) {
+        console.error("Failed to fetch notes:", error);
+        // Don't show error to user, just show empty notes
+      } finally {
+        setNotesLoading(false);
+      }
+    };
+
+    fetchNotes();
   }, [classId, sessionId]);
 
   const getStatusColor = (status: SessionDetail["status"]) => {
@@ -259,6 +289,74 @@ export function MenteeSessionDetailPage() {
             </div>
           </Card>
 
+          {/* Notes Section - Collapsible Card */}
+          <Card className="mb-6 overflow-hidden bg-white">
+            <button
+              onClick={() => setNotesExpanded(!notesExpanded)}
+              className="w-full p-4 flex items-center justify-between bg-white hover:bg-gray-50 transition-colors"
+            >
+              <div className="flex items-center">
+                <StickyNote className="w-5 h-5 mr-2 text-gray-600" />
+                <span className="text-lg font-bold text-gray-900">Notes</span>
+                {notes.length > 0 && (
+                  <span className="ml-2 px-2 py-0.5 bg-amber-100 text-amber-700 text-xs font-medium rounded-full">
+                    {notes.length}
+                  </span>
+                )}
+              </div>
+              <ChevronDown
+                className={`w-5 h-5 text-gray-500 transition-transform duration-200 ${
+                  notesExpanded ? "rotate-180" : ""
+                }`}
+              />
+            </button>
+            {notesExpanded && (
+              <div className="px-4 pb-4 border-t border-gray-100">
+                {notesLoading ? (
+                  <div className="flex items-center justify-center py-4">
+                    <Loader2 className="w-5 h-5 text-gray-400 animate-spin mr-2" />
+                    <span className="text-gray-500 text-sm">
+                      Loading notes...
+                    </span>
+                  </div>
+                ) : notes.length > 0 ? (
+                  <div className="space-y-3 pt-4">
+                    {notes.map((note) => (
+                      <div
+                        key={note.id}
+                        className="p-4 bg-amber-50 border border-amber-200 rounded-lg"
+                      >
+                        <h4 className="font-semibold text-amber-900 mb-1">
+                          {note.note_title}
+                        </h4>
+                        <p className="text-amber-800 text-sm whitespace-pre-wrap">
+                          {note.note_information}
+                        </p>
+                        <p className="text-xs text-amber-600 mt-2">
+                          Updated:{" "}
+                          {new Date(note.updated_at).toLocaleDateString(
+                            "en-US",
+                            {
+                              month: "short",
+                              day: "numeric",
+                              year: "numeric",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            }
+                          )}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-4 text-gray-500 text-sm">
+                    No notes available for this session yet.
+                  </div>
+                )}
+              </div>
+            )}
+          </Card>
+
           {/* Main Content Grid */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Left Column - Main Info */}
@@ -329,17 +427,6 @@ export function MenteeSessionDetailPage() {
                   ))}
                 </div>
               </Card>
-
-              {/* Notes */}
-              {session.notes && (
-                <Card className="p-6 bg-amber-50 border-amber-200">
-                  <h2 className="text-lg font-bold text-amber-800 mb-2 flex items-center">
-                    <AlertCircle className="w-5 h-5 mr-2" />
-                    Important Notes
-                  </h2>
-                  <p className="text-amber-700">{session.notes}</p>
-                </Card>
-              )}
             </div>
 
             {/* Right Column - Sidebar */}
