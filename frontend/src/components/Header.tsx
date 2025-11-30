@@ -27,6 +27,11 @@ export function Header() {
             className="flex items-center gap-4 cursor-pointer group"
             onClick={() => navigate("/")}
           >
+            <img 
+              src="/logo.svg" 
+              alt="Logo" 
+              className="w-10 h-10 object-contain"
+            />
             <h1 className="text-2xl font-bold group-hover:text-blue-200 transition-colors">
               Tutor Support System
             </h1>
