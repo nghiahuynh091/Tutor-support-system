@@ -197,15 +197,19 @@ class AdminModel:
             # Detect conflicts based on week_day and overlapping time periods
             conflicts_query = """
                 SELECT 
-                    c1.id::text as id,
-                    s1.subject_name as subject,
-                    c1.id::text as classCode,
-                    u1.full_name as tutor,
-                    c1.week_day::text as day,
-                    CONCAT('Period ', c1.start_time, '-', c1.end_time) as periods,
-                    CONCAT(c1.week_day::text, ' ', c1.start_time, '-', c1.end_time) as schedule,
-                    CONCAT('Class ', c2.id, ' (', s2.subject_name, ') - ', c2.week_day::text, ' ', c2.start_time, '-', c2.end_time) as conflictsWith,
-                    c2.id::text as conflictClassId
+                    c1.id::text as class1_id,
+                    s1.subject_name as class1_subject,
+                    s1.subject_code as class1_code,
+                    c2.id::text as class2_id,
+                    s2.subject_name as class2_subject,
+                    s2.subject_code as class2_code,
+                    u1.full_name as tutor_name,
+                    c1.week_day::text,
+                    CONCAT(
+                        GREATEST(c1.start_time, c2.start_time), 
+                        '-', 
+                        LEAST(c1.end_time, c2.end_time)
+                    ) as conflict_periods
                 FROM classes c1
                 JOIN subjects s1 ON c1.subject_id = s1.id
                 JOIN public.user u1 ON c1.tutor_id = u1.id
@@ -214,8 +218,7 @@ class AdminModel:
                     AND c1.week_day = c2.week_day
                     AND c1.tutor_id = c2.tutor_id
                     AND (
-                        (c1.start_time <= c2.start_time AND c1.end_time > c2.start_time) OR
-                        (c2.start_time <= c1.start_time AND c2.end_time > c1.start_time)
+                        (c1.start_time < c2.end_time) AND (c1.end_time > c2.start_time)
                     )
                 JOIN subjects s2 ON c2.subject_id = s2.id
                 WHERE c1.class_status != 'cancelled'
