@@ -6,14 +6,14 @@ import { Header } from "../components/Header";
 import { Footer } from "../components/Footer";
 import { useAuth } from "../contexts/AuthContext";
 
-interface FeedbackData {
-  class_id: string;
-  session_id: string;
-  rating_scale: number;
-  comments: string;
-  mentee_id?: string;
-  id?: string;
-}
+// interface FeedbackData {
+//   class_id: string;
+//   session_id: string;
+//   rating_scale: number;
+//   comments: string;
+//   mentee_id?: string;
+//   id?: string;
+// }
 
 export const FeedbackPage: React.FC = () => {
   // Get params from URL
