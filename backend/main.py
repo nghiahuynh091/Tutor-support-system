@@ -23,6 +23,7 @@ from routes import note_route
 from routes import session_route
 
 from routes.FeedbackAndProgressTracking import assignmentRoute, feedbackRoute, progressRoute, submissionRoute
+from routes import attendance_route
 
 app = FastAPI(
     title=settings.API_TITLE,
@@ -51,6 +52,7 @@ app.include_router(progressRoute.router)
 app.include_router(assignmentRoute.router)
 app.include_router(submissionRoute.router)
 app.include_router(feedbackRoute.router)
+app.include_router(attendance_route.router)
 
 # class modules
 app.include_router(class_route.router)

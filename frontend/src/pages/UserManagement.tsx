@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Header } from "@/components/Header";
 import api from "@/lib/api";
 import {
   Search,
@@ -58,19 +57,22 @@ export function UserManagement() {
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [totalUsers, setTotalUsers] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 10; // Show 10 users per page
 
   // Fetch users from API
   useEffect(() => {
-    fetchUsers();
+    fetchUsers(1); // Fetch first page on initial load or filter change
   }, [filterRole]);
 
-  const fetchUsers = async () => {
+  const fetchUsers = async (page: number) => {
     setLoading(true);
     setError(null);
     try {
+      const offset = (page - 1) * pageSize;
       const params: any = {
-        limit: 100,
-        offset: 0,
+        limit: pageSize,
+        offset: offset,
       };
 
       if (searchQuery) {
@@ -86,6 +88,7 @@ export function UserManagement() {
       if (response.data.success) {
         setUsers(response.data.data.users);
         setTotalUsers(response.data.data.total);
+        setCurrentPage(page);
       }
     } catch (err: any) {
       setError(err.response?.data?.detail?.error || "Failed to load users");
@@ -96,7 +99,7 @@ export function UserManagement() {
   };
 
   const handleSearch = () => {
-    fetchUsers();
+    fetchUsers(1); // Reset to first page on a new search
   };
 
   const handleDeactivateUser = (user: User) => {
@@ -149,32 +152,19 @@ export function UserManagement() {
       case "academic_affairs":
       case "student_affairs":
         return "bg-purple-100 text-purple-800";
-      default:
+      case "mentee":
         return "bg-blue-100 text-blue-800";
+      default:
+        return "bg-gray-100 text-gray-800";
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white">
-      <Header />
-
-      <main className="container mx-auto px-4 md:px-8 py-8">
-        {/* Header with back button */}
-        <div className="flex items-center gap-4 mb-8">
-          <Button
-            variant="outline"
-            onClick={() => navigate("/admin/dashboard")}
-            className="flex items-center gap-2 text-gray-900 hover:text-blue-700 border-gray-300"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back to Dashboard
-          </Button>
-          <div>
-            <h1 className="text-4xl font-bold text-blue-900">
+    <div className="container mx-auto px-4 md:px-8 py-8">
+        <div className="mb-8">
+            <h1 className="text-3xl font-bold text-gray-800">
               User Account Management
             </h1>
-            <p className="text-gray-600">View and manage system users</p>
-          </div>
         </div>
 
         {/* Search and Filter Controls */}
@@ -204,6 +194,7 @@ export function UserManagement() {
                   <option value="tutor">Tutors</option>
                   <option value="admin">Admins</option>
                   <option value="coordinator">Coordinators</option>
+                  <option value="unknown">Unknown</option>
                 </select>
                 <Button onClick={handleSearch} className="h-12">
                   Search
@@ -310,20 +301,43 @@ export function UserManagement() {
                         >
                           View Profile
                         </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleDeactivateUser(user)}
-                          className="text-red-600 hover:bg-red-50"
-                        >
-                          <UserX className="h-4 w-4 mr-1" />
-                          Deactivate
-                        </Button>
+                        {user.role && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleDeactivateUser(user)}
+                            className="text-red-600 hover:bg-red-50"
+                          >
+                            <UserX className="h-4 w-4 mr-1" />
+                            Deactivate
+                          </Button>
+                        )}
                       </div>
                     </div>
                   ))}
                 </div>
               </CardContent>
+              <div className="flex items-center justify-end space-x-2 py-4 px-6 border-t">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => fetchUsers(currentPage - 1)}
+                  disabled={currentPage <= 1}
+                >
+                  Previous
+                </Button>
+                <span className="text-sm text-gray-700">
+                  Page {currentPage} of {Math.ceil(totalUsers / pageSize)}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => fetchUsers(currentPage + 1)}
+                  disabled={(currentPage * pageSize) >= totalUsers}
+                >
+                  Next
+                </Button>
+              </div>
             </Card>
           )
         )}
@@ -638,7 +652,6 @@ export function UserManagement() {
             </Card>
           </div>
         )}
-      </main>
     </div>
   );
 }

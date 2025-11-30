@@ -8,7 +8,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Header } from "@/components/Header";
 import api from "@/lib/api";
 import {
   Users,
@@ -124,15 +123,11 @@ export function CoordinatorDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white">
-      <Header />
-
-      <main className="container mx-auto px-4 md:px-8 py-8">
+    <div className="container mx-auto px-4 md:px-8 py-8">
         <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-2 text-blue-900">
+          <h1 className="text-3xl font-bold text-gray-800">
             Admin Dashboard
           </h1>
-          <p className="text-gray-600">Overview of the tutoring system</p>
         </div>
 
         {/* Loading State */}
@@ -190,130 +185,8 @@ export function CoordinatorDashboard() {
 
             {activeTab === "overview" ? (
               <>
-                {/* Stats Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
-                  <Card className="border-blue-200">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="text-sm font-medium">
-                        Total Mentees
-                      </CardTitle>
-                      <Users className="h-4 w-4 text-blue-600" />
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-bold text-blue-900">
-                        {stats.totalMentees}
-                      </div>
-                      <p className="text-xs text-gray-600">Active students</p>
-                    </CardContent>
-                  </Card>
-
-                  <Card className="border-green-200">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="text-sm font-medium">
-                        Total Tutors
-                      </CardTitle>
-                      <Users className="h-4 w-4 text-green-600" />
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-bold text-green-900">
-                        {stats.totalTutors}
-                      </div>
-                      <p className="text-xs text-gray-600">Active tutors</p>
-                    </CardContent>
-                  </Card>
-
-                  <Card className="border-purple-200">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="text-sm font-medium">
-                        Total Classes
-                      </CardTitle>
-                      <GraduationCap className="h-4 w-4 text-purple-600" />
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-bold text-purple-900">
-                        {stats.totalClasses}
-                      </div>
-                      <p className="text-xs text-gray-600">Active classes</p>
-                    </CardContent>
-                  </Card>
-
-                  <Card className="border-orange-200">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="text-sm font-medium">
-                        Total Sessions
-                      </CardTitle>
-                      <Calendar className="h-4 w-4 text-orange-600" />
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-bold text-orange-900">
-                        {stats.totalSessions}
-                      </div>
-                      <p className="text-xs text-gray-600">
-                        {stats.upcomingSessions} upcoming
-                      </p>
-                    </CardContent>
-                  </Card>
-
-                  <Card className="border-pink-200">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="text-sm font-medium">
-                        Subjects
-                      </CardTitle>
-                      <BookOpen className="h-4 w-4 text-pink-600" />
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-bold text-pink-900">
-                        {stats.totalSubjects}
-                      </div>
-                      <p className="text-xs text-gray-600">Available</p>
-                    </CardContent>
-                  </Card>
-                </div>
-
-                {/* Recent Activity */}
-                <Card className="border-blue-200">
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <CardTitle className="text-xl text-blue-900">
-                          Recent Activity
-                        </CardTitle>
-                        <CardDescription>
-                          Latest updates from the system
-                        </CardDescription>
-                      </div>
-                      <Button variant="outline" size="sm">
-                        View All
-                      </Button>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      {activities.map((activity) => (
-                        <div
-                          key={activity.id}
-                          className="flex items-start gap-4 pb-4 border-b last:border-0 last:pb-0"
-                        >
-                          <div className="text-2xl">
-                            {getActivityIcon(activity.type)}
-                          </div>
-                          <div className="flex-1">
-                            <p className="text-sm font-medium text-gray-900">
-                              {activity.description}
-                            </p>
-                            <p className="text-xs text-gray-600 mt-1">
-                              by {activity.user} •{" "}
-                              {formatTimestamp(activity.timestamp)}
-                            </p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-
                 {/* Quick Actions */}
-                <div className="grid md:grid-cols-3 gap-6 mt-8">
+                <div className="grid md:grid-cols-3 gap-6 mb-8">
                   <Card
                     className="hover:shadow-lg transition-shadow cursor-pointer border-blue-200"
                     onClick={() => navigate("/admin/users")}
@@ -381,6 +254,47 @@ export function CoordinatorDashboard() {
                     </CardContent>
                   </Card>
                 </div>
+                {/* Recent Activity */}
+                <Card className="border-blue-200">
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <CardTitle className="text-xl text-blue-900">
+                          Recent Activity
+                        </CardTitle>
+                        <CardDescription>
+                          Latest updates from the system
+                        </CardDescription>
+                      </div>
+                      <Button variant="outline" size="sm">
+                        View All
+                      </Button>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      {activities.map((activity) => (
+                        <div
+                          key={activity.id}
+                          className="flex items-start gap-4 pb-4 border-b last:border-0 last:pb-0"
+                        >
+                          <div className="text-2xl">
+                            {getActivityIcon(activity.type)}
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-sm font-medium text-gray-900">
+                              {activity.description}
+                            </p>
+                            <p className="text-xs text-gray-600 mt-1">
+                              by {activity.user} •{" "}
+                              {formatTimestamp(activity.timestamp)}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
               </>
             ) : (
               /* Conflict Summary Tab */
@@ -482,7 +396,6 @@ export function CoordinatorDashboard() {
             )}
           </>
         )}
-      </main>
     </div>
   );
 }

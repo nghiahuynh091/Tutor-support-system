@@ -10,6 +10,7 @@ import { MenteeSchedulePage } from "./pages/MenteeSchedulePage";
 import { MenteeSessionDetailPage } from "./pages/MenteeSessionDetailPage";
 import { TutorHomePage } from "./pages/TutorHomePage";
 import { TutorMyClassesPage } from "./pages/TutorMyClassesPage";
+import { TutorClassDetailPage } from "./pages/TutorClassDetailPage";
 import { TutorRegisteringPage } from "./pages/TutorRegisteringPage";
 import { TutorSchedulePage } from "./pages/TutorSchedulePage";
 import { CoordinatorDashboard } from "./pages/CoordinatorDashboard";
@@ -31,6 +32,9 @@ import { TutorProfile } from "./pages/TutorProfile";
 import Card from "./pages/SessionManager/Card";
 import { UserManagement } from "./pages/UserManagement";
 import { ViewReports } from "./pages/ViewReports";
+import { SessionDetailPage } from "./pages/SessionDetailPage";
+import { AdminLayout } from "./components/AdminLayout";
+import { AdminRegistrationPage } from "./pages/AdminRegistrationPage";
 
 function App() {
   return (
@@ -81,6 +85,14 @@ function App() {
             <Route path="/tutor/home" element={<TutorHomePage />} />
             <Route path="/tutor/my-classes" element={<TutorMyClassesPage />} />
             <Route
+              path="/tutor/class/:classId"
+              element={<TutorClassDetailPage />}
+            />
+            <Route
+              path="/class/:classId/session/:sessionId"
+              element={<SessionDetailPage />}
+            />
+            <Route
               path="/tutor/registering"
               element={<TutorRegisteringPage />}
             />
@@ -110,10 +122,13 @@ function App() {
 
         {/* Admin Routes */}
         <Route element={<ProtectedRoute allowedRoles={["admin"]} />}>
-          <Route path="/admin/dashboard" element={<CoordinatorDashboard />} />
-          <Route path="/admin/profile" element={<CoordinatorProfile />} />
-          <Route path="/admin/users" element={<UserManagement />} />
-          <Route path="/admin/reports" element={<ViewReports />} />
+          <Route element={<AdminLayout />}>
+            <Route path="/admin/dashboard" element={<CoordinatorDashboard />} />
+            <Route path="/admin/registrations" element={<AdminRegistrationPage />} />
+            <Route path="/admin/profile" element={<CoordinatorProfile />} />
+            <Route path="/admin/users" element={<UserManagement />} />
+            <Route path="/admin/reports" element={<ViewReports />} />
+          </Route>
         </Route>
       </Routes>
     </BrowserRouter>
