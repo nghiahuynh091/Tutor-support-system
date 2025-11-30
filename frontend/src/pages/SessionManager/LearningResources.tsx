@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
-import api from "@/lib/api"
+import { useState, useEffect, useCallback } from "react";
+import api from "@/lib/api";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface Resource {
   id: number;
@@ -9,20 +10,16 @@ interface Resource {
   fileName?: string;
 }
 
-function LearningResources({ sessionId }: { sessionId: number }) {
+function LearningResources({ classId }: { classId: number }) {
   const [resources, setResources] = useState<Resource[]>([]);
   const [adding, setAdding] = useState(false);
   const [selectedType, setSelectedType] = useState<"Local" | "HCMUT_LIBRARY" | "">("");
   const [file, setFile] = useState<File | null>(null);
+  const { user } = useAuth();
 
-  // Fetch session resources from backend
-  useEffect(() => {
-    fetchResources();
-  }, [sessionId]);
-
-  const fetchResources = async () => {
+  const fetchResources = useCallback(async () => {
     try {
-      const res = await api.get(`/materials/session/${sessionId}`);
+      const res = await api.get(`/materials/class/${classId}`);
       // Transform backend data to frontend format
       const transformedResources = res.data.map((resource: any) => ({
         id: resource.id,
@@ -35,10 +32,18 @@ function LearningResources({ sessionId }: { sessionId: number }) {
     } catch (err) {
       console.error("Failed to fetch resources", err);
     }
-  };
+  }, [classId]);
+
+  // Fetch class resources from backend
+  useEffect(() => {
+    if (classId) {
+      fetchResources();
+    }
+  }, [classId, fetchResources]);
 
   const handleAddResource = async () => {
     if (!selectedType) return alert("Please select a resource type.");
+    if (!user) return alert("You must be logged in to add a resource.");
 
     try {
       if (selectedType === "Local") {
@@ -46,12 +51,9 @@ function LearningResources({ sessionId }: { sessionId: number }) {
         
         const formData = new FormData();
         formData.append("file", file);
-        
-        // Get tutor_id from localStorage or use default
-        const tutor_id = localStorage.getItem("tutor_id") || "00000000-0000-0000-0000-000000000000";
-        formData.append("tutor_id", tutor_id);
+        formData.append("tutor_id", user.id);
 
-        await api.post(`/materials/session/${sessionId}`, formData, {
+        await api.post(`/materials/class/${classId}`, formData, {
           headers: { "Content-Type": "multipart/form-data" },
         });
 

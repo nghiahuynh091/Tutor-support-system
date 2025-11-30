@@ -13,10 +13,10 @@ supabase = create_client(supabase_url, supabase_key)
 
 router = APIRouter(prefix="/materials", tags=["Materials"])
 
-# POST /materials/session/{session_id}
-@router.post("/session/{session_id}")
+# POST /materials/class/{class_id}
+@router.post("/class/{class_id}")
 async def uploadResource(
-    session_id: int, 
+    class_id: int, 
     tutor_id: UUID = Form(...), 
     file: UploadFile = File(...)
 ):
@@ -26,7 +26,7 @@ async def uploadResource(
         
         # Create unique file path for Supabase storage
         file_extension = os.path.splitext(file.filename)[1]
-        storage_path = f"session_{session_id}/{tutor_id}_{int(datetime.utcnow().timestamp())}{file_extension}"
+        storage_path = f"class_{class_id}/{tutor_id}_{int(datetime.utcnow().timestamp())}{file_extension}"
         
         # Upload to Supabase storage
         upload_response = supabase.storage.from_("learning-resources").upload(
@@ -55,8 +55,8 @@ async def uploadResource(
                 pass
             raise HTTPException(status_code=500, detail="Failed to create resource in database")
             
-        # Link resource to class/session
-        await LearningResource.linkResource(session_id, resource_id)
+        # Link resource to class
+        await LearningResource.linkResourceToClass(class_id, resource_id)
         
         return {
             "message": "success", 
@@ -67,10 +67,10 @@ async def uploadResource(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Upload failed: {str(e)}")
 
-# GET /materials/session/{session_id}
-@router.get("/session/{session_id}")
-async def getSessionResource(session_id: int):
-    return await LearningResource.getSessionResources(session_id)
+# GET /materials/class/{class_id}
+@router.get("/class/{class_id}")
+async def getClassResources(class_id: int):
+    return await LearningResource.getResourcesForClass(class_id)
 
 # GET /materials/{material_id}/download
 @router.get("/{material_id}/download") 

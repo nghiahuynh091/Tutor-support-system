@@ -108,7 +108,7 @@ export const sessionService = {
    */
   getSessionsByClass: async (classId: number): Promise<CalendarSession[]> => {
     try {
-      const response = await api.get(`/sessions/mentee/class/${classId}`);
+      const response = await api.get(`/sessions/tutor/class/${classId}`);
       const sessions: SessionApiResponse[] = response.data.sessions || [];
       return sessions.map(transformSession);
     } catch (error) {

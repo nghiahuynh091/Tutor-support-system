@@ -152,6 +152,56 @@ class SessionController:
                 "error": f"Failed to cancel session: {str(e)}"
             }
 
+    @staticmethod
+    async def complete_session(tutor_id: str, class_id: int, session_id: int) -> Dict[str, Any]:
+        """
+        Mark a session as completed (tutor only)
+        """
+        try:
+            # Verify tutor owns the class
+            is_owner = await SessionModel.verify_tutor_owns_class(tutor_id, class_id)
+            if not is_owner:
+                return {
+                    "success": False,
+                    "error": "You don't have permission to complete this session"
+                }
+            
+            # Get current session to check status
+            session = await SessionModel.get_session_by_id(class_id, session_id)
+            if session is None:
+                return {
+                    "success": False,
+                    "error": "Session not found"
+                }
+            
+            # Check if session is already completed
+            if session['session_status'] == 'completed':
+                return {
+                    "success": False,
+                    "error": "Session is already completed"
+                }
+            
+            # Update session status to completed
+            result = await SessionModel.update_session_status(class_id, session_id, 'completed')
+            
+            if result is None:
+                return {
+                    "success": False,
+                    "error": "Failed to complete session"
+                }
+            
+            return {
+                "success": True,
+                "session": result,
+                "message": "Session completed successfully"
+            }
+        except Exception as e:
+            return {
+                "success": False,
+                "error": f"Failed to complete session: {str(e)}"
+            }
+
+
     # ==================== COMMON ENDPOINTS ====================
     
     @staticmethod
