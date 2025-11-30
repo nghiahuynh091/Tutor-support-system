@@ -43,8 +43,7 @@ export function TutorSessions() {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [classes, setClasses] = useState<ClassData[]>([]);
+  const [, setClasses] = useState<ClassData[]>([]);
   const [subjects, setSubjects] = useState<GroupedSubject[]>([]);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [expandedSubjectId, setExpandedSubjectId] = useState<number | null>(
