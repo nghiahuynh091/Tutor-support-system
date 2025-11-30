@@ -160,7 +160,7 @@ export function TutorRegisteringPage() {
     switch (status?.toLowerCase()) {
       case "scheduled":
         return (
-          <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-100">
+          <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">
             Pending
           </Badge>
         );
@@ -172,7 +172,7 @@ export function TutorRegisteringPage() {
         );
       default:
         return (
-          <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-100">
+          <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">
             Registering
           </Badge>
         );
@@ -181,7 +181,7 @@ export function TutorRegisteringPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-amber-50 to-white">
+      <div className="min-h-screen bg-gray-50">
         <div className="flex items-center justify-center h-[calc(100vh-80px)]">
           <div className="text-center">
             <RefreshCw className="h-12 w-12 animate-spin text-amber-600 mx-auto mb-4" />
@@ -194,7 +194,7 @@ export function TutorRegisteringPage() {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-amber-50 to-white">
+      <div className="min-h-screen bg-gray-50">
         <div className="flex items-center justify-center h-[calc(100vh-80px)]">
           <Card className="p-8 text-center">
             <AlertCircle className="h-12 w-12 text-yellow-500 mx-auto mb-4" />
@@ -212,7 +212,7 @@ export function TutorRegisteringPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-50 to-white">
+    <div className="min-h-screen bg-gray-50">
       {/* Success Toast */}
       {showSuccessToast && (
         <div className="fixed top-4 right-4 bg-green-500 text-white px-6 py-4 rounded-lg shadow-lg flex items-center space-x-2 z-50 animate-in slide-in-from-right">
@@ -225,12 +225,12 @@ export function TutorRegisteringPage() {
         {/* Header Section */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
           <div>
-            <h1 className="text-3xl md:text-4xl font-bold mb-2 text-amber-900">
+            <h1 className="text-3xl md:text-4xl font-bold mb-2 text-gray-900">
               Registering Classes
             </h1>
-            <p className="text-gray-600">
+            {/* <p className="text-gray-600">
               Create and manage classes awaiting confirmation
-            </p>
+            </p> */}
             {error && (
               <p className="text-red-500 text-sm mt-2 flex items-center gap-1">
                 <AlertCircle className="h-4 w-4" />
@@ -245,7 +245,7 @@ export function TutorRegisteringPage() {
               size="sm"
               onClick={handleRefresh}
               disabled={refreshing}
-              className="border-amber-300 text-amber-600 hover:bg-amber-50"
+              className="border-gray-300 text-gray-600 hover:bg-gray-50"
             >
               <RefreshCw
                 className={`mr-2 h-4 w-4 ${refreshing ? "animate-spin" : ""}`}
@@ -255,7 +255,7 @@ export function TutorRegisteringPage() {
 
             <Button
               size="lg"
-              className="bg-amber-600 hover:bg-amber-700 text-white"
+              className="bg-blue-600 hover:bg-blue-700 text-white"
               onClick={() => setIsCreateModalOpen(true)}
             >
               <Plus className="mr-2 h-5 w-5" />
@@ -266,9 +266,9 @@ export function TutorRegisteringPage() {
 
         {/* Classes Content */}
         {subjects.length === 0 ? (
-          <Card className="border-amber-200 border-dashed">
+          <Card className="border-gray-200 border-dashed">
             <CardContent className="py-16 text-center">
-              <Calendar className="h-16 w-16 text-amber-300 mx-auto mb-4" />
+              <Calendar className="h-16 w-16 text-gray-300 mx-auto mb-4" />
               <h3 className="text-xl font-semibold text-gray-700 mb-2">
                 No Registering Classes
               </h3>
@@ -278,7 +278,7 @@ export function TutorRegisteringPage() {
               </p>
               <Button
                 size="lg"
-                className="bg-amber-600 hover:bg-amber-700"
+                className="bg-blue-600 hover:bg-blue-700"
                 onClick={() => setIsCreateModalOpen(true)}
               >
                 <Plus className="mr-2 h-5 w-5" />
@@ -294,30 +294,30 @@ export function TutorRegisteringPage() {
               return (
                 <Card
                   key={subject.id}
-                  className="border-amber-200 hover:border-amber-400 transition-all duration-200 bg-white shadow-sm"
+                  className="border-gray-200 hover:border-gray-400 transition-all duration-200 bg-white shadow-sm"
                 >
                   {/* Subject Header - Clickable */}
                   <CardHeader
-                    className="cursor-pointer hover:bg-amber-50 transition-colors rounded-t-lg"
+                    className="cursor-pointer hover:bg-gray-50 transition-colors rounded-t-lg"
                     onClick={() => toggleSubject(subject.id)}
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         {isSubjectExpanded ? (
-                          <ChevronDown className="h-5 w-5 text-amber-600" />
+                          <ChevronDown className="h-5 w-5 text-blue-600" />
                         ) : (
-                          <ChevronRight className="h-5 w-5 text-amber-600" />
+                          <ChevronRight className="h-5 w-5 text-blue-600" />
                         )}
                         <div>
-                          <CardTitle className="text-xl md:text-2xl text-amber-900">
+                          <CardTitle className="text-xl md:text-2xl text-gray-900">
                             {subject.subject_name}
                           </CardTitle>
-                          <p className="text-sm text-amber-600 font-semibold mt-1">
+                          <p className="text-sm text-gray-600 font-semibold mt-1">
                             {subject.subject_code}
                           </p>
                         </div>
                       </div>
-                      <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-100">
+                      <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100">
                         {subject.classes.length}{" "}
                         {subject.classes.length === 1 ? "class" : "classes"}
                       </Badge>
@@ -341,23 +341,23 @@ export function TutorRegisteringPage() {
                           return (
                             <div
                               key={classItem.id}
-                              className="border border-amber-200 rounded-lg overflow-hidden"
+                              className="border border-gray-200 rounded-lg overflow-hidden"
                             >
                               {/* Class Header - Clickable */}
                               <div
-                                className="bg-gradient-to-r from-amber-50 to-white p-4 cursor-pointer hover:from-amber-100 hover:to-amber-50 transition-colors"
+                                className="bg-gray-50 p-4 cursor-pointer hover:bg-gray-100 transition-colors"
                                 onClick={() => toggleClass(classItem.id)}
                               >
                                 <div className="flex items-start justify-between gap-4">
                                   <div className="flex items-start gap-3 flex-1">
                                     {isClassExpanded ? (
-                                      <ChevronDown className="h-5 w-5 text-amber-600 mt-1 flex-shrink-0" />
+                                      <ChevronDown className="h-5 w-5 text-blue-600 mt-1 flex-shrink-0" />
                                     ) : (
-                                      <ChevronRight className="h-5 w-5 text-amber-600 mt-1 flex-shrink-0" />
+                                      <ChevronRight className="h-5 w-5 text-blue-600 mt-1 flex-shrink-0" />
                                     )}
                                     <div className="flex-1 min-w-0">
                                       <div className="flex flex-wrap items-center gap-2 mb-2">
-                                        <h3 className="text-lg font-bold text-amber-900">
+                                        <h3 className="text-lg font-bold text-gray-900">
                                           Class #{classItem.id}
                                         </h3>
                                         {getStatusBadge(classItem.class_status)}
@@ -385,13 +385,13 @@ export function TutorRegisteringPage() {
 
                                       <div className="flex flex-wrap gap-4 text-sm text-gray-600">
                                         <div className="flex items-center gap-1">
-                                          <Calendar className="h-4 w-4 text-amber-500" />
+                                          <Calendar className="h-4 w-4 text-blue-500" />
                                           <span>
                                             {getScheduleDisplay(classItem)}
                                           </span>
                                         </div>
                                         <div className="flex items-center gap-1">
-                                          <Users className="h-4 w-4 text-amber-500" />
+                                          <Users className="h-4 w-4 text-blue-500" />
                                           <span
                                             className={
                                               isFull
@@ -406,7 +406,7 @@ export function TutorRegisteringPage() {
                                         </div>
                                         {classItem.location && (
                                           <div className="flex items-center gap-1">
-                                            <MapPin className="h-4 w-4 text-amber-500" />
+                                            <MapPin className="h-4 w-4 text-blue-500" />
                                             <span>{classItem.location}</span>
                                           </div>
                                         )}
@@ -437,12 +437,12 @@ export function TutorRegisteringPage() {
 
                               {/* Expanded Class Details */}
                               {isClassExpanded && (
-                                <div className="p-4 bg-white border-t border-amber-100 space-y-4">
+                                <div className="p-4 bg-white border-t border-gray-100 space-y-4">
                                   {/* Schedule Info */}
                                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div className="bg-amber-50 rounded-lg p-4">
+                                    <div className="bg-gray-50 rounded-lg p-4">
                                       <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                                        <Clock className="h-4 w-4 text-amber-600" />
+                                        <Clock className="h-4 w-4 text-blue-600" />
                                         Schedule Details
                                       </h4>
                                       <div className="space-y-2 text-sm">
@@ -558,8 +558,8 @@ export function TutorRegisteringPage() {
 
                                   {/* Info Note */}
                                   <div className="pt-3 border-t">
-                                    <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-                                      <p className="text-sm text-amber-800">
+                                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                                      <p className="text-sm text-blue-800">
                                         <strong>Note:</strong> This class is
                                         pending confirmation. Once confirmed by
                                         the admin, it will be moved to "My
