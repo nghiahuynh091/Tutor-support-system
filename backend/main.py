@@ -46,31 +46,31 @@ app.add_middleware(
 )
 
 # Include route modules
-app.include_router(system_route.router)  # Root and system endpoints
-app.include_router(user_route.router)    # /users endpoints
-app.include_router(progressRoute.router)
-app.include_router(assignmentRoute.router)
-app.include_router(submissionRoute.router)
-app.include_router(feedbackRoute.router)
-app.include_router(attendance_route.router)
+app.include_router(system_route.router, prefix="/api")  # Root and system endpoints
+app.include_router(user_route.router, prefix="/api")    # /users endpoints
+app.include_router(progressRoute.router, prefix="/api")
+app.include_router(assignmentRoute.router, prefix="/api")
+app.include_router(submissionRoute.router, prefix="/api")
+app.include_router(feedbackRoute.router, prefix="/api")
+app.include_router(attendance_route.router, prefix="/api")
 
 # class modules
-app.include_router(class_route.router)
+app.include_router(class_route.router, prefix="/api")
 
 # registration modules
-app.include_router(registration_route.router)
+app.include_router(registration_route.router, prefix="/api")
 
 # admin modules
-app.include_router(admin_route.router)
+app.include_router(admin_route.router, prefix="/api")
 
 #learning modules
-app.include_router(learning_route.router)
+app.include_router(learning_route.router, prefix="/api")
 
 #subject modules
-app.include_router(subject_route.router)
+app.include_router(subject_route.router, prefix="/api")
 
 #note modules
-app.include_router(note_route.router)
+app.include_router(note_route.router, prefix="/api")
 
 #session modules
-app.include_router(session_route.router)
+app.include_router(session_route.router, prefix="/api")
