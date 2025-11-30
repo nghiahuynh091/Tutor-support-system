@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
-import { Trash2, X, CheckCircle, Plus } from "lucide-react";
+import { Trash2, X, Plus } from "lucide-react";
 import { useParams } from "react-router-dom";
 
 interface Question {

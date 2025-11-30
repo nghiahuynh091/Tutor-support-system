@@ -52,10 +52,12 @@ export function Card() {
   }, [sessionCancelled]);
 
   // 📩 Invite persistence
-  const [inviteStatus, setInviteStatus] = useState<Record<number, boolean>>(() => {
-    const saved = localStorage.getItem("inviteStatus");
-    return saved ? JSON.parse(saved) : {};
-  });
+  const [inviteStatus, setInviteStatus] = useState<Record<number, boolean>>(
+    () => {
+      const saved = localStorage.getItem("inviteStatus");
+      return saved ? JSON.parse(saved) : {};
+    }
+  );
   useEffect(() => {
     localStorage.setItem("inviteStatus", JSON.stringify(inviteStatus));
   }, [inviteStatus]);
@@ -71,18 +73,21 @@ export function Card() {
 
   return (
     <div className="card">
-    <Header />
-<h2>
-  Class ID: {classId || "N/A"} - Mentoring Session
-</h2>
-<p>Lecturer: Dr. John Doe</p>
+      <Header />
+      <h2>Class ID: {classId || "N/A"} - Mentoring Session</h2>
+      <p>Lecturer: Dr. John Doe</p>
 
-
-      <div className="card-row clickable" onClick={() => setActiveSection("attendance")}>
+      <div
+        className="card-row clickable"
+        onClick={() => setActiveSection("attendance")}
+      >
         📋 Mark Attendance
       </div>
 
-      <div className="card-row clickable" onClick={() => setActiveSection("notes")}>
+      <div
+        className="card-row clickable"
+        onClick={() => setActiveSection("notes")}
+      >
         📝 Add Meeting Notes
       </div>
 
@@ -97,8 +102,10 @@ export function Card() {
         📅 Arrange Make-Up Session
       </div>
 
-      <div className="card-row clickable" onClick={() => setActiveSection("resources")}>
-      </div>
+      <div
+        className="card-row clickable"
+        onClick={() => setActiveSection("resources")}
+      ></div>
 
       <div className="section-content">
         {activeSection === "attendance" && (
@@ -135,11 +142,18 @@ export function Card() {
 
         {activeSection === "makeup" && (
           <MakeUpSession
-            students={attendance.map((a) => ({
-              id: a.id,
-              firstName: a.firstName,
-              lastName: a.lastName,
-            }))}
+            students={attendance.map(
+              (a: {
+                id: number;
+                firstName: string;
+                lastName: string;
+                status: string;
+              }) => ({
+                id: a.id,
+                firstName: a.firstName,
+                lastName: a.lastName,
+              })
+            )}
             inviteStatus={inviteStatus}
             setInviteStatus={setInviteStatus}
             sessionComplete={sessionComplete}
@@ -147,7 +161,9 @@ export function Card() {
           />
         )}
 
-        {activeSection === "resources" && <LearningResources />}
+        {activeSection === "resources" && (
+          <LearningResources classId={parseInt(classId || "0")} />
+        )}
       </div>
     </div>
   );

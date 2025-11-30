@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Plus, Calendar, Save, Edit2, X, CheckCircle, BookOpen, Users, ArrowRight, Loader2 } from "lucide-react";

@@ -5,7 +5,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
   Calendar,
-  Clock,
   Users,
   RefreshCw,
   AlertCircle,
@@ -30,9 +29,7 @@ import {
 } from "@/services/sessionService";
 
 // Sub-components for each feature section
-import AttendanceTable from "./SessionManager/AttendanceTable";
-import MeetingNotes from "./SessionManager/MeetingNotes";
-import MakeUpSession from "./SessionManager/MakeUpSession";
+
 import LearningResources from "./SessionManager/LearningResources";
 
 const DAYS_OF_WEEK: Record<string, string> = {
@@ -141,22 +138,7 @@ export function TutorClassDetailPage() {
     }
   }, []);
 
-  // Attendance states
-  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(
-    null
-  );
-  const [meetingNote, setMeetingNote] = useState("");
-  const [attendance, setAttendance] = useState([
-    { id: 1, firstName: "Alice", lastName: "Nguyen", status: "" },
-    { id: 2, firstName: "Bob", lastName: "Tran", status: "" },
-    { id: 3, firstName: "Charlie", lastName: "Pham", status: "" },
-  ]);
-  const [sessionComplete, setSessionComplete] = useState(false);
-  const [sessionCancelled, setSessionCancelled] = useState(false);
-  const [inviteStatus, setInviteStatus] = useState<Record<number, boolean>>({});
-  const [activeAttendanceSection, setActiveAttendanceSection] = useState<
-    string | null
-  >(null);
+  // Attendance states (managed per session, not globally)
 
   // Progress tracking states
   const [progressRecords, setProgressRecords] = useState<ProgressRecord[]>([]);
@@ -340,7 +322,27 @@ export function TutorClassDetailPage() {
     fetchAllScoresForRecords();
   }, [fetchAllScoresForRecords]);
 
-  const canArrangeMakeUp = sessionComplete || sessionCancelled;
+  // Create a new progress report
+  const handleCreateProgressRecord = async () => {
+    if (!classId || !token || !newProgressTitle.trim()) return;
+    try {
+      const response = await fetch(`${BASE_URL}/progress/record`, {
+        method: "POST",
+        headers: getHeaders(),
+        body: JSON.stringify({
+          class_id: parseInt(classId),
+          title: newProgressTitle.trim(),
+        }),
+      });
+      if (!response.ok) throw new Error("Failed to create progress report");
+      setNewProgressTitle("");
+      setIsCreateProgressOpen(false);
+      fetchProgressRecords();
+    } catch (error) {
+      console.error("Error creating progress report:", error);
+      alert("Failed to create progress report.");
+    }
+  };
 
   if (loading) {
     return (
@@ -714,7 +716,7 @@ export function TutorClassDetailPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <LearningResources classId={parseInt(classId)} />
+                  <LearningResources classId={parseInt(classId || "0")} />
                 </CardContent>
               </Card>
             </div>
@@ -909,7 +911,6 @@ export function TutorClassDetailPage() {
                         key={rec.id}
                         onClick={() => {
                           setSelectedRecord(rec);
-                          fetchProgressScores(rec.id);
                         }}
                         className={`p-4 rounded-lg border cursor-pointer transition hover:shadow-md ${
                           selectedRecord?.id === rec.id

@@ -10,11 +10,7 @@ import {
 } from "@/components/ui/card";
 import api from "@/lib/api";
 import {
-  Users,
-  BookOpen,
-  Calendar,
   TrendingUp,
-  GraduationCap,
   AlertTriangle,
   Loader2,
 } from "lucide-react";
