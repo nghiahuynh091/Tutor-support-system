@@ -212,7 +212,9 @@ export function CoordinatorDashboard() {
                     </CardContent>
                   </Card>
 
-                  <Card className="hover:shadow-lg transition-shadow cursor-pointer border-blue-200">
+                  <Card className="hover:shadow-lg transition-shadow cursor-pointer border-blue-200" 
+                  onClick={() => navigate("/admin/registrations")}
+                  >
                     <CardHeader>
                       <CardTitle className="text-lg text-blue-900">
                         Manage Classes
@@ -222,7 +224,9 @@ export function CoordinatorDashboard() {
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
-                      <Button className="w-full bg-blue-600 hover:bg-blue-700">
+                      <Button className="w-full bg-blue-600 hover:bg-blue-700" 
+                      onClick={() => navigate("/admin/registrations")}
+                      >
                         View Classes
                       </Button>
                     </CardContent>
