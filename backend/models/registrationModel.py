@@ -386,3 +386,23 @@ class RegistrationModel:
             "has_conflict": len(conflicts) > 0,
             "conflicts": conflicts
         }
+
+    @staticmethod
+    async def get_mentees_by_class(class_id: int) -> List[Dict[str, Any]]:
+        """
+        Get all mentees registered in a specific class
+        """
+        query = """
+            SELECT 
+                u.id as mentee_id,
+                u.full_name,
+                u.email,
+                u.avatar_url,
+                cr.registration_log as enrolled_at
+            FROM class_registrations cr
+            JOIN public.user u ON cr.mentee_id = u.id
+            WHERE cr.class_id = $1
+            ORDER BY u.full_name
+        """
+        mentees = await db.execute_query(query, class_id)
+        return mentees if mentees else []

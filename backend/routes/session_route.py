@@ -106,6 +106,27 @@ async def cancel_session(
             raise HTTPException(status_code=404, detail=result["error"])
         raise HTTPException(status_code=400, detail=result["error"])
 
+@router.patch("/{class_id}/{session_id}/complete")
+async def complete_session(
+    class_id: int,
+    session_id: int,
+    current_user: dict = Depends(authorize(["tutor"]))
+):
+    """
+    Mark a session as completed (tutor only)
+    """
+    tutor_id = current_user.get("sub")
+    result = await SessionController.complete_session(tutor_id, class_id, session_id)
+    
+    if result["success"]:
+        return result
+    else:
+        if "permission" in result["error"].lower():
+            raise HTTPException(status_code=403, detail=result["error"])
+        if "not found" in result["error"].lower():
+            raise HTTPException(status_code=404, detail=result["error"])
+        raise HTTPException(status_code=400, detail=result["error"])
+
 
 # ==================== COMMON ENDPOINTS ====================
 # Note: This route must be placed LAST because it uses path parameters

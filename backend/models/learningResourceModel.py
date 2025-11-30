@@ -12,7 +12,7 @@ supabase = create_client(supabase_url, supabase_key)
 
 class LearningResource:
     @staticmethod
-    async def getSessionResources(class_id: int) -> List[Dict[str, Any]]:
+    async def getResourcesForClass(class_id: int) -> List[Dict[str, Any]]:
         query = """
             SELECT lr.id, lr.tutor_id, lr.file_type, lr.resource_source, lr.title, lr.created_at
             FROM learning_resources lr
@@ -46,7 +46,7 @@ class LearningResource:
         return result['id'] if result else None
     
     @staticmethod
-    async def linkResource(class_id: int, resource_id: int):
+    async def linkResourceToClass(class_id: int, resource_id: int):
         query = """
             INSERT INTO class_resources(class_id, resource_id, created_at)
             VALUES($1, $2, $3)

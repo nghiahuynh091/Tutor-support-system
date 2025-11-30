@@ -18,7 +18,7 @@ export function HomePage() {
           navigate("/mentee/home", { replace: true });
           break;
         case "tutor":
-          navigate("/tutor/sessions", { replace: true });
+          navigate("/tutor/home", { replace: true });
           break;
         case "admin":
           navigate("/admin/dashboard", { replace: true });
@@ -46,7 +46,7 @@ export function HomePage() {
           <Button
             size="lg"
             className="bg-blue-600 hover:bg-blue-700 text-white"
-            onClick={() => navigate("/tutor/sessions")}
+            onClick={() => navigate("/tutor/home")}
           >
             Manage My Sessions
           </Button>

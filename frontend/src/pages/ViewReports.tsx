@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Header } from "@/components/Header";
 import {
   ArrowLeft,
   BarChart3,
@@ -194,9 +193,9 @@ export function ViewReports() {
     switch (selectedReportType) {
       case "course_analytics":
         return (
-          <Card className="border-green-200 mt-6">
-            <CardHeader className="bg-green-50">
-              <CardTitle className="text-green-900">
+          <Card className="border-blue-200 mt-6">
+            <CardHeader className="bg-blue-50">
+              <CardTitle className="text-blue-900">
                 Course Analytics Report
               </CardTitle>
             </CardHeader>
@@ -251,25 +250,25 @@ export function ViewReports() {
 
       case "resource_usage":
         return (
-          <Card className="border-purple-200 mt-6">
-            <CardHeader className="bg-purple-50">
-              <CardTitle className="text-purple-900">
+          <Card className="border-blue-200 mt-6">
+            <CardHeader className="bg-blue-50">
+              <CardTitle className="text-blue-900">
                 Resource Usage Report
               </CardTitle>
             </CardHeader>
             <CardContent className="p-6">
               <div className="grid md:grid-cols-2 gap-4 mb-6">
-                <div className="text-center p-4 bg-purple-50 rounded">
-                  <div className="text-2xl font-bold text-purple-900">
+                <div className="text-center p-4 bg-blue-50 rounded">
+                  <div className="text-2xl font-bold text-blue-900">
                     {reportData.summary?.totalResources || 0}
                   </div>
-                  <div className="text-sm text-purple-600">Total Resources</div>
+                  <div className="text-sm text-blue-600">Total Resources</div>
                 </div>
-                <div className="text-center p-4 bg-purple-50 rounded">
-                  <div className="text-lg font-bold text-purple-900">
+                <div className="text-center p-4 bg-blue-50 rounded">
+                  <div className="text-lg font-bold text-blue-900">
                     {reportData.summary?.mostUsedResource || "N/A"}
                   </div>
-                  <div className="text-sm text-purple-600">
+                  <div className="text-sm text-blue-600">
                     Most Popular Resource
                   </div>
                 </div>
@@ -302,33 +301,33 @@ export function ViewReports() {
 
       case "participation":
         return (
-          <Card className="border-orange-200 mt-6">
-            <CardHeader className="bg-orange-50">
-              <CardTitle className="text-orange-900">
+          <Card className="border-blue-200 mt-6">
+            <CardHeader className="bg-blue-50">
+              <CardTitle className="text-blue-900">
                 Participation Report
               </CardTitle>
             </CardHeader>
             <CardContent className="p-6">
               <div className="grid md:grid-cols-3 gap-4 mb-6">
-                <div className="text-center p-4 bg-orange-50 rounded">
-                  <div className="text-2xl font-bold text-orange-900">
+                <div className="text-center p-4 bg-blue-50 rounded">
+                  <div className="text-2xl font-bold text-blue-900">
                     {reportData.summary?.totalParticipants || 0}
                   </div>
-                  <div className="text-sm text-orange-600">
+                  <div className="text-sm text-blue-600">
                     Total Participants
                   </div>
                 </div>
-                <div className="text-center p-4 bg-orange-50 rounded">
-                  <div className="text-2xl font-bold text-orange-900">
+                <div className="text-center p-4 bg-blue-50 rounded">
+                  <div className="text-2xl font-bold text-blue-900">
                     {reportData.summary?.activeUsers || 0}
                   </div>
-                  <div className="text-sm text-orange-600">Active Users</div>
+                  <div className="text-sm text-blue-600">Active Users</div>
                 </div>
-                <div className="text-center p-4 bg-orange-50 rounded">
-                  <div className="text-2xl font-bold text-orange-900">
+                <div className="text-center p-4 bg-blue-50 rounded">
+                  <div className="text-2xl font-bold text-blue-900">
                     {reportData.summary?.averageSessionTime || 0}min
                   </div>
-                  <div className="text-sm text-orange-600">
+                  <div className="text-sm text-blue-600">
                     Avg Session Time
                   </div>
                 </div>
@@ -367,73 +366,62 @@ export function ViewReports() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white">
-      <Header />
-
-      <main className="container mx-auto px-4 md:px-8 py-8">
+    <div className="container mx-auto px-4 md:px-8 py-8">
         {/* Header with back button */}
-        <div className="flex items-center gap-4 mb-8">
-          <Button
-            variant="outline"
-            onClick={() => navigate("/admin/dashboard")}
-            className="flex items-center gap-2 text-gray-900 hover:text-blue-700 border-gray-300"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back to Dashboard
-          </Button>
-          <div>
-            <h1 className="text-4xl font-bold text-blue-900">View Reporting</h1>
-            <p className="text-gray-600">Generate and view system reports</p>
-          </div>
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-800">
+            View Reporting
+          </h1>
+          <p className="text-gray-600">Generate and view system reports</p>
         </div>
 
         {/* Report Type Selection */}
         <div className="grid md:grid-cols-3 lg:grid-cols-4 gap-6 mb-8">
           <Card
-            className="hover:shadow-lg transition-shadow cursor-pointer border-green-200"
+            className="hover:shadow-lg transition-shadow cursor-pointer border-blue-200"
             onClick={() => fetchReport("course_analytics")}
           >
             <CardHeader className="text-center">
-              <BarChart3 className="h-12 w-12 text-green-600 mx-auto mb-2" />
-              <CardTitle className="text-green-900">Course Analytics</CardTitle>
+              <BarChart3 className="h-12 w-12 text-blue-600 mx-auto mb-2" />
+              <CardTitle className="text-blue-900">Course Analytics</CardTitle>
             </CardHeader>
             <CardContent className="text-center">
               <p className="text-sm text-gray-600 mb-4">
                 View enrollment statistics, completion rates, and course
                 performance metrics
               </p>
-              <Button className="w-full bg-green-600 hover:bg-green-700">
+              <Button className="w-full bg-blue-600 hover:bg-blue-700">
                 Generate Report
               </Button>
             </CardContent>
           </Card>
 
           <Card
-            className="hover:shadow-lg transition-shadow cursor-pointer border-purple-200"
+            className="hover:shadow-lg transition-shadow cursor-pointer border-blue-200"
             onClick={() => fetchReport("resource_usage")}
           >
             <CardHeader className="text-center">
-              <FileText className="h-12 w-12 text-purple-600 mx-auto mb-2" />
-              <CardTitle className="text-purple-900">Resource Report</CardTitle>
+              <FileText className="h-12 w-12 text-blue-600 mx-auto mb-2" />
+              <CardTitle className="text-blue-900">Resource Report</CardTitle>
             </CardHeader>
             <CardContent className="text-center">
               <p className="text-sm text-gray-600 mb-4">
                 Analyze resource usage, downloads, and most popular learning
                 materials
               </p>
-              <Button className="w-full bg-purple-600 hover:bg-purple-700">
+              <Button className="w-full bg-blue-600 hover:bg-blue-700">
                 Generate Report
               </Button>
             </CardContent>
           </Card>
 
           <Card
-            className="hover:shadow-lg transition-shadow cursor-pointer border-orange-200"
+            className="hover:shadow-lg transition-shadow cursor-pointer border-blue-200"
             onClick={() => fetchReport("participation")}
           >
             <CardHeader className="text-center">
-              <Users className="h-12 w-12 text-orange-600 mx-auto mb-2" />
-              <CardTitle className="text-orange-900">
+              <Users className="h-12 w-12 text-blue-600 mx-auto mb-2" />
+              <CardTitle className="text-blue-900">
                 Participation Report
               </CardTitle>
             </CardHeader>
@@ -442,19 +430,19 @@ export function ViewReports() {
                 Track user engagement, session attendance, and participation
                 metrics
               </p>
-              <Button className="w-full bg-orange-600 hover:bg-orange-700">
+              <Button className="w-full bg-blue-600 hover:bg-blue-700">
                 Generate Report
               </Button>
             </CardContent>
           </Card>
 
           <Card
-            className="hover:shadow-lg transition-shadow cursor-pointer border-indigo-200"
+            className="hover:shadow-lg transition-shadow cursor-pointer border-blue-200"
             onClick={() => fetchReport("subject_performance")}
           >
             <CardHeader className="text-center">
-              <BookOpen className="h-12 w-12 text-indigo-600 mx-auto mb-2" />
-              <CardTitle className="text-indigo-900">
+              <BookOpen className="h-12 w-12 text-blue-600 mx-auto mb-2" />
+              <CardTitle className="text-blue-900">
                 Subject Performance
               </CardTitle>
             </CardHeader>
@@ -462,37 +450,37 @@ export function ViewReports() {
               <p className="text-sm text-gray-600 mb-4">
                 Analyze student performance, ratings, and attendance by subject
               </p>
-              <Button className="w-full bg-indigo-600 hover:bg-indigo-700">
+              <Button className="w-full bg-blue-600 hover:bg-blue-700">
                 Generate Report
               </Button>
             </CardContent>
           </Card>
 
           <Card
-            className="hover:shadow-lg transition-shadow cursor-pointer border-teal-200"
+            className="hover:shadow-lg transition-shadow cursor-pointer border-blue-200"
             onClick={() => fetchReport("tutor_workload")}
           >
             <CardHeader className="text-center">
-              <Briefcase className="h-12 w-12 text-teal-600 mx-auto mb-2" />
-              <CardTitle className="text-teal-900">Tutor Workload</CardTitle>
+              <Briefcase className="h-12 w-12 text-blue-600 mx-auto mb-2" />
+              <CardTitle className="text-blue-900">Tutor Workload</CardTitle>
             </CardHeader>
             <CardContent className="text-center">
               <p className="text-sm text-gray-600 mb-4">
                 Monitor tutor efficiency, class load, and utilization rates
               </p>
-              <Button className="w-full bg-teal-600 hover:bg-teal-700">
+              <Button className="w-full bg-blue-600 hover:bg-blue-700">
                 Generate Report
               </Button>
             </CardContent>
           </Card>
 
           <Card
-            className="hover:shadow-lg transition-shadow cursor-pointer border-yellow-200"
+            className="hover:shadow-lg transition-shadow cursor-pointer border-blue-200"
             onClick={() => fetchReport("scholarship_eligible")}
           >
             <CardHeader className="text-center">
-              <Award className="h-12 w-12 text-yellow-600 mx-auto mb-2" />
-              <CardTitle className="text-yellow-900">
+              <Award className="h-12 w-12 text-blue-600 mx-auto mb-2" />
+              <CardTitle className="text-blue-900">
                 Scholarship Eligible
               </CardTitle>
             </CardHeader>
@@ -500,25 +488,25 @@ export function ViewReports() {
               <p className="text-sm text-gray-600 mb-4">
                 Identify students eligible for scholarships based on performance
               </p>
-              <Button className="w-full bg-yellow-600 hover:bg-yellow-700">
+              <Button className="w-full bg-blue-600 hover:bg-blue-700">
                 Generate Report
               </Button>
             </CardContent>
           </Card>
 
           <Card
-            className="hover:shadow-lg transition-shadow cursor-pointer border-cyan-200"
+            className="hover:shadow-lg transition-shadow cursor-pointer border-blue-200"
             onClick={() => fetchReport("class_utilization")}
           >
             <CardHeader className="text-center">
-              <TrendingUp className="h-12 w-12 text-cyan-600 mx-auto mb-2" />
-              <CardTitle className="text-cyan-900">Class Utilization</CardTitle>
+              <TrendingUp className="h-12 w-12 text-blue-600 mx-auto mb-2" />
+              <CardTitle className="text-blue-900">Class Utilization</CardTitle>
             </CardHeader>
             <CardContent className="text-center">
               <p className="text-sm text-gray-600 mb-4">
                 Optimize room capacity and analyze enrollment efficiency
               </p>
-              <Button className="w-full bg-cyan-600 hover:bg-cyan-700">
+              <Button className="w-full bg-blue-600 hover:bg-blue-700">
                 Generate Report
               </Button>
             </CardContent>
@@ -555,7 +543,6 @@ export function ViewReports() {
             </CardContent>
           </Card>
         )}
-      </main>
     </div>
   );
 }

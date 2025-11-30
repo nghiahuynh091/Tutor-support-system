@@ -1,5 +1,3 @@
-import { Header } from "@/components/Header";
-import { Footer } from "@/components/Footer";
 import UserProfile from "@/components/UserProfile"; // Assuming you have this component
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -7,12 +5,7 @@ export function CoordinatorProfile() {
   const { user } = useAuth();
 
   return (
-    <div className="min-h-screen bg-white">
-      <Header />
-      <div className="container mx-auto px-8 py-12">
-        <h2 className="text-3xl font-bold text-blue-900 mb-8 text-center">
-          My Profile
-        </h2>
+    <div className="container mx-auto px-8 py-12">
         <UserProfile
           name={user?.full_name || "Admin Name"}
           email={user?.email || "admin@example.com"}
@@ -22,8 +15,6 @@ export function CoordinatorProfile() {
           role="admin"
           Faculty="Administration"
         />
-      </div>
-      <Footer />
     </div>
   );
 }

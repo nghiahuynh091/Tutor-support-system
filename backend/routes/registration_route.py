@@ -116,3 +116,15 @@ async def get_registrations_by_mentee(mentee_id: str):
         return result
     else:
         raise HTTPException(status_code=500, detail=result["error"])
+
+@router.get("/class/{class_id}/mentees")
+async def get_mentees_by_class(class_id: int):
+    """
+    Get all mentees registered in a specific class
+    """
+    result = await RegistrationController.get_mentees_by_class(class_id)
+    
+    if result["success"]:
+        return result
+    else:
+        raise HTTPException(status_code=500, detail=result["error"])

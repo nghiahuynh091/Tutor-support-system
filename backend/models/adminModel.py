@@ -22,7 +22,7 @@ class AdminModel:
             mentee_result = await db.execute_single(
                 """
                 SELECT COUNT(DISTINCT m.user_id) as count 
-                FROM MENTEE m
+                FROM mentee m
                 JOIN public.user u ON m.user_id = u.id
                 """
             )
@@ -32,7 +32,7 @@ class AdminModel:
             tutor_result = await db.execute_single(
                 """
                 SELECT COUNT(DISTINCT t.user_id) as count 
-                FROM TUTOR t
+                FROM tutor t
                 JOIN public.user u ON t.user_id = u.id
                 """
             )
@@ -64,7 +64,7 @@ class AdminModel:
             upcoming_result = await db.execute_single(
                 """
                 SELECT COUNT(*) as count FROM sessions 
-                WHERE session_date_time >= NOW() 
+                WHERE session_date >= NOW() 
                 AND session_status = 'scheduled'
                 """
             )
@@ -272,8 +272,8 @@ class AdminModel:
                     t.expertise_areas
                 FROM public.user u
                 LEFT JOIN user_roles ur ON u.id = ur.user_id
-                LEFT JOIN MENTEE m ON u.id = m.user_id
-                LEFT JOIN TUTOR t ON u.id = t.user_id
+                LEFT JOIN mentee m ON u.id = m.user_id
+                LEFT JOIN tutor t ON u.id = t.user_id
                 WHERE 1=1
             """
             
@@ -287,9 +287,12 @@ class AdminModel:
                 param_count += 1
             
             if role:
-                base_query += f" AND ur.role::text = ${param_count}"
-                params.append(role)
-                param_count += 1
+                if role == 'unknown':
+                    base_query += f" AND ur.role IS NULL"
+                else:
+                    base_query += f" AND ur.role::text = ${param_count}"
+                    params.append(role)
+                    param_count += 1
             
             # Get total count
             count_query = f"SELECT COUNT(*) as count FROM ({base_query}) as filtered_users"
@@ -384,8 +387,8 @@ class AdminModel:
                     t.expertise_areas
                 FROM public.user u
                 LEFT JOIN user_roles ur ON u.id = ur.user_id
-                LEFT JOIN MENTEE m ON u.id = m.user_id
-                LEFT JOIN TUTOR t ON u.id = t.user_id
+                LEFT JOIN mentee m ON u.id = m.user_id
+                LEFT JOIN tutor t ON u.id = t.user_id
                 WHERE u.id = $1
                 """,
                 user_id

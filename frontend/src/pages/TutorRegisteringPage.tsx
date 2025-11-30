@@ -39,12 +39,10 @@ const periodToTime = (hour: number): string => {
   return `${hour.toString().padStart(2, "0")}:00`;
 };
 
-export function TutorSessions() {
+export function TutorRegisteringPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [classes, setClasses] = useState<ClassData[]>([]);
   const [subjects, setSubjects] = useState<GroupedSubject[]>([]);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [expandedSubjectId, setExpandedSubjectId] = useState<number | null>(
@@ -59,17 +57,25 @@ export function TutorSessions() {
   const [showSuccessToast, setShowSuccessToast] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
 
-  // Load tutor's classes from API
+  // Load tutor's registering (unconfirmed) classes from API
   const loadClasses = useCallback(async () => {
     if (!user?.id) return;
 
     try {
       setError(null);
       const tutorClasses = await classService.getClassesByTutor(user.id);
-      setClasses(tutorClasses);
+
+      // Filter only unconfirmed classes (class_status === 'scheduled' or anything not confirmed/open)
+      const registeringClasses = tutorClasses.filter(
+        (c) =>
+          c.class_status === "scheduled" ||
+          (c.class_status !== "confirmed" &&
+            c.class_status !== "open" &&
+            c.class_status !== "cancelled")
+      );
 
       // Group classes by subject
-      const grouped = classService.groupClassesBySubject(tutorClasses);
+      const grouped = classService.groupClassesBySubject(registeringClasses);
       setSubjects(grouped);
     } catch (err: any) {
       console.error("Failed to load classes:", err);
@@ -152,16 +158,10 @@ export function TutorSessions() {
 
   const getStatusBadge = (status?: string) => {
     switch (status?.toLowerCase()) {
-      case "active":
+      case "scheduled":
         return (
-          <Badge className="bg-green-100 text-green-800 hover:bg-green-100">
-            Active
-          </Badge>
-        );
-      case "completed":
-        return (
-          <Badge className="bg-gray-100 text-gray-800 hover:bg-gray-100">
-            Completed
+          <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">
+            Pending
           </Badge>
         );
       case "cancelled":
@@ -172,8 +172,8 @@ export function TutorSessions() {
         );
       default:
         return (
-          <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100">
-            Open
+          <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">
+            Registering
           </Badge>
         );
     }
@@ -181,11 +181,11 @@ export function TutorSessions() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white">
+      <div className="min-h-screen bg-gray-50">
         <div className="flex items-center justify-center h-[calc(100vh-80px)]">
           <div className="text-center">
-            <RefreshCw className="h-12 w-12 animate-spin text-blue-600 mx-auto mb-4" />
-            <p className="text-gray-600">Loading your classes...</p>
+            <RefreshCw className="h-12 w-12 animate-spin text-amber-600 mx-auto mb-4" />
+            <p className="text-gray-600">Loading your registering classes...</p>
           </div>
         </div>
       </div>
@@ -194,7 +194,7 @@ export function TutorSessions() {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white">
+      <div className="min-h-screen bg-gray-50">
         <div className="flex items-center justify-center h-[calc(100vh-80px)]">
           <Card className="p-8 text-center">
             <AlertCircle className="h-12 w-12 text-yellow-500 mx-auto mb-4" />
@@ -212,7 +212,7 @@ export function TutorSessions() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white">
+    <div className="min-h-screen bg-gray-50">
       {/* Success Toast */}
       {showSuccessToast && (
         <div className="fixed top-4 right-4 bg-green-500 text-white px-6 py-4 rounded-lg shadow-lg flex items-center space-x-2 z-50 animate-in slide-in-from-right">
@@ -225,12 +225,12 @@ export function TutorSessions() {
         {/* Header Section */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
           <div>
-            <h1 className="text-3xl md:text-4xl font-bold mb-2 text-blue-900">
-              My Classes
+            <h1 className="text-3xl md:text-4xl font-bold mb-2 text-gray-900">
+              Registering Classes
             </h1>
-            <p className="text-gray-600">
-              Create and manage your tutoring classes
-            </p>
+            {/* <p className="text-gray-600">
+              Create and manage classes awaiting confirmation
+            </p> */}
             {error && (
               <p className="text-red-500 text-sm mt-2 flex items-center gap-1">
                 <AlertCircle className="h-4 w-4" />
@@ -245,7 +245,7 @@ export function TutorSessions() {
               size="sm"
               onClick={handleRefresh}
               disabled={refreshing}
-              className="border-blue-300 text-blue-600 hover:bg-blue-50"
+              className="border-gray-300 text-gray-600 hover:bg-gray-50"
             >
               <RefreshCw
                 className={`mr-2 h-4 w-4 ${refreshing ? "animate-spin" : ""}`}
@@ -261,34 +261,16 @@ export function TutorSessions() {
               <Plus className="mr-2 h-5 w-5" />
               Create Class
             </Button>
-
-            <Button
-              size="lg"
-              variant="outline"
-              className="border-blue-300 text-blue-600 hover:bg-blue-50"
-              onClick={() => navigate("/assignment")}
-            >
-              <Plus className="mr-2 h-5 w-5" />
-              Assignment
-            </Button>
-
-            <Button
-              size="lg"
-              className="bg-green-600 hover:bg-green-700 text-white"
-              onClick={() => navigate("/tutor/progress_class_selection")}
-            >
-              Progress Track
-            </Button>
           </div>
         </div>
 
         {/* Classes Content */}
         {subjects.length === 0 ? (
-          <Card className="border-blue-200 border-dashed">
+          <Card className="border-gray-200 border-dashed">
             <CardContent className="py-16 text-center">
-              <Calendar className="h-16 w-16 text-blue-300 mx-auto mb-4" />
+              <Calendar className="h-16 w-16 text-gray-300 mx-auto mb-4" />
               <h3 className="text-xl font-semibold text-gray-700 mb-2">
-                No Classes Yet
+                No Registering Classes
               </h3>
               <p className="text-gray-500 mb-6">
                 You haven't created any classes yet. Start by creating your
@@ -312,11 +294,11 @@ export function TutorSessions() {
               return (
                 <Card
                   key={subject.id}
-                  className="border-blue-200 hover:border-blue-400 transition-all duration-200 bg-white shadow-sm"
+                  className="border-gray-200 hover:border-gray-400 transition-all duration-200 bg-white shadow-sm"
                 >
                   {/* Subject Header - Clickable */}
                   <CardHeader
-                    className="cursor-pointer hover:bg-blue-50 transition-colors rounded-t-lg"
+                    className="cursor-pointer hover:bg-gray-50 transition-colors rounded-t-lg"
                     onClick={() => toggleSubject(subject.id)}
                   >
                     <div className="flex items-center justify-between">
@@ -327,10 +309,10 @@ export function TutorSessions() {
                           <ChevronRight className="h-5 w-5 text-blue-600" />
                         )}
                         <div>
-                          <CardTitle className="text-xl md:text-2xl text-blue-900">
+                          <CardTitle className="text-xl md:text-2xl text-gray-900">
                             {subject.subject_name}
                           </CardTitle>
-                          <p className="text-sm text-blue-600 font-semibold mt-1">
+                          <p className="text-sm text-gray-600 font-semibold mt-1">
                             {subject.subject_code}
                           </p>
                         </div>
@@ -359,11 +341,11 @@ export function TutorSessions() {
                           return (
                             <div
                               key={classItem.id}
-                              className="border border-blue-200 rounded-lg overflow-hidden"
+                              className="border border-gray-200 rounded-lg overflow-hidden"
                             >
                               {/* Class Header - Clickable */}
                               <div
-                                className="bg-gradient-to-r from-blue-50 to-white p-4 cursor-pointer hover:from-blue-100 hover:to-blue-50 transition-colors"
+                                className="bg-gray-50 p-4 cursor-pointer hover:bg-gray-100 transition-colors"
                                 onClick={() => toggleClass(classItem.id)}
                               >
                                 <div className="flex items-start justify-between gap-4">
@@ -375,7 +357,7 @@ export function TutorSessions() {
                                     )}
                                     <div className="flex-1 min-w-0">
                                       <div className="flex flex-wrap items-center gap-2 mb-2">
-                                        <h3 className="text-lg font-bold text-blue-900">
+                                        <h3 className="text-lg font-bold text-gray-900">
                                           Class #{classItem.id}
                                         </h3>
                                         {getStatusBadge(classItem.class_status)}
@@ -455,10 +437,10 @@ export function TutorSessions() {
 
                               {/* Expanded Class Details */}
                               {isClassExpanded && (
-                                <div className="p-4 bg-white border-t border-blue-100 space-y-4">
+                                <div className="p-4 bg-white border-t border-gray-100 space-y-4">
                                   {/* Schedule Info */}
                                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div className="bg-blue-50 rounded-lg p-4">
+                                    <div className="bg-gray-50 rounded-lg p-4">
                                       <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
                                         <Clock className="h-4 w-4 text-blue-600" />
                                         Schedule Details
@@ -568,23 +550,24 @@ export function TutorSessions() {
                                           rel="noopener noreferrer"
                                         >
                                           <ExternalLink className="mr-2 h-4 w-4" />
-                                          Join Meeting Link
+                                          Meeting Link
                                         </a>
                                       </Button>
                                     </div>
                                   )}
 
-                                  {/* Action Buttons */}
-                                  {/* <div className="pt-3 border-t flex gap-3">
-                                    <Button
-                                      variant="default"
-                                      size="sm"
-                                      className="flex-1 bg-green-600 hover:bg-green-700 text-white"
-                                      onClick={() => navigate(`/tutor/mark_attendance/${classItem.id}`)}
-                                    >
-                                      Meeting Action
-                                    </Button>
-                                  </div> */}
+                                  {/* Info Note */}
+                                  <div className="pt-3 border-t">
+                                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                                      <p className="text-sm text-blue-800">
+                                        <strong>Note:</strong> This class is
+                                        pending confirmation. Once confirmed by
+                                        the admin, it will be moved to "My
+                                        Classes" and you can manage assignments,
+                                        progress tracking, and attendance.
+                                      </p>
+                                    </div>
+                                  </div>
                                 </div>
                               )}
                             </div>

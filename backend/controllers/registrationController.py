@@ -108,3 +108,22 @@ class RegistrationController:
                 "success": False,
                 "error": str(e)
             }
+
+    @staticmethod
+    async def get_mentees_by_class(class_id: int) -> Dict[str, Any]:
+        """
+        Get all mentees registered in a specific class
+        """
+        try:
+            mentees = await RegistrationModel.get_mentees_by_class(class_id)
+            return {
+                "success": True,
+                "mentees": mentees,
+                "count": len(mentees),
+                "message": "Mentees retrieved successfully"
+            }
+        except Exception as e:
+            return {
+                "success": False,
+                "error": str(e)
+            }

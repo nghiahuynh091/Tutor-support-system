@@ -1,13 +1,18 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { MenteeLayout } from "./components/MenteeLayout";
+import { TutorLayout } from "./components/TutorLayout";
 import { HomePage } from "./pages/HomePage";
 import { LoginPage } from "./pages/LoginPage";
 import { MenteeHomePage } from "./pages/MenteeHomePage";
 import { MenteeRegistrationPage } from "./pages/MenteeRegistrationPage";
 import { MenteeSchedulePage } from "./pages/MenteeSchedulePage";
 import { MenteeSessionDetailPage } from "./pages/MenteeSessionDetailPage";
-import { TutorSessions } from "./pages/TutorSessions";
+import { TutorHomePage } from "./pages/TutorHomePage";
+import { TutorMyClassesPage } from "./pages/TutorMyClassesPage";
+import { TutorClassDetailPage } from "./pages/TutorClassDetailPage";
+import { TutorRegisteringPage } from "./pages/TutorRegisteringPage";
+import { TutorSchedulePage } from "./pages/TutorSchedulePage";
 import { CoordinatorDashboard } from "./pages/CoordinatorDashboard";
 import { FeedbackPage } from "./pages/FeedbackPage";
 import { PrivateNotePage } from "./pages/PrivateNotePage";
@@ -27,6 +32,9 @@ import { TutorProfile } from "./pages/TutorProfile";
 import Card from "./pages/SessionManager/Card";
 import { UserManagement } from "./pages/UserManagement";
 import { ViewReports } from "./pages/ViewReports";
+import { SessionDetailPage } from "./pages/SessionDetailPage";
+import { AdminLayout } from "./components/AdminLayout";
+import { AdminRegistrationPage } from "./pages/AdminRegistrationPage";
 
 function App() {
   return (
@@ -71,37 +79,56 @@ function App() {
           </Route>
         </Route>
 
-        {/* Tutor Routes */}
+        {/* Tutor Routes - with TutorLayout */}
         <Route element={<ProtectedRoute allowedRoles={["tutor"]} />}>
-          <Route path="/tutor/sessions" element={<TutorSessions />} />
-          <Route path="/tutor/mark_attendance/:classId" element={<Card />} />
-          <Route path="/assignment" element={<ProvideAssignmentPage />} />
-          <Route path="/assignment/homework/:id" element={<HomeworkPage />} />
-          <Route
-            path="/assignment/quiz/:classId/:sessionId"
-            element={<QuizPage />}
-          />
-          <Route
-            path="/tutor/progress_class_selection"
-            element={<ProgressClassSelectionPage />}
-          />
-          <Route
-            path="/tutor/progress/:classId"
-            element={<ProgressTrackingPage />}
-          />
-          <Route
-            path="/mentee_progress/:id/private_note"
-            element={<PrivateNotePage />}
-          />
-          <Route path="/tutor/profile" element={<TutorProfile />} />
+          <Route element={<TutorLayout />}>
+            <Route path="/tutor/home" element={<TutorHomePage />} />
+            <Route path="/tutor/my-classes" element={<TutorMyClassesPage />} />
+            <Route
+              path="/tutor/class/:classId"
+              element={<TutorClassDetailPage />}
+            />
+            <Route
+              path="/class/:classId/session/:sessionId"
+              element={<SessionDetailPage />}
+            />
+            <Route
+              path="/tutor/registering"
+              element={<TutorRegisteringPage />}
+            />
+            <Route path="/tutor/schedule" element={<TutorSchedulePage />} />
+            <Route path="/tutor/mark_attendance/:classId" element={<Card />} />
+            <Route path="/assignment" element={<ProvideAssignmentPage />} />
+            <Route path="/assignment/homework/:id" element={<HomeworkPage />} />
+            <Route
+              path="/assignment/quiz/:classId/:sessionId"
+              element={<QuizPage />}
+            />
+            <Route
+              path="/tutor/progress_class_selection"
+              element={<ProgressClassSelectionPage />}
+            />
+            <Route
+              path="/tutor/progress/:classId"
+              element={<ProgressTrackingPage />}
+            />
+            <Route
+              path="/mentee_progress/:id/private_note"
+              element={<PrivateNotePage />}
+            />
+            <Route path="/tutor/profile" element={<TutorProfile />} />
+          </Route>
         </Route>
 
         {/* Admin Routes */}
         <Route element={<ProtectedRoute allowedRoles={["admin"]} />}>
-          <Route path="/admin/dashboard" element={<CoordinatorDashboard />} />
-          <Route path="/admin/profile" element={<CoordinatorProfile />} />
-          <Route path="/admin/users" element={<UserManagement />} />
-          <Route path="/admin/reports" element={<ViewReports />} />
+          <Route element={<AdminLayout />}>
+            <Route path="/admin/dashboard" element={<CoordinatorDashboard />} />
+            <Route path="/admin/registrations" element={<AdminRegistrationPage />} />
+            <Route path="/admin/profile" element={<CoordinatorProfile />} />
+            <Route path="/admin/users" element={<UserManagement />} />
+            <Route path="/admin/reports" element={<ViewReports />} />
+          </Route>
         </Route>
       </Routes>
     </BrowserRouter>

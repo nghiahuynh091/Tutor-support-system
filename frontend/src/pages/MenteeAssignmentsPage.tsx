@@ -153,7 +153,7 @@ export const MenteeAssignmentsPage: React.FC = () => {
     };
 
     fetchVisibleSubmissions();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [selectedSessions, assignments, token]);
 
   const handleSessionChange = (classId: number, sessionId: number) => {
