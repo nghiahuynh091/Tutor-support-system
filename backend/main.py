@@ -74,17 +74,3 @@ app.include_router(note_route.router)
 
 #session modules
 app.include_router(session_route.router)
-
-
-if __name__ == "__main__":
-    import uvicorn
-    print(f"📍 Server URL:     {settings.server_url}")
-    print(f"📚 API Docs:       {settings.docs_url}")
-    print(f"📖 ReDoc:          {settings.redoc_url}")
-    uvicorn.run(
-        "main:app",
-        host=settings.HOST,
-        port=settings.PORT,
-        reload=settings.RELOAD,
-        log_level="info" if settings.DEBUG else "warning"
-    )
