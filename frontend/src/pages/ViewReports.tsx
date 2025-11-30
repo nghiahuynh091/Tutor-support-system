@@ -4,13 +4,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
   BarChart3,
-  FileText,
   Download,
   Users,
-  BookOpen,
   Briefcase,
-  Award,
-  TrendingUp,
+
   Loader2,
 } from "lucide-react";
 import api from "@/lib/api";

@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -45,7 +44,6 @@ type User = {
 };
 
 export function UserManagement() {
-  const navigate = useNavigate();
   const [users, setUsers] = useState<User[]>([]);
   const [isLoadingInitial, setIsLoadingInitial] = useState(true);
   const [isFetchingPage, setIsFetchingPage] = useState(false);

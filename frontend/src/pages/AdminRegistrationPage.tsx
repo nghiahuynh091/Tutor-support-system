@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
 import api from "@/lib/api";
 import { Loader2, CheckCircle, XCircle, AlertTriangle } from "lucide-react";
 
@@ -16,6 +15,7 @@ interface ClassData {
   current_enrolled: number;
   capacity: number;
   class_status: string;
+  registration_deadline: string;
 }
 
 export function AdminRegistrationPage() {
