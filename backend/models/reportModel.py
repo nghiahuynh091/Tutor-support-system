@@ -313,7 +313,7 @@ class ReportModel:
                         WHEN c.week_day IS NOT NULL THEN c.week_day::text || c.start_time::text 
                     END) as unique_time_slots
                 FROM public.user u
-                JOIN TUTOR t ON u.id = t.user_id
+                JOIN tutor t ON u.id = t.user_id
                 LEFT JOIN classes c ON u.id = c.tutor_id AND c.class_status != 'cancelled'
                 LEFT JOIN sessions sess ON c.id = sess.class_id
                 LEFT JOIN feedback f ON c.id = f.class_id
@@ -396,7 +396,7 @@ class ReportModel:
                     COALESCE(AVG(f.rating_scale), 0) as avg_feedback_rating,
                     COUNT(DISTINCT f.class_id) as feedback_submitted
                 FROM public.user u
-                JOIN MENTEE m ON u.id = m.user_id
+                JOIN mentee m ON u.id = m.user_id
                 LEFT JOIN class_registrations cr ON u.id = cr.mentee_id 
                     AND cr.cancellation_log IS NULL
                 LEFT JOIN attendance a ON u.id = a.mentee_id

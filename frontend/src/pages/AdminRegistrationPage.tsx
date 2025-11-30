@@ -49,11 +49,15 @@ export function AdminRegistrationPage() {
 
   const handleConfirmClass = async (classId: number) => {
     try {
-      await api.post(`/classes/${classId}/confirm`);
-      alert(`Class #${classId} confirmed and sessions created!`);
+      const response = await api.post(`/classes/${classId}/confirm`);
+      if (response.data.success) {
+        alert(response.data.message || `Class #${classId} processed successfully.`);
+      } else {
+        alert(response.data.error || `Failed to process class #${classId}.`);
+      }
       fetchPendingClasses(); // Refresh the list
     } catch (err) {
-      alert(`Failed to confirm class #${classId}.`);
+      alert(`An error occurred while processing class #${classId}.`);
       console.error(err);
     }
   };
@@ -63,8 +67,12 @@ export function AdminRegistrationPage() {
       return;
     }
     try {
-      await api.post("/classes/confirm/all");
-      alert("All pending classes processed!");
+      const response = await api.post("/classes/confirm/all");
+      if (response.data.success) {
+        alert(response.data.message || "All pending classes processed!");
+      } else {
+        alert(response.data.error || "Failed to process all classes.");
+      }
       fetchPendingClasses(); // Refresh the list
     } catch (err) {
       alert("Failed to process all classes.");
@@ -79,9 +87,7 @@ export function AdminRegistrationPage() {
           <h1 className="text-3xl font-bold text-gray-800">
             Registration Management
           </h1>
-          <p className="text-gray-600">
-            Confirm pending classes to create their sessions.
-          </p>
+
         </div>
         <Button onClick={handleConfirmAll} disabled={loading || pendingClasses.length === 0}>
           <CheckCircle className="mr-2 h-4 w-4" />
@@ -108,7 +114,7 @@ export function AdminRegistrationPage() {
           {pendingClasses.map((cls) => (
             <Card key={cls.id} className="w-full">
               <CardContent className="p-4 flex items-center justify-between">
-                <div className="flex-1 grid grid-cols-5 gap-4 items-center">
+                <div className="flex-1 grid grid-cols-6 gap-4 items-center">
                   <div className="col-span-2">
                     <p className="font-bold text-lg text-gray-800">{cls.subject_name}</p>
                     <p className="text-sm text-gray-500">Class #{cls.id}</p>
@@ -124,6 +130,10 @@ export function AdminRegistrationPage() {
                   <div>
                     <p className="text-sm font-medium text-gray-800">{cls.current_enrolled} / {cls.capacity}</p>
                     <p className="text-xs text-gray-500">Enrollment</p>
+                  </div>
+                   <div>
+                    <p className="text-sm font-medium text-gray-800">{new Date(cls.registration_deadline).toLocaleString()}</p>
+                    <p className="text-xs text-gray-500">Deadline</p>
                   </div>
                 </div>
                 <div className="ml-6">

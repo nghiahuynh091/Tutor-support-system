@@ -9,6 +9,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Bell, User, Settings, LogOut } from "lucide-react";
+import hcmutLogo from "@/assets/hcmut_logo.png";
 
 export function TutorLayout() {
   const navigate = useNavigate();
@@ -45,9 +46,8 @@ export function TutorLayout() {
               className="flex items-center space-x-3 cursor-pointer pr-8"
               onClick={() => navigate("/tutor/home")}
             >
-              <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center">
-                <span className="text-blue-700 font-bold text-xl">T</span>
-              </div>
+              <img src={hcmutLogo} alt="HCMUT Logo" className="w-20 h-18 rounded-lg" />
+
               <h1 className="text-xl font-bold tracking-tight">
                 Tutor Support System
               </h1>
