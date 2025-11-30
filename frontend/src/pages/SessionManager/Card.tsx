@@ -98,7 +98,6 @@ export function Card() {
       </div>
 
       <div className="card-row clickable" onClick={() => setActiveSection("resources")}>
-        📚 Learning Resources
       </div>
 
       <div className="section-content">

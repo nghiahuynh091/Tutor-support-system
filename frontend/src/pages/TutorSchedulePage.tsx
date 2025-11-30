@@ -220,11 +220,6 @@ export function TutorSchedulePage() {
   // Max sessions to show per day
   const maxVisibleSessions = viewMode === "week" ? 3 : 2;
 
-  // Navigate to session detail or class page
-  const handleViewDetails = (session: CalendarSession) => {
-    // For tutor, navigate to the mark attendance page for this class
-    navigate(`/tutor/mark_attendance/${session.class_id}`);
-  };
 
   return (
     <div className="min-h-screen bg-gray-50 py-6">
@@ -662,12 +657,14 @@ export function TutorSchedulePage() {
                       </a>
                     </Button>
                   )}
-                <Button
-                  className="flex-1 bg-blue-600 hover:bg-blue-700"
-                  onClick={() => handleViewDetails(selectedSession)}
-                >
-                  Manage Session
-                </Button>
+                {selectedSession.status === 'scheduled' && (
+                  <Button
+                    className="flex-1 bg-blue-600 hover:bg-blue-700"
+                    onClick={() => navigate(`/class/${selectedSession.class_id}/session/${selectedSession.id}`)}
+                  >
+                    Manage Session
+                  </Button>
+                )}
                 <Button
                   variant="outline"
                   onClick={() => setSelectedSession(null)}

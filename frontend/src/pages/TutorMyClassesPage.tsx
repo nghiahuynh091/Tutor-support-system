@@ -4,18 +4,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
   Calendar,
-  Clock,
   Users,
   ChevronDown,
   ChevronRight,
   MapPin,
   RefreshCw,
   AlertCircle,
-  ExternalLink,
-  CheckCircle,
-  FileText,
-  TrendingUp,
-  ClipboardList,
+  ArrowRight,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -47,14 +42,9 @@ export function TutorMyClassesPage() {
   const [expandedSubjectId, setExpandedSubjectId] = useState<number | null>(
     null
   );
-  const [expandedClassId, setExpandedClassId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
-
-  // Success toast state
-  const [showSuccessToast, setShowSuccessToast] = useState(false);
-  const [successMessage, setSuccessMessage] = useState("");
 
   // Load tutor's confirmed classes from API
   const loadClasses = useCallback(async () => {
@@ -98,21 +88,8 @@ export function TutorMyClassesPage() {
     setRefreshing(false);
   };
 
-  const showSuccess = (message: string) => {
-    setSuccessMessage(message);
-    setShowSuccessToast(true);
-    setTimeout(() => setShowSuccessToast(false), 3000);
-  };
-
   const toggleSubject = (subjectId: number) => {
     setExpandedSubjectId(expandedSubjectId === subjectId ? null : subjectId);
-    if (expandedSubjectId !== subjectId) {
-      setExpandedClassId(null);
-    }
-  };
-
-  const toggleClass = (classId: number) => {
-    setExpandedClassId(expandedClassId === classId ? null : classId);
   };
 
   const getScheduleDisplay = (classItem: ClassData): string => {
@@ -120,29 +97,6 @@ export function TutorMyClassesPage() {
     return `${dayName} ${periodToTime(classItem.start_time)} - ${periodToTime(
       classItem.end_time
     )}`;
-  };
-
-  const getStatusBadge = (status?: string) => {
-    switch (status?.toLowerCase()) {
-      case "confirmed":
-        return (
-          <Badge className="bg-green-100 text-green-800 hover:bg-green-100">
-            Confirmed
-          </Badge>
-        );
-      case "open":
-        return (
-          <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100">
-            Open
-          </Badge>
-        );
-      default:
-        return (
-          <Badge className="bg-green-100 text-green-800 hover:bg-green-100">
-            Active
-          </Badge>
-        );
-    }
   };
 
   if (loading) {
@@ -179,14 +133,6 @@ export function TutorMyClassesPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white">
-      {/* Success Toast */}
-      {showSuccessToast && (
-        <div className="fixed top-4 right-4 bg-green-500 text-white px-6 py-4 rounded-lg shadow-lg flex items-center space-x-2 z-50 animate-in slide-in-from-right">
-          <CheckCircle className="w-5 h-5" />
-          <span className="font-medium">{successMessage}</span>
-        </div>
-      )}
-
       <main className="container mx-auto px-4 md:px-8 py-8">
         {/* Header Section */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
@@ -194,9 +140,7 @@ export function TutorMyClassesPage() {
             <h1 className="text-3xl md:text-4xl font-bold mb-2 text-blue-900">
               My Classes
             </h1>
-            <p className="text-gray-600">
-              Confirmed classes with active sessions
-            </p>
+
             {error && (
               <p className="text-red-500 text-sm mt-2 flex items-center gap-1">
                 <AlertCircle className="h-4 w-4" />
@@ -273,7 +217,7 @@ export function TutorMyClassesPage() {
                           </p>
                         </div>
                       </div>
-                      <Badge className="bg-green-100 text-green-800 hover:bg-green-100">
+                      <Badge className="bg-blue-600 text-white hover:bg-blue-600">
                         {subject.classes.length}{" "}
                         {subject.classes.length === 1 ? "class" : "classes"}
                       </Badge>
@@ -289,242 +233,78 @@ export function TutorMyClassesPage() {
                         </p>
                       ) : (
                         subject.classes.map((classItem) => {
-                          const isClassExpanded =
-                            expandedClassId === classItem.id;
                           const isFull =
                             classItem.current_enrolled >= classItem.capacity;
 
                           return (
                             <div
                               key={classItem.id}
-                              className="border border-blue-200 rounded-lg overflow-hidden"
+                              className="border border-blue-200 rounded-lg overflow-hidden bg-gradient-to-r from-blue-50 to-white p-4 hover:shadow-md transition-shadow"
                             >
-                              {/* Class Header - Clickable */}
-                              <div
-                                className="bg-gradient-to-r from-green-50 to-white p-4 cursor-pointer hover:from-green-100 hover:to-green-50 transition-colors"
-                                onClick={() => toggleClass(classItem.id)}
-                              >
-                                <div className="flex items-start justify-between gap-4">
-                                  <div className="flex items-start gap-3 flex-1">
-                                    {isClassExpanded ? (
-                                      <ChevronDown className="h-5 w-5 text-green-600 mt-1 flex-shrink-0" />
-                                    ) : (
-                                      <ChevronRight className="h-5 w-5 text-green-600 mt-1 flex-shrink-0" />
-                                    )}
-                                    <div className="flex-1 min-w-0">
-                                      <div className="flex flex-wrap items-center gap-2 mb-2">
-                                        <h3 className="text-lg font-bold text-blue-900">
-                                          Class #{classItem.id}
-                                        </h3>
-                                        {getStatusBadge(classItem.class_status)}
-                                        {classItem.num_of_weeks && (
-                                          <Badge
-                                            variant="outline"
-                                            className="text-purple-700 border-purple-300"
-                                          >
-                                            {classItem.num_of_weeks} weeks
-                                          </Badge>
-                                        )}
-                                        <Badge
-                                          variant="outline"
-                                          className="text-gray-600"
-                                        >
-                                          Semester {classItem.semester}
-                                        </Badge>
-                                      </div>
-
-                                      {classItem.description && (
-                                        <p className="text-sm text-gray-600 mb-2 line-clamp-2">
-                                          {classItem.description}
-                                        </p>
-                                      )}
-
-                                      <div className="flex flex-wrap gap-4 text-sm text-gray-600">
-                                        <div className="flex items-center gap-1">
-                                          <Calendar className="h-4 w-4 text-green-500" />
-                                          <span>
-                                            {getScheduleDisplay(classItem)}
-                                          </span>
-                                        </div>
-                                        <div className="flex items-center gap-1">
-                                          <Users className="h-4 w-4 text-green-500" />
-                                          <span
-                                            className={
-                                              isFull
-                                                ? "text-red-600 font-semibold"
-                                                : ""
-                                            }
-                                          >
-                                            {classItem.current_enrolled}/
-                                            {classItem.capacity} students
-                                            {isFull && " (Full)"}
-                                          </span>
-                                        </div>
-                                        {classItem.location && (
-                                          <div className="flex items-center gap-1">
-                                            <MapPin className="h-4 w-4 text-green-500" />
-                                            <span>{classItem.location}</span>
-                                          </div>
-                                        )}
-                                      </div>
-                                    </div>
-                                  </div>
-                                </div>
-                              </div>
-
-                              {/* Expanded Class Details */}
-                              {isClassExpanded && (
-                                <div className="p-4 bg-white border-t border-green-100 space-y-4">
-                                  {/* Schedule Info */}
-                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div className="bg-blue-50 rounded-lg p-4">
-                                      <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                                        <Clock className="h-4 w-4 text-blue-600" />
-                                        Schedule Details
-                                      </h4>
-                                      <div className="space-y-2 text-sm">
-                                        <div className="flex justify-between">
-                                          <span className="text-gray-600">
-                                            Day:
-                                          </span>
-                                          <span className="font-medium">
-                                            {DAYS_OF_WEEK[classItem.week_day] ||
-                                              classItem.week_day}
-                                          </span>
-                                        </div>
-                                        <div className="flex justify-between">
-                                          <span className="text-gray-600">
-                                            Time:
-                                          </span>
-                                          <span className="font-medium">
-                                            {periodToTime(classItem.start_time)}{" "}
-                                            - {periodToTime(classItem.end_time)}
-                                          </span>
-                                        </div>
-                                        {classItem.num_of_weeks && (
-                                          <div className="flex justify-between">
-                                            <span className="text-gray-600">
-                                              Duration:
-                                            </span>
-                                            <span className="font-medium">
-                                              {classItem.num_of_weeks} weeks
-                                            </span>
-                                          </div>
-                                        )}
-                                      </div>
-                                    </div>
-
-                                    <div className="bg-green-50 rounded-lg p-4">
-                                      <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                                        <Users className="h-4 w-4 text-green-600" />
-                                        Enrollment
-                                      </h4>
-                                      <div className="space-y-2 text-sm">
-                                        <div className="flex justify-between">
-                                          <span className="text-gray-600">
-                                            Enrolled:
-                                          </span>
-                                          <span className="font-medium">
-                                            {classItem.current_enrolled}{" "}
-                                            students
-                                          </span>
-                                        </div>
-                                        <div className="flex justify-between">
-                                          <span className="text-gray-600">
-                                            Capacity:
-                                          </span>
-                                          <span className="font-medium">
-                                            {classItem.capacity} students
-                                          </span>
-                                        </div>
-                                        <div className="flex justify-between">
-                                          <span className="text-gray-600">
-                                            Available:
-                                          </span>
-                                          <span
-                                            className={`font-medium ${
-                                              isFull
-                                                ? "text-red-600"
-                                                : "text-green-600"
-                                            }`}
-                                          >
-                                            {isFull
-                                              ? "Class Full"
-                                              : `${
-                                                  classItem.capacity -
-                                                  classItem.current_enrolled
-                                                } spots`}
-                                          </span>
-                                        </div>
-                                      </div>
-                                    </div>
-                                  </div>
-
-                                  {/* Meeting Link */}
-                                  {classItem.meeting_link && (
-                                    <div className="pt-3 border-t">
-                                      <Button
+                              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                {/* Class Info */}
+                                <div className="flex-1">
+                                  <div className="flex flex-wrap items-center gap-2 mb-2">
+                                    <h3 className="text-lg font-bold text-blue-900">
+                                      Class #{classItem.id}
+                                    </h3>
+                                    {classItem.num_of_weeks && (
+                                      <Badge
                                         variant="outline"
-                                        size="sm"
-                                        className="w-full border-blue-300 text-blue-600 hover:bg-blue-50"
-                                        asChild
+                                        className="text-purple-700 border-purple-300"
                                       >
-                                        <a
-                                          href={classItem.meeting_link}
-                                          target="_blank"
-                                          rel="noopener noreferrer"
-                                        >
-                                          <ExternalLink className="mr-2 h-4 w-4" />
-                                          Join Meeting Link
-                                        </a>
-                                      </Button>
-                                    </div>
-                                  )}
+                                        {classItem.num_of_weeks} weeks
+                                      </Badge>
+                                    )}
+                                    <Badge
+                                      variant="outline"
+                                      className="text-gray-600"
+                                    >
+                                      Semester {classItem.semester}
+                                    </Badge>
+                                  </div>
 
-                                  {/* Action Buttons for Confirmed Classes */}
-                                  <div className="pt-3 border-t grid grid-cols-1 md:grid-cols-3 gap-3">
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      className="border-green-300 text-green-700 hover:bg-green-50"
-                                      onClick={() =>
-                                        navigate(
-                                          `/assignment?classId=${classItem.id}`
-                                        )
-                                      }
-                                    >
-                                      <FileText className="mr-2 h-4 w-4" />
-                                      Assignments
-                                    </Button>
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      className="border-purple-300 text-purple-700 hover:bg-purple-50"
-                                      onClick={() =>
-                                        navigate(
-                                          `/tutor/progress/${classItem.id}`
-                                        )
-                                      }
-                                    >
-                                      <TrendingUp className="mr-2 h-4 w-4" />
-                                      Progress Track
-                                    </Button>
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      className="border-amber-300 text-amber-700 hover:bg-amber-50"
-                                      onClick={() =>
-                                        navigate(
-                                          `/tutor/mark_attendance/${classItem.id}`
-                                        )
-                                      }
-                                    >
-                                      <ClipboardList className="mr-2 h-4 w-4" />
-                                      Attendance
-                                    </Button>
+                                  <div className="flex flex-wrap gap-4 text-sm text-gray-600">
+                                    <div className="flex items-center gap-1">
+                                      <Calendar className="h-4 w-4 text-blue-500" />
+                                      <span>
+                                        {getScheduleDisplay(classItem)}
+                                      </span>
+                                    </div>
+                                    <div className="flex items-center gap-1">
+                                      <Users className="h-4 w-4 text-blue-500" />
+                                      <span
+                                        className={
+                                          isFull
+                                            ? "text-red-600 font-semibold"
+                                            : ""
+                                        }
+                                      >
+                                        {classItem.current_enrolled}/
+                                        {classItem.capacity} students
+                                        {isFull && " (Full)"}
+                                      </span>
+                                    </div>
+                                    {classItem.location && (
+                                      <div className="flex items-center gap-1">
+                                        <MapPin className="h-4 w-4 text-blue-500" />
+                                        <span>{classItem.location}</span>
+                                      </div>
+                                    )}
                                   </div>
                                 </div>
-                              )}
+
+                                {/* View Details Button */}
+                                <Button
+                                  onClick={() =>
+                                    navigate(`/tutor/class/${classItem.id}`)
+                                  }
+                                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                                >
+                                  View Details
+                                  <ArrowRight className="ml-2 h-4 w-4" />
+                                </Button>
+                              </div>
                             </div>
                           );
                         })
