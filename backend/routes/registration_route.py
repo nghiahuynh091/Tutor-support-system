@@ -1,6 +1,20 @@
-from fastapi import APIRouter, HTTPException, Body
-from typing import Optional
+from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel
 from controllers.registrationController import RegistrationController
+
+# Request schemas
+class RegisterRequest(BaseModel):
+    class_id: int
+    mentee_id: str
+
+class CancelRequest(BaseModel):
+    class_id: int
+    mentee_id: str
+
+class RescheduleRequest(BaseModel):
+    old_class_id: int
+    new_class_id: int
+    mentee_id: str
 
 # Create router
 router = APIRouter(
@@ -10,18 +24,13 @@ router = APIRouter(
 )
 
 @router.post("/register")
-async def register_for_class(
-    request: Optional[dict] = Body(...,
-    example={
-        "class_id": 1,
-        "mentee_id": "uuid-of-mentee"
-    })):
+async def register_for_class(request: RegisterRequest):
     """
     Register a mentee for a class
     """
     result = await RegistrationController.register_for_class(
-        request.get("class_id"), 
-        request.get("mentee_id")
+        request.class_id, 
+        request.mentee_id
     )   
     
     if result["success"]:
@@ -31,19 +40,15 @@ async def register_for_class(
             status_code=400 if "conflict" in result.get("error", "").lower() else 500,
             detail=result.get("error", "Registration failed")
         )
+
 @router.post("/cancel")
-async def cancel_registration(
-    request: Optional[dict] = Body(...,
-    example={
-        "class_id": 1,
-        "mentee_id": "uuid-of-mentee"
-    })):
+async def cancel_registration(request: CancelRequest):
     """
     Cancel a class registration
     """
     result = await RegistrationController.cancel_registration(
-        request.get("class_id"), 
-        request.get("mentee_id")
+        request.class_id, 
+        request.mentee_id
     )   
     
     if result["success"]:
@@ -52,36 +57,20 @@ async def cancel_registration(
         raise HTTPException(status_code=500, detail=result["error"])
     
 @router.post("/reschedule")
-async def reschedule_class(
-    request: Optional[dict] = Body(...,
-    example={
-        "old_class_id": 1,
-        "new_class_id": 2,
-        "mentee_id": "uuid-of-mentee"
-    })):
+async def reschedule_class(request: RescheduleRequest):
     """
     Reschedule from old class to new class
     """
-    old_class_id = request.get("old_class_id")
-    new_class_id = request.get("new_class_id")
-    mentee_id = request.get("mentee_id")
-    
-    if not all([old_class_id, new_class_id, mentee_id]):
-        raise HTTPException(
-            status_code=400,
-            detail="old_class_id, new_class_id, and mentee_id are all required"
-        )
-    
-    if old_class_id == new_class_id:
+    if request.old_class_id == request.new_class_id:
         raise HTTPException(
             status_code=400,
             detail="Old class and new class cannot be the same"
         )
     
     result = await RegistrationController.reschedule_class(
-        old_class_id,
-        new_class_id,
-        mentee_id
+        request.old_class_id,
+        request.new_class_id,
+        request.mentee_id
     )
     
     if result["success"]:
