@@ -31,7 +31,8 @@ const DAYS_OF_WEEK: Record<string, string> = {
 };
 
 const periodToTime = (hour: number): string => {
-  return `${hour.toString().padStart(2, "0")}:00`;
+  const adjustedHour = (hour + 5) % 24;
+  return `${adjustedHour.toString().padStart(2, "0")}:00`;
 };
 
 export function TutorMyClassesPage() {

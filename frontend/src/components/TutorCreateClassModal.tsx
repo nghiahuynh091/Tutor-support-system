@@ -38,7 +38,8 @@ const DAYS_OF_WEEK = [
 
 // Convert hour to period display
 const hourToPeriodDisplay = (hour: number): string => {
-  return `${hour.toString().padStart(2, "0")}:00`;
+  const adjustedHour = (hour + 5) % 24;
+  return `${adjustedHour.toString().padStart(2, '0')}:00`;
 };
 
 export function TutorCreateClassModal({
