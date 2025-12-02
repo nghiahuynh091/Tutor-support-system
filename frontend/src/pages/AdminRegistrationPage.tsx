@@ -151,10 +151,11 @@ export function AdminRegistrationPage() {
                   </div>
                   <div>
                     <p className="text-sm font-medium text-gray-800">
-                      {cls.registration_deadline
-                        .replace("T", " ")
-                        .replace("Z", "")
-                        .slice(0, 16)}
+                      {(() => {
+                        const utcDate = new Date(cls.registration_deadline);
+                        const vnDate = new Date(utcDate.getTime() + 7 * 60 * 60 * 1000);
+                        return vnDate.toISOString().replace("T", " ").slice(0, 16);
+                      })()}
                     </p>
                     <p className="text-xs text-gray-500">Deadline</p>
                   </div>
