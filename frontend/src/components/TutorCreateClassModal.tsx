@@ -119,7 +119,7 @@ export function TutorCreateClassModal({
       // Convert deadline to UTC by subtracting 7 hours (Vietnam timezone)
       const localDeadline = new Date(formData.registration_deadline);
       const utcDeadline = new Date(
-        localDeadline.getTime() - 7 * 60 * 60 * 1000
+        localDeadline.getTime() + 7 * 60 * 60 * 1000
       );
       const utcDeadlineString = utcDeadline.toISOString().slice(0, 16);
 
