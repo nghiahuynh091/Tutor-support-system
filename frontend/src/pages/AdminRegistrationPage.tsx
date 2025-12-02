@@ -30,7 +30,7 @@ export function AdminRegistrationPage() {
       const response = await api.get("/classes/");
       if (response.data.success) {
         const scheduledClasses = response.data.classes.filter(
-          (c: ClassData) => c.class_status === 'scheduled'
+          (c: ClassData) => c.class_status === "scheduled"
         );
         setPendingClasses(scheduledClasses);
       } else {
@@ -51,7 +51,9 @@ export function AdminRegistrationPage() {
     try {
       const response = await api.post(`/classes/${classId}/confirm`);
       if (response.data.success) {
-        alert(response.data.message || `Class #${classId} processed successfully.`);
+        alert(
+          response.data.message || `Class #${classId} processed successfully.`
+        );
       } else {
         alert(response.data.error || `Failed to process class #${classId}.`);
       }
@@ -63,7 +65,11 @@ export function AdminRegistrationPage() {
   };
 
   const handleConfirmAll = async () => {
-    if (!confirm("Are you sure you want to confirm all pending classes? This will create sessions for all eligible classes.")) {
+    if (
+      !confirm(
+        "Are you sure you want to confirm all pending classes? This will create sessions for all eligible classes."
+      )
+    ) {
       return;
     }
     try {
@@ -87,9 +93,11 @@ export function AdminRegistrationPage() {
           <h1 className="text-3xl font-bold text-gray-800">
             Registration Management
           </h1>
-
         </div>
-        <Button onClick={handleConfirmAll} disabled={loading || pendingClasses.length === 0}>
+        <Button
+          onClick={handleConfirmAll}
+          disabled={loading || pendingClasses.length === 0}
+        >
           <CheckCircle className="mr-2 h-4 w-4" />
           Confirm All Pending
         </Button>
@@ -107,7 +115,9 @@ export function AdminRegistrationPage() {
       ) : pendingClasses.length === 0 ? (
         <div className="text-center py-16">
           <XCircle className="mx-auto h-10 w-10 text-gray-400 mb-4" />
-          <p className="text-gray-500">No classes are currently pending confirmation.</p>
+          <p className="text-gray-500">
+            No classes are currently pending confirmation.
+          </p>
         </div>
       ) : (
         <div className="space-y-4">
@@ -116,23 +126,36 @@ export function AdminRegistrationPage() {
               <CardContent className="p-4 flex items-center justify-between">
                 <div className="flex-1 grid grid-cols-6 gap-4 items-center">
                   <div className="col-span-2">
-                    <p className="font-bold text-lg text-gray-800">{cls.subject_name}</p>
+                    <p className="font-bold text-lg text-gray-800">
+                      {cls.subject_name}
+                    </p>
                     <p className="text-sm text-gray-500">Class #{cls.id}</p>
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-gray-800">{cls.tutor_name}</p>
+                    <p className="text-sm font-medium text-gray-800">
+                      {cls.tutor_name}
+                    </p>
                     <p className="text-xs text-gray-500">Tutor</p>
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-gray-800">{cls.week_day}, {cls.start_time}:00 - {cls.end_time}:00</p>
+                    <p className="text-sm font-medium text-gray-800">
+                      {cls.week_day}, {cls.start_time}:00 - {cls.end_time}:00
+                    </p>
                     <p className="text-xs text-gray-500">Schedule</p>
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-gray-800">{cls.current_enrolled} / {cls.capacity}</p>
+                    <p className="text-sm font-medium text-gray-800">
+                      {cls.current_enrolled} / {cls.capacity}
+                    </p>
                     <p className="text-xs text-gray-500">Enrollment</p>
                   </div>
-                   <div>
-                    <p className="text-sm font-medium text-gray-800">{new Date(cls.registration_deadline).toLocaleString()}</p>
+                  <div>
+                    <p className="text-sm font-medium text-gray-800">
+                      {cls.registration_deadline
+                        .replace("T", " ")
+                        .replace("Z", "")
+                        .slice(0, 16)}
+                    </p>
                     <p className="text-xs text-gray-500">Deadline</p>
                   </div>
                 </div>

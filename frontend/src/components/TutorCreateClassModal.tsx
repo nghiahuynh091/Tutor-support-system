@@ -117,6 +117,13 @@ export function TutorCreateClassModal({
     setSubmitting(true);
 
     try {
+      // Convert deadline to UTC by subtracting 7 hours (Vietnam timezone)
+      const localDeadline = new Date(formData.registration_deadline);
+      const utcDeadline = new Date(
+        localDeadline.getTime() - 7 * 60 * 60 * 1000
+      );
+      const utcDeadlineString = utcDeadline.toISOString().slice(0, 16);
+
       const payload: CreateClassPayload = {
         subject_id: parseInt(formData.subject_id),
         semester: parseInt(formData.semester),
@@ -126,7 +133,7 @@ export function TutorCreateClassModal({
         location: formData.location,
         capacity: parseInt(formData.capacity),
         num_of_weeks: parseInt(formData.num_of_weeks),
-        registration_deadline: formData.registration_deadline,
+        registration_deadline: utcDeadlineString,
       };
 
       const result = await classService.createClass(payload);
@@ -170,7 +177,9 @@ export function TutorCreateClassModal({
             <div className="grid grid-cols-2 gap-4">
               {/* Subject Selection */}
               <div className="space-y-2 col-span-2">
-                <Label htmlFor="subject" className="text-gray-700">Subject *</Label>
+                <Label htmlFor="subject" className="text-gray-700">
+                  Subject *
+                </Label>
                 <Select
                   value={formData.subject_id}
                   onValueChange={(value) => handleChange("subject_id", value)}
@@ -181,7 +190,11 @@ export function TutorCreateClassModal({
                   </SelectTrigger>
                   <SelectContent className="bg-white text-gray-900">
                     {subjects.map((subject) => (
-                      <SelectItem key={subject.id} value={subject.id.toString()} className="text-gray-900">
+                      <SelectItem
+                        key={subject.id}
+                        value={subject.id.toString()}
+                        className="text-gray-900"
+                      >
                         {subject.subject_code} - {subject.subject_name}
                       </SelectItem>
                     ))}
@@ -191,7 +204,9 @@ export function TutorCreateClassModal({
 
               {/* Semester */}
               <div className="space-y-2">
-                <Label htmlFor="semester" className="text-gray-700">Semester *</Label>
+                <Label htmlFor="semester" className="text-gray-700">
+                  Semester *
+                </Label>
                 <Select
                   value={formData.semester}
                   onValueChange={(value) => handleChange("semester", value)}
@@ -201,16 +216,24 @@ export function TutorCreateClassModal({
                     <SelectValue placeholder="Select semester" />
                   </SelectTrigger>
                   <SelectContent className="bg-white text-gray-900">
-                    <SelectItem value="251" className="text-gray-900">251</SelectItem>
-                    <SelectItem value="252" className="text-gray-900">252</SelectItem>
-                    <SelectItem value="253" className="text-gray-900">253</SelectItem>
+                    <SelectItem value="251" className="text-gray-900">
+                      251
+                    </SelectItem>
+                    <SelectItem value="252" className="text-gray-900">
+                      252
+                    </SelectItem>
+                    <SelectItem value="253" className="text-gray-900">
+                      253
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               {/* Week Day */}
               <div className="space-y-2">
-                <Label htmlFor="week_day" className="text-gray-700">Day of Week *</Label>
+                <Label htmlFor="week_day" className="text-gray-700">
+                  Day of Week *
+                </Label>
                 <Select
                   value={formData.week_day}
                   onValueChange={(value) => handleChange("week_day", value)}
@@ -221,7 +244,11 @@ export function TutorCreateClassModal({
                   </SelectTrigger>
                   <SelectContent className="bg-white text-gray-900">
                     {DAYS_OF_WEEK.map((day) => (
-                      <SelectItem key={day.value} value={day.value} className="text-gray-900">
+                      <SelectItem
+                        key={day.value}
+                        value={day.value}
+                        className="text-gray-900"
+                      >
                         {day.label}
                       </SelectItem>
                     ))}
@@ -275,7 +302,9 @@ export function TutorCreateClassModal({
 
               {/* Location & Capacity */}
               <div className="space-y-2">
-                <Label htmlFor="location" className="text-gray-700">Location / Meeting Link *</Label>
+                <Label htmlFor="location" className="text-gray-700">
+                  Location / Meeting Link *
+                </Label>
                 <Input
                   id="location"
                   placeholder="Room 101 or Zoom Link"
@@ -286,7 +315,9 @@ export function TutorCreateClassModal({
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="capacity" className="text-gray-700">Capacity *</Label>
+                <Label htmlFor="capacity" className="text-gray-700">
+                  Capacity *
+                </Label>
                 <Input
                   id="capacity"
                   type="number"
@@ -301,7 +332,9 @@ export function TutorCreateClassModal({
 
               {/* Duration & Deadline */}
               <div className="space-y-2">
-                <Label htmlFor="num_of_weeks" className="text-gray-700">Number of Weeks *</Label>
+                <Label htmlFor="num_of_weeks" className="text-gray-700">
+                  Number of Weeks *
+                </Label>
                 <Input
                   id="num_of_weeks"
                   type="number"
@@ -315,7 +348,12 @@ export function TutorCreateClassModal({
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="registration_deadline" className="text-gray-700">Registration Deadline *</Label>
+                <Label
+                  htmlFor="registration_deadline"
+                  className="text-gray-700"
+                >
+                  Registration Deadline *
+                </Label>
                 <Input
                   id="registration_deadline"
                   type="datetime-local"
@@ -330,36 +368,54 @@ export function TutorCreateClassModal({
             </div>
 
             {/* Preview */}
-            {formData.subject_id && formData.week_day && formData.start_time && formData.end_time && (
-              <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
-                <h4 className="font-semibold text-blue-900 mb-2">📋 Preview</h4>
-                <div className="text-sm text-blue-800 space-y-1">
-                  <p>
-                    <strong>Subject:</strong>{" "}
-                    {subjects.find(s => s.id.toString() === formData.subject_id)?.subject_name}
-                  </p>
-                  <p>
-                    <strong>Schedule:</strong>{" "}
-                    {DAYS_OF_WEEK.find(d => d.value === formData.week_day)?.label}{" "}
-                    {hourToPeriodDisplay(parseInt(formData.start_time))} -{" "}
-                    {hourToPeriodDisplay(parseInt(formData.end_time))}
-                  </p>
-                  {formData.num_of_weeks && (
+            {formData.subject_id &&
+              formData.week_day &&
+              formData.start_time &&
+              formData.end_time && (
+                <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                  <h4 className="font-semibold text-blue-900 mb-2">
+                    📋 Preview
+                  </h4>
+                  <div className="text-sm text-blue-800 space-y-1">
                     <p>
-                      <strong>Duration:</strong> {formData.num_of_weeks} weeks
+                      <strong>Subject:</strong>{" "}
+                      {
+                        subjects.find(
+                          (s) => s.id.toString() === formData.subject_id
+                        )?.subject_name
+                      }
                     </p>
-                  )}
-                  {formData.capacity && (
                     <p>
-                      <strong>Capacity:</strong> {formData.capacity} students
+                      <strong>Schedule:</strong>{" "}
+                      {
+                        DAYS_OF_WEEK.find((d) => d.value === formData.week_day)
+                          ?.label
+                      }{" "}
+                      {hourToPeriodDisplay(parseInt(formData.start_time))} -{" "}
+                      {hourToPeriodDisplay(parseInt(formData.end_time))}
                     </p>
-                  )}
+                    {formData.num_of_weeks && (
+                      <p>
+                        <strong>Duration:</strong> {formData.num_of_weeks} weeks
+                      </p>
+                    )}
+                    {formData.capacity && (
+                      <p>
+                        <strong>Capacity:</strong> {formData.capacity} students
+                      </p>
+                    )}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
             <DialogFooter className="mt-6">
-              <Button type="button" className="text-black" variant="outline" onClick={handleClose} disabled={submitting}>
+              <Button
+                type="button"
+                className="text-black"
+                variant="outline"
+                onClick={handleClose}
+                disabled={submitting}
+              >
                 Cancel
               </Button>
               <Button
